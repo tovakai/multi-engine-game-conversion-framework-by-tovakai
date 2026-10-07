@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import stat
 import time
@@ -206,11 +207,24 @@ def create_frame_zip(
     output: Path | None = None,
     force: bool = False,
 ) -> Path:
-    """Create a FrameDrop/Frame Control compatible ZIP with Unix mode metadata."""
+    """Create a drop-in ZIP with an unambiguous top-level launch.sh.
+
+    The real converted build lives under payload/. Keeping native runtime binaries
+    one level below the trampoline makes generic installers prefer launch.sh while
+    preserving each backend's internal layout unchanged.
+    """
 
     source = build_directory.expanduser().resolve()
     if not source.is_dir():
         raise FramePackageError(f"Build directory does not exist: {source}")
+
+    if launcher_path is not None:
+        launcher_relative = _relative_to_build(launcher_path, source)
+    else:
+        launcher_relative = str(load_frame_metadata(source)["launcher"])
+    source_launcher = source / Path(launcher_relative)
+    if not source_launcher.is_file():
+        raise FramePackageError(f"Converted launcher does not exist: {source_launcher}")
 
     archive = (
         output.expanduser().resolve()
@@ -223,11 +237,33 @@ def create_frame_zip(
             f"Frame package already exists: {archive}. Pass --force to replace it."
         )
 
-    launcher_relative = (
-        _relative_to_build(launcher_path, source) if launcher_path is not None else None
-    )
     temporary = archive.parent / f".{archive.name}.tmp-{uuid.uuid4().hex[:8]}"
     root_name = source.name
+    target_literal = shlex.quote(launcher_relative)
+    trampoline = (
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n\n"
+        'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
+        'PAYLOAD="$ROOT/payload"\n'
+        f"TARGET={target_literal}\n"
+        'exec "$PAYLOAD/$TARGET" "$@"\n'
+    ).encode("utf-8")
+
+    def write_bytes(
+        zf: zipfile.ZipFile,
+        *,
+        sample: Path,
+        arcname: str,
+        data: bytes,
+        permissions: int = 0o644,
+    ) -> None:
+        info = _zip_info(
+            sample,
+            arcname,
+            permissions=permissions,
+            file_type=stat.S_IFREG,
+        )
+        zf.writestr(info, data)
 
     try:
         with zipfile.ZipFile(
@@ -237,54 +273,112 @@ def create_frame_zip(
             compresslevel=6,
             allowZip64=True,
         ) as zf:
-            root_info = _zip_info(
-                source,
-                root_name,
-                permissions=0o755,
-                file_type=stat.S_IFDIR,
-                directory=True,
+            zf.writestr(
+                _zip_info(
+                    source,
+                    root_name,
+                    permissions=0o755,
+                    file_type=stat.S_IFDIR,
+                    directory=True,
+                ),
+                b"",
             )
-            zf.writestr(root_info, b"")
+            write_bytes(
+                zf,
+                sample=source_launcher,
+                arcname=f"{root_name}/launch.sh",
+                data=trampoline,
+                permissions=0o755,
+            )
+
+            payload_root = f"{root_name}/payload"
+            zf.writestr(
+                _zip_info(
+                    source,
+                    payload_root,
+                    permissions=0o755,
+                    file_type=stat.S_IFDIR,
+                    directory=True,
+                ),
+                b"",
+            )
 
             for path in sorted(source.rglob("*"), key=lambda p: p.as_posix()):
                 relative = path.relative_to(source)
-                arcname = f"{root_name}/{relative.as_posix()}"
+                arcname = f"{payload_root}/{relative.as_posix()}"
 
                 if path.is_symlink():
-                    target = os.readlink(path)
                     info = _zip_info(
                         path,
                         arcname,
                         permissions=0o777,
                         file_type=stat.S_IFLNK,
                     )
-                    zf.writestr(info, target.encode("utf-8"))
+                    zf.writestr(info, os.readlink(path).encode("utf-8"))
                     continue
 
                 if path.is_dir():
-                    info = _zip_info(
-                        path,
-                        arcname,
-                        permissions=0o755,
-                        file_type=stat.S_IFDIR,
-                        directory=True,
+                    zf.writestr(
+                        _zip_info(
+                            path,
+                            arcname,
+                            permissions=0o755,
+                            file_type=stat.S_IFDIR,
+                            directory=True,
+                        ),
+                        b"",
                     )
-                    zf.writestr(info, b"")
                     continue
 
                 if not path.is_file():
                     continue
 
                 executable = _portable_executable(relative, launcher_relative)
-                permissions = 0o755 if executable else 0o644
                 info = _zip_info(
                     path,
                     arcname,
-                    permissions=permissions,
+                    permissions=0o755 if executable else 0o644,
                     file_type=stat.S_IFREG,
                 )
                 with path.open("rb") as src, zf.open(info, "w") as dst:
                     shutil.copyfileobj(src, dst, 1 << 20)
+
+            # Duplicate tiny integration metadata at the wrapper root so an extracted
+            # package can itself be fed to our native steam-install command.
+            metadata_path = source / _METADATA_DIR / _METADATA_FILE
+            if metadata_path.is_file():
+                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                metadata["launcher"] = "launch.sh"
+                metadata["payload"] = "payload"
+                metadata["payload_launcher"] = launcher_relative
+                write_bytes(
+                    zf,
+                    sample=metadata_path,
+                    arcname=f"{root_name}/{_METADATA_DIR}/{_METADATA_FILE}",
+                    data=(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
+                )
+
+            artwork_root = source / _METADATA_DIR / _ARTWORK_DIR
+            if artwork_root.is_dir():
+                for artwork in sorted(artwork_root.iterdir()):
+                    if artwork.is_file() and artwork.suffix.lower() in _IMAGE_SUFFIXES:
+                        write_bytes(
+                            zf,
+                            sample=artwork,
+                            arcname=f"{root_name}/{_METADATA_DIR}/{_ARTWORK_DIR}/{artwork.name}",
+                            data=artwork.read_bytes(),
+                        )
+
+            # Frame Control already treats these root names as shortcut-icon sources.
+            for icon_name in ("icon.png", "logo.png"):
+                icon = source / icon_name
+                if icon.is_file():
+                    write_bytes(
+                        zf,
+                        sample=icon,
+                        arcname=f"{root_name}/{icon_name}",
+                        data=icon.read_bytes(),
+                    )
 
         if archive.exists():
             archive.unlink()
@@ -296,7 +390,6 @@ def create_frame_zip(
         raise FramePackageError(f"Could not create Frame package {archive}: {exc}") from exc
 
     return archive
-
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
