@@ -11,6 +11,15 @@ from pathlib import Path
 from typing import Any
 
 from megcfbt import APP_NAME
+from megcfbt.frame_control_patch import (
+    PATCHED_LIMIT_GIB,
+    STOCK_LIMIT_GIB,
+    FrameControlPatchError,
+    inspect_frame_control,
+    locate_frame_control_server,
+    patch_upload_limit,
+    restore_upload_limit,
+)
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt.router import (
     ConversionError,
@@ -280,6 +289,19 @@ class ConverterApp:
         )
         self.cover_button.pack(side="left", padx=(18, 0))
 
+        self.frame_control_button = ctk.CTkButton(
+            options,
+            text="Frame Control…",
+            width=128,
+            height=30,
+            fg_color="transparent",
+            border_width=1,
+            border_color=C_BORDER,
+            text_color=C_MUTED,
+            command=self._open_frame_control_tools,
+        )
+        self.frame_control_button.pack(side="left", padx=(10, 0))
+
         self.runtime_button = ctk.CTkButton(
             options,
             text="Runtime: automatic",
@@ -518,6 +540,242 @@ class ConverterApp:
             self.steam_cover = Path(path)
             self.cover_button.configure(text=f"Cover: {self.steam_cover.name}")
             self._set_status(f"Steam cover: {self.steam_cover.name}", C_TEAL)
+
+    def _open_frame_control_tools(self) -> None:
+        window = ctk.CTkToplevel(self.root)
+        window.title("Frame Control integration")
+        window.geometry("690x410")
+        window.minsize(620, 380)
+        window.configure(fg_color=C_BG)
+        window.transient(self.root)
+
+        selected: dict[str, Path | None] = {
+            "path": locate_frame_control_server(),
+        }
+
+        ctk.CTkLabel(
+            window,
+            text="Frame Control transfer limit",
+            font=ctk.CTkFont(size=21, weight="bold"),
+            text_color=C_TEXT,
+        ).pack(anchor="w", padx=22, pady=(20, 4))
+        ctk.CTkLabel(
+            window,
+            text=(
+                f"Frame Control currently ships with an {STOCK_LIMIT_GIB} GiB raw-upload limit. "
+                f"This optional tweak raises only that guard to {PATCHED_LIMIT_GIB} GiB."
+            ),
+            text_color=C_MUTED,
+            justify="left",
+            wraplength=640,
+        ).pack(anchor="w", padx=22, pady=(0, 10))
+
+        path_label = ctk.CTkLabel(
+            window,
+            text="Looking for Frame Control…",
+            text_color=C_MUTED,
+            anchor="w",
+            justify="left",
+            wraplength=640,
+        )
+        path_label.pack(fill="x", padx=22, pady=(5, 2))
+
+        status_label = ctk.CTkLabel(
+            window,
+            text="",
+            text_color=C_MUTED,
+            anchor="w",
+            justify="left",
+            wraplength=640,
+            font=ctk.CTkFont(size=14, weight="bold"),
+        )
+        status_label.pack(fill="x", padx=22, pady=(0, 10))
+
+        warning = ctk.CTkFrame(
+            window,
+            fg_color=C_PANEL,
+            border_width=1,
+            border_color=C_BORDER,
+            corner_radius=10,
+        )
+        warning.pack(fill="x", padx=22, pady=(2, 12))
+        ctk.CTkLabel(
+            warning,
+            text=(
+                "Experimental third-party modification. Close and restart Frame Control after changing it. "
+                "Large transfers need enough temporary disk space and may still fail if the connection drops. "
+                "A Frame Control update may replace the patched file."
+            ),
+            text_color=C_MUTED,
+            justify="left",
+            wraplength=610,
+        ).pack(fill="x", padx=12, pady=10)
+
+        actions = ctk.CTkFrame(window, fg_color="transparent")
+        actions.pack(fill="x", padx=22, pady=(0, 16))
+
+        patch_btn = ctk.CTkButton(
+            actions,
+            text=f"Raise to {PATCHED_LIMIT_GIB} GiB",
+            width=150,
+            fg_color=C_ACCENT,
+            hover_color=C_ACCENT_HOVER,
+            text_color="#1a0f0a",
+        )
+        patch_btn.pack(side="left")
+
+        restore_btn = ctk.CTkButton(
+            actions,
+            text="Restore original",
+            width=140,
+            fg_color=C_PANEL_2,
+            hover_color=C_BORDER,
+        )
+        restore_btn.pack(side="left", padx=(10, 0))
+
+        def refresh() -> None:
+            path = selected["path"]
+            if path is None:
+                path_label.configure(
+                    text="Frame Control was not found automatically. Select its server.py or Frame Control.exe.",
+                    text_color=C_MUTED,
+                )
+                status_label.configure(text="Status: not located", text_color=C_ERR)
+                patch_btn.configure(state="disabled")
+                restore_btn.configure(state="disabled")
+                return
+            path_label.configure(text=str(path), text_color=C_TEAL)
+            try:
+                status = inspect_frame_control(path)
+            except FrameControlPatchError as exc:
+                status_label.configure(text=f"Status: {exc}", text_color=C_ERR)
+                patch_btn.configure(state="disabled")
+                restore_btn.configure(state="disabled")
+                return
+
+            if status.is_stock:
+                status_label.configure(
+                    text=f"Status: stock {status.limit_gib} GiB upload limit",
+                    text_color=C_TEXT,
+                )
+                patch_btn.configure(state="normal")
+                restore_btn.configure(state="normal" if status.has_backup else "disabled")
+            elif status.is_patched:
+                status_label.configure(
+                    text=f"Status: patched to {status.limit_gib} GiB"
+                    + (" · backup ready" if status.has_backup else " · no backup found"),
+                    text_color=C_OK,
+                )
+                patch_btn.configure(state="disabled")
+                restore_btn.configure(state="normal" if status.has_backup else "disabled")
+            else:
+                status_label.configure(
+                    text=f"Status: custom {status.limit_gib} GiB limit · left untouched",
+                    text_color=C_ERR,
+                )
+                patch_btn.configure(state="disabled")
+                restore_btn.configure(state="normal" if status.has_backup else "disabled")
+
+        def choose() -> None:
+            path = filedialog.askopenfilename(
+                parent=window,
+                title="Select Frame Control server.py or Frame Control.exe",
+                filetypes=[
+                    ("Frame Control", "server.py Frame Control.exe"),
+                    ("Python", "*.py"),
+                    ("Executable", "*.exe"),
+                    ("All files", "*.*"),
+                ],
+            )
+            if not path:
+                return
+            resolved = locate_frame_control_server(Path(path))
+            if resolved is None:
+                messagebox.showerror(
+                    APP_NAME,
+                    "That file does not lead to a Frame Control resources\\ui\\server.py.",
+                    parent=window,
+                )
+                return
+            selected["path"] = resolved
+            refresh()
+
+        def apply_patch() -> None:
+            path = selected["path"]
+            if path is None:
+                return
+            if not messagebox.askyesno(
+                APP_NAME,
+                (
+                    f"Raise Frame Control's raw upload limit from {STOCK_LIMIT_GIB} GiB "
+                    f"to {PATCHED_LIMIT_GIB} GiB?\n\n"
+                    "The original server.py will be backed up first. This is an unofficial "
+                    "compatibility tweak and requires restarting Frame Control."
+                ),
+                parent=window,
+            ):
+                return
+            try:
+                result = patch_upload_limit(path)
+            except FrameControlPatchError as exc:
+                messagebox.showerror(APP_NAME, str(exc), parent=window)
+                refresh()
+                return
+            self._log(
+                f"Frame Control: upload limit patched to {result.limit_gib} GiB at {result.server_path}"
+            )
+            self._set_status(
+                f"Frame Control upload limit → {result.limit_gib} GiB (restart Frame Control)",
+                C_OK,
+            )
+            refresh()
+            messagebox.showinfo(
+                APP_NAME,
+                f"Frame Control is patched to {result.limit_gib} GiB.\n\n"
+                "Close and reopen Frame Control before the next transfer.",
+                parent=window,
+            )
+
+        def restore() -> None:
+            path = selected["path"]
+            if path is None:
+                return
+            if not messagebox.askyesno(
+                APP_NAME,
+                "Restore the exact Frame Control server.py that was backed up before patching?",
+                parent=window,
+            ):
+                return
+            try:
+                result = restore_upload_limit(path)
+            except FrameControlPatchError as exc:
+                messagebox.showerror(APP_NAME, str(exc), parent=window)
+                refresh()
+                return
+            self._log(f"Frame Control: restored stock {result.limit_gib} GiB upload limit")
+            self._set_status("Frame Control upload limit restored", C_OK)
+            refresh()
+            messagebox.showinfo(
+                APP_NAME,
+                "Frame Control's original server.py was restored. Restart Frame Control.",
+                parent=window,
+            )
+
+        patch_btn.configure(command=apply_patch)
+        restore_btn.configure(command=restore)
+
+        ctk.CTkButton(
+            actions,
+            text="Locate…",
+            width=110,
+            fg_color="transparent",
+            border_width=1,
+            border_color=C_BORDER,
+            text_color=C_MUTED,
+            command=choose,
+        ).pack(side="right")
+
+        refresh()
 
     def _pick_renpy_runtime(self) -> None:
         folder = filedialog.askdirectory(
