@@ -111,6 +111,14 @@ multi-engine-game-conversion-framework-by-tovakai build Game.zip \
 Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
+## Experimental GodotSteam ARM64 compatibility
+
+A custom Godot 3.7-dev1 runtime with GodotSteam 3.30 has been tested in
+30 minutes of Brotato gameplay on Steam Frame. The converter can now use an
+explicitly configured prebuilt ARM64 runtime bundle and preserve Steam metadata.
+See [the runtime recipe and packaging instructions](docs/godotsteam-arm64.md).
+This is opt-in and does not yet compile custom Godot from the Windows GUI.
+
 ## Design rule
 
 A game exposing a compatibility problem is a test case, not a product target.

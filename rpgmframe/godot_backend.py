@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import uuid
 from collections.abc import Callable
@@ -125,6 +126,32 @@ def build_godot_game(
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
 
     fingerprint = inspect_godot_executable(inspection.game_root, pack)
+    # Opt-in runtime bundle produced by the tested GodotSteam ARM64 recipe.
+    # Never silently substitute it for unrelated custom Godot exports.
+    if (
+        runtime is None
+        and fingerprint is not None
+        and fingerprint.custom_build
+        and fingerprint.godotsteam
+    ):
+        configured = os.environ.get("TOVAKAI_GODOTSTEAM_ARM64_RUNTIME")
+        if configured:
+            candidate = _normalize(configured)
+            manifest = candidate / "runtime.json"
+            try:
+                import json
+                metadata = json.loads(manifest.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                metadata = None
+            if not isinstance(metadata, dict) or metadata.get("recipe") != "godot-3.7-dev1-godotsteam-3.30-arm64":
+                raise GodotBuildError(
+                    "Configured GodotSteam runtime has no matching recipe manifest: "
+                    f"{manifest}"
+                )
+            runtime = candidate
+            if progress:
+                progress(f"Using opt-in GodotSteam ARM64 runtime: {candidate}")
+
     if runtime is None and fingerprint is not None and fingerprint.custom_build:
         details = "custom Godot development build"
         if fingerprint.godotsteam:
@@ -194,6 +221,21 @@ def build_godot_game(
             materialize_pack(pack, pck_target)
         elif not pck_target.is_file():
             shutil.copy2(pack.path, pck_target)
+
+        # Some GodotSteam exports locate steam_data.json beside the native
+        # executable, not inside the game directory. Keep the original copy
+        # and install a companion beside godot.arm64.
+        steam_data = inspection.game_root / "steam_data.json"
+        if steam_data.is_file() and (runtime_path / "runtime.json").is_file():
+            import json
+            try:
+                metadata = json.loads((runtime_path / "runtime.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                metadata = {}
+            if metadata.get("recipe") == "godot-3.7-dev1-godotsteam-3.30-arm64":
+                shutil.copy2(steam_data, staging / "steam_data.json")
+                if progress:
+                    progress("Preserved GodotSteam steam_data.json beside runtime")
 
         stage(0.78, "Checking native Windows dependencies")
         dlls = list(inspection.game_root.rglob("*.dll"))
