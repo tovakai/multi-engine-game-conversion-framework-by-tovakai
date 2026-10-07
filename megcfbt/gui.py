@@ -447,23 +447,23 @@ class ConverterApp:
         def update() -> None:
             self.overall_progress.set(clamped)
             self.progress_percent_label.configure(text=f"{round(clamped * 100)}%")
-            self.activity_label.configure(text=f"Current task: {message}")
+            self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
 
         self._dispatch(update)
 
     def _progress_log(self, message: str) -> None:
         self._log(message)
         self._dispatch(
-            lambda: self.activity_label.configure(text=f"Current task: {message}")
+            lambda: self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
         )
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         if busy:
-            self.convert_btn.configure(state="disabled", text="Working…")
+            self.convert_btn.configure(state="disabled", text="WORKING…")
             self.overall_progress.set(0.0)
             self.progress_percent_label.configure(text="0%")
-            self.activity_label.configure(text="Current task: starting conversion…")
+            self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
         else:
             allowed = bool(self.inspection and self.inspection.buildable)
@@ -484,14 +484,14 @@ class ConverterApp:
         self.renpy_runtime = None
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
-        self.drop_label.configure(text="Inspecting game…")
+        self.drop_label.configure(text="SCANNING PAYLOAD…")
         self.game_label.configure(text=source.stem if source.is_file() else source.name)
         self.engine_label.configure(text="Engine: inspecting…")
         self.backend_label.configure(text="Backend: inspecting…")
         self.compat_label.configure(text="Compatibility: checking…")
         self.overall_progress.set(0.0)
         self.progress_percent_label.configure(text="0%")
-        self.activity_label.configure(text="Current task: inspecting source…")
+        self.activity_label.configure(text="CURRENT OPERATION // INSPECTING SOURCE…")
         self.activity_progress.start()
         self._generation += 1
         generation = self._generation
@@ -507,7 +507,7 @@ class ConverterApp:
 
     def _show_inspection(self, result: UnifiedInspection) -> None:
         self.activity_progress.stop()
-        self.activity_label.configure(text="Current task: ready")
+        self.activity_label.configure(text="CURRENT OPERATION // READY")
         self.inspection = result
         version = f" {result.engine_version}" if result.engine_version else ""
         self.game_label.configure(text=result.game_name or "Unknown game")
@@ -522,16 +522,18 @@ class ConverterApp:
             if self.renpy_runtime:
                 runtime_text = f"Ren'Py override: {self.renpy_runtime.name}"
             elif result.engine_version:
-                runtime_text = f"Runtime: automatic Ren'Py {result.engine_version}  ·  override…"
+                runtime_text = f"RUNTIME // AUTO REN'PY {result.engine_version}  //  OVERRIDE…"
             else:
-                runtime_text = "Choose Ren'Py ARM64 runtime…"
+                runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
         else:
             self.runtime_button.configure(state="disabled", text="RUNTIME // AUTOMATIC")
 
         self.convert_btn.configure(state="normal" if result.buildable else "disabled")
         self.drop_label.configure(
-            text="Ready to convert" if result.buildable else "Detected, but not automatically buildable"
+            text="PAYLOAD LOCKED"
+            if result.buildable
+            else "DETECTED // MANUAL HANDLING REQUIRED"
         )
         self._set_status(
             f"Detected {result.engine_label}" if result.backend else "No supported engine detected",
@@ -542,12 +544,12 @@ class ConverterApp:
 
     def _inspection_failed(self, message: str) -> None:
         self.activity_progress.stop()
-        self.activity_label.configure(text="Current task: inspection failed")
+        self.activity_label.configure(text="CURRENT OPERATION // INSPECTION FAILED")
         self.inspection = None
-        self.drop_label.configure(text="Inspection failed")
+        self.drop_label.configure(text="SCAN FAILED")
         self.engine_label.configure(text="Engine: inspection failed", text_color=C_ERR)
         self.convert_btn.configure(state="disabled")
-        self._set_status("Inspection failed", C_ERR)
+        self._set_status("SCAN FAILED", C_ERR)
         self._log("Inspect error: " + message)
 
     def _browse(self) -> None:
@@ -617,7 +619,7 @@ class ConverterApp:
         self._log(f"Backend: {self.inspection.backend}")
         self._log(f"Output: {output}")
         self._set_busy(True)
-        self._set_status("Converting…", C_TEAL)
+        self._set_status("CONVERSION IN PROGRESS", C_TEAL)
 
         def worker() -> None:
             try:
@@ -659,9 +661,9 @@ class ConverterApp:
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)
-        self.activity_label.configure(text="Current task: failed")
+        self.activity_label.configure(text="CURRENT OPERATION // FAILED")
         self._log("ERROR: " + message)
-        self._set_status("Failed", C_ERR)
+        self._set_status("CONVERSION FAILED", C_ERR)
         messagebox.showerror(APP_NAME, message)
 
     def run(self) -> None:
