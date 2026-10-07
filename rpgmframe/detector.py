@@ -12,6 +12,7 @@ from typing import Any
 from rpgmframe.models import (
     Compatibility,
     Confidence,
+    EngineFamily,
     EngineVariant,
     GameInspection,
 )
@@ -509,7 +510,7 @@ def inspect_game(path: Path | str) -> GameInspection:
             source_path=root,
             evidence=evidence,
             warnings=[
-                "Multiple RPG Maker game roots were found at the same directory "
+                "Multiple supported game roots were found at the same directory "
                 "depth; refusing to guess which payload is the main game."
             ],
         )
@@ -549,7 +550,7 @@ def inspect_game(path: Path | str) -> GameInspection:
     warnings: list[str] = []
     if best.source_root != root:
         warnings.append(
-            "Auto-discovered RPG Maker game root in subfolder: "
+            "Auto-discovered game root in subfolder: "
             f"{_relative(best.source_root, root)}"
         )
 
