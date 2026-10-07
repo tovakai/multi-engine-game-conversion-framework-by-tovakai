@@ -13,6 +13,7 @@ There is no short public product name. You have to say the whole thing.
 | Ren'Py | RenFrame | replace the distributed runtime with a matching Linux ARM64 Ren'Py runtime | proven separately in RenFrame; combined path needs validation |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
+| Construct 2 / 3 | RPGMFrame / NW.js | detect exported HTML5 payloads via `c2runtime.js` or `c3runtime.js` and re-wrap them with Linux ARM64 NW.js | implemented; hardware validation pending |
 | Godot | RPGMFrame / Godot | preserve PCK and launch it with the exact matching official Linux ARM64 Godot runtime | Godot 4.3 title running on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
@@ -28,12 +29,12 @@ Multi-Engine Game Conversion Framework by Tovakai
                      |
                engine router
           ___________|____________
-         |           |            |
-      Ren'Py      RPG Maker     Godot
-         |           |            |
-     RenFrame      RPGMFrame    RPGMFrame
-         |           |            |
-         +-----------+------------+
+         |           |            |             |
+      Ren'Py      RPG Maker    Construct       Godot
+         |           |            |             |
+     RenFrame      RPGMFrame   RPGMFrame      RPGMFrame
+         |           |            |             |
+         +-----------+------------+-------------+
                      |
              Linux ARM64 build
                      |
@@ -82,6 +83,22 @@ multi-engine-game-conversion-framework-by-tovakai gui
 There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
+
+## Construct 2 / 3
+
+Construct exports are browser payloads, so the first implementation deliberately
+reuses the same verified Linux ARM64 NW.js runtime path already used for RPG Maker
+MV/MZ. Detection recognizes Construct 2's `c2runtime.js` and Construct 3's
+`c3runtime.js`, including the common `scripts/c3runtime.js` layout.
+
+This path is currently marked **needs testing** rather than universally supported:
+wrapper-specific APIs, Steam integrations, and third-party addons may depend on
+Construct's original desktop wrapper. Packed-only exports such as opaque
+`assets.dat`/single-file wrappers are not unpacked by this detector yet.
+
+Modern Construct 3 also has an official Linux CEF exporter with ARM64 support. If
+a game already ships that build, conversion should not be necessary; the converter
+is primarily useful for Windows-only or older NW.js-era releases.
 
 ## Ren'Py runtime resolution
 
