@@ -257,7 +257,10 @@ def build_godot_game(
         stage(0.90, "Writing ARM64 launcher")
         launcher = staging / "launch.sh"
         launcher.write_text(
-            godot_launcher_body(f"game/{pck_name}"),
+            godot_launcher_body(
+                f"game/{pck_name}",
+                force_zink=bool(fingerprint is not None and fingerprint.custom_build),
+            ),
             encoding="utf-8",
             newline="\n",
         )
