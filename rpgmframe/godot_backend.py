@@ -72,6 +72,15 @@ def _copy_runtime_bundle(runtime_path: Path, staging: Path) -> list[str]:
 
     return copied
 
+def _copy_godotsteam_data(source_root: Path, staging: Path) -> bool:
+    """Copy steam_data.json beside godot.arm64 when the game ships one."""
+    source = source_root / "steam_data.json"
+    if not source.is_file():
+        return False
+    shutil.copy2(source, staging / "steam_data.json")
+    return True
+
+
 def _staging_path(output: Path) -> Path:
     return output.parent / f".{output.name}.tmp-{uuid.uuid4().hex[:8]}"
 
@@ -221,9 +230,7 @@ def build_godot_game(
         # not only from the PCK/game working directory. Preserve the original
         # sidecar beside godot.arm64 when present.
         if fingerprint is not None and fingerprint.godotsteam:
-            steam_data = inspection.game_root / "steam_data.json"
-            if steam_data.is_file():
-                shutil.copy2(steam_data, staging / "steam_data.json")
+            if _copy_godotsteam_data(inspection.game_root, staging):
                 if progress:
                     progress("Copied GodotSteam steam_data.json beside runtime")
             else:
