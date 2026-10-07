@@ -190,31 +190,47 @@ git -C "$GODOT_DIR" reset -q --hard FETCH_HEAD
 git -C "$GODOT_DIR" clean -qfdx
 
 echo "==> Applying Godot 3.x CanvasItem cast fix"
-PATCH_FILE="$WORK_DIR/canvas-item-123099.patch"
-cat > "$PATCH_FILE" <<'PATCH'
-diff --git a/scene/2d/canvas_item.h b/scene/2d/canvas_item.h
---- a/scene/2d/canvas_item.h
-+++ b/scene/2d/canvas_item.h
-@@ -48,8 +48,6 @@ class CanvasItemMaterial : public Material {
- 	GDCLASS(CanvasItemMaterial, Material);
- 
- public:
--	static constexpr AncestralClass static_ancestral_class = AncestralClass::CANVAS_ITEM;
--
- 	enum BlendMode {
- 		BLEND_MODE_MIX,
- 		BLEND_MODE_ADD,
-@@ -167,6 +165,8 @@ class CanvasItem : public Node {
- 	friend class CanvasLayer;
- 
-public:
-+	static constexpr AncestralClass static_ancestral_class = AncestralClass::CANVAS_ITEM;
-+
- 	enum BlendMode {
- 
- 		BLEND_MODE_MIX, //default
-PATCH
-git -C "$GODOT_DIR" apply "$PATCH_FILE"
+GODOT_DIR="$GODOT_DIR" python3 - <<'PY'
+import os
+from pathlib import Path
+
+p = Path(os.environ["GODOT_DIR"]) / "scene/2d/canvas_item.h"
+text = p.read_text()
+
+declaration = (
+    "\tstatic constexpr AncestralClass static_ancestral_class = "
+    "AncestralClass::CANVAS_ITEM;\n"
+)
+material_anchor = (
+    "class CanvasItemMaterial : public Material {\n"
+    "\tGDCLASS(CanvasItemMaterial, Material);\n\n"
+    "public:\n"
+)
+canvas_anchor = (
+    "class CanvasItem : public Node {"
+)
+
+material_start = text.find(material_anchor)
+canvas_start = text.find(canvas_anchor)
+if material_start < 0 or canvas_start < 0:
+    raise SystemExit("Could not locate CanvasItem classes for PR #123099 patch")
+
+material_decl = text.find(declaration, material_start, canvas_start)
+if material_decl < 0:
+    raise SystemExit("CanvasItemMaterial ancestral-class declaration was not found")
+
+text = text[:material_decl] + text[material_decl + len(declaration):]
+canvas_start = text.find(canvas_anchor)
+public_pos = text.find("\npublic:\n", canvas_start)
+if public_pos < 0:
+    raise SystemExit("CanvasItem public section was not found")
+
+insert_at = public_pos + len("\npublic:\n")
+if declaration in text[canvas_start:canvas_start + 1200]:
+    raise SystemExit("CanvasItem ancestral-class declaration is already present")
+text = text[:insert_at] + declaration + "\n" + text[insert_at:]
+p.write_text(text)
+PY
 
 if [[ ! -d "$GODOTSTEAM_DIR/.git" ]]; then
     echo "==> Fetching GodotSteam source"
