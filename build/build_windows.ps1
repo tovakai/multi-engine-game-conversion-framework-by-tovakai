@@ -1,4 +1,4 @@
-# Build Multi-Engine Game Conversion Framework by Tovakai for Windows x64.
+# Build Multi-Engine Game Conversion Framework by tovakai for Windows x64.
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
@@ -12,7 +12,23 @@ if (-not (Test-Path $py)) {
 
 & $py -m pip install -e ".[gui,build]"
 
-$appName = "Multi-Engine Game Conversion Framework by Tovakai"
+$appName = "Multi-Engine Game Conversion Framework by tovakai"
+$legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
+$commit = (& git rev-parse --short HEAD 2>$null)
+if (-not $commit) { $commit = "unknown" }
+
+# Remove both current and legacy-named outputs so an old binary cannot survive
+# a successful rebuild and masquerade as the fresh application.
+foreach ($path in @(
+  "dist\$appName",
+  "dist\$legacyAppName",
+  "dist\windows\$appName",
+  "dist\windows\$legacyAppName",
+  "build\$appName",
+  "build\$legacyAppName"
+)) {
+  if (Test-Path $path) { Remove-Item -Recurse -Force $path }
+}
 & $py -m PyInstaller `
   --noconfirm `
   --clean `
@@ -32,7 +48,7 @@ if (Test-Path "dist\$appName") {
 }
 
 $readme = @"
-Multi-Engine Game Conversion Framework by Tovakai
+Multi-Engine Game Conversion Framework by tovakai
 =================================================
 
 1. Run the application.
@@ -46,9 +62,17 @@ Ren'Py currently requires a matching ARM64 Ren'Py runtime folder.
 "@
 Set-Content -Path (Join-Path $release "README.txt") -Value $readme -Encoding UTF8
 
+$buildInfo = @"
+commit=$commit
+built=$(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+"@
+Set-Content -Path (Join-Path $release "BUILD.txt") -Value $buildInfo -Encoding UTF8
+
+
 $zip = "dist\multi-engine-game-conversion-framework-by-tovakai-windows-x64.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path $release -DestinationPath $zip -CompressionLevel Optimal
 
+Write-Host "Built commit: $commit"
 Write-Host "Built: $release\$appName.exe"
 Write-Host "Zip:   $zip"
