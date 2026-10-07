@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
+import re
+import shutil
+import tarfile
+import tempfile
+import urllib.error
+import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from renframe.detector import (
     collect_version_hints,
@@ -16,6 +25,33 @@ from renframe.utils import normalize_path
 
 _X86_ARCHES = frozenset({"x86_64", "x86", "amd64", "i386", "i686"})
 _ARM_ARCHES = frozenset({"aarch64", "arm64", "arm"})
+_RELEASE_VERSION_RE = re.compile(r"^(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.\\d+)?$")
+_DEFAULT_BASE_URL = "https://www.renpy.org/dl"
+
+
+class RuntimeDownloadError(RuntimeError):
+    """Raised when an official Ren'Py ARM64 runtime cannot be acquired safely."""
+
+
+def normalize_release_version(version: str) -> str:
+    """Normalize Ren'Py release/build strings to the public x.y.z release."""
+    match = _RELEASE_VERSION_RE.match(version.strip())
+    if not match:
+        raise RuntimeDownloadError(
+            f"Ren'Py version must be an exact release such as 8.5.3; got {version!r}"
+        )
+    return ".".join(match.groups())
+
+
+def python_tag_for_generation(generation: int | None) -> str:
+    if generation == 8:
+        return "py3"
+    if generation == 7:
+        return "py2"
+    raise RuntimeDownloadError(
+        "Automatic Linux ARM64 runtime acquisition currently supports "
+        "Ren'Py 7.x (Python 2) and 8.x (Python 3) releases."
+    )
 
 
 @dataclass
@@ -221,40 +257,301 @@ def runtime_architecture_is_clearly_x86(inspection: RuntimeInspection) -> bool:
     return has_x86 and not has_arm
 
 
-class RuntimeManager:
-    """
-    Manage cached ARM64 Ren'Py runtimes.
+def _default_cache_dir() -> Path:
+    override = os.environ.get("MEGCFBT_CACHE_DIR")
+    if override:
+        return Path(override).expanduser() / "runtimes" / "renpy"
+    legacy = os.environ.get("RENFRAME_CACHE_DIR")
+    if legacy:
+        return Path(legacy).expanduser()
+    return (
+        Path.home()
+        / ".cache"
+        / "multi-engine-game-conversion-framework-by-tovakai"
+        / "runtimes"
+        / "renpy"
+    )
 
-    Automatic download/install is intentionally not implemented yet. Build
-    currently requires an explicit ``--runtime`` path.
-    """
 
-    def __init__(self, cache_dir: Path | None = None) -> None:
-        home = Path.home()
-        self.cache_dir = cache_dir or (home / ".cache" / "renframe" / "runtimes")
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
-    def find_runtime(self, version: str | None = None) -> Path | None:
-        """Locate a cached runtime directory, optionally matching a version."""
-        if not self.cache_dir.is_dir():
-            return None
-        candidates = sorted(p for p in self.cache_dir.iterdir() if p.is_dir())
-        if version:
-            version_key = version.lower()
-            for path in candidates:
-                if version_key in path.name.lower():
-                    return path
-            return None
-        return candidates[0] if candidates else None
 
-    def install_runtime(self, source: Path, *, name: str | None = None) -> Path:
-        """Install/copy a user-provided runtime into the cache (not yet implemented)."""
-        raise NotImplementedError(
-            "Runtime installation is not implemented yet. "
-            "Pass --runtime explicitly to `renframe build`."
+def _parse_sha256(checksums: str, filename: str) -> str:
+    section: str | None = None
+    for raw in checksums.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.lower().startswith("# sha256"):
+            section = "sha256"
+            continue
+        if line.startswith("#"):
+            section = line[1:].strip().lower()
+            continue
+        if section != "sha256":
+            continue
+        parts = line.split()
+        if len(parts) >= 2 and parts[-1].lstrip("*") == filename:
+            digest = parts[0].lower()
+            if re.fullmatch(r"[0-9a-f]{64}", digest):
+                return digest
+    raise RuntimeDownloadError(
+        f"Official checksums.txt does not contain a SHA256 for {filename}"
+    )
+
+
+def _safe_tar_members(
+    archive: tarfile.TarFile,
+    platform_name: str,
+) -> list[tarfile.TarInfo]:
+    members: list[tarfile.TarInfo] = []
+    for member in archive.getmembers():
+        path = PurePosixPath(member.name)
+        if path.is_absolute() or ".." in path.parts:
+            raise RuntimeDownloadError(
+                f"Refusing unsafe path in official Ren'Py archive: {member.name}"
+            )
+        parts = path.parts
+        matched = any(
+            parts[i] == "lib" and parts[i + 1] == platform_name
+            for i in range(max(0, len(parts) - 1))
+        )
+        if not matched:
+            continue
+        if member.issym() or member.islnk():
+            target = PurePosixPath(member.linkname)
+            if target.is_absolute() or ".." in target.parts:
+                raise RuntimeDownloadError(
+                    f"Refusing unsafe link in official Ren'Py archive: "
+                    f"{member.name} -> {member.linkname}"
+                )
+        members.append(member)
+    return members
+
+
+def _validate_platform_dir(path: Path) -> None:
+    if not path.is_dir():
+        raise RuntimeDownloadError(f"Extracted Ren'Py platform is missing: {path}")
+
+    candidates = [path / "renpy", path / "python", path / "python3"]
+    architectures = {
+        read_elf_architecture(candidate)
+        for candidate in candidates
+        if candidate.is_file()
+    }
+    architectures.discard(None)
+    if "aarch64" not in architectures:
+        raise RuntimeDownloadError(
+            "Downloaded Ren'Py sdkarm platform did not contain a readable "
+            f"AArch64 launcher/runtime in {path}"
         )
 
+
+class RuntimeManager:
+    """Download, verify, extract, and cache official Ren'Py sdkarm slices."""
+
+    def __init__(
+        self,
+        cache_dir: Path | None = None,
+        *,
+        base_url: str = _DEFAULT_BASE_URL,
+    ) -> None:
+        self.cache_dir = (cache_dir or _default_cache_dir()).expanduser()
+        self.base_url = base_url.rstrip("/")
+
+    def platform_path(self, version: str, python_tag: str) -> Path:
+        release = normalize_release_version(version)
+        return self.cache_dir / release / f"{python_tag}-linux-aarch64"
+
+    def find_platform(self, version: str, python_tag: str) -> Path | None:
+        path = self.platform_path(version, python_tag)
+        try:
+            _validate_platform_dir(path)
+        except RuntimeDownloadError:
+            return None
+        return path
+
+    def _read_url(self, url: str) -> str:
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Multi-Engine-Game-Conversion-Framework-by-Tovakai"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                return response.read().decode("utf-8", errors="replace")
+        except (OSError, urllib.error.URLError) as exc:
+            raise RuntimeDownloadError(f"Could not download {url}: {exc}") from exc
+
+    def _download(
+        self,
+        url: str,
+        destination: Path,
+        *,
+        progress: Callable[[str], None] | None,
+    ) -> None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        partial = destination.with_name(destination.name + ".partial")
+        partial.unlink(missing_ok=True)
+
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Multi-Engine-Game-Conversion-Framework-by-Tovakai"},
+        )
+        if progress:
+            progress(f"Downloading official Ren'Py ARM64 SDK: {url}")
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response, partial.open(
+                "wb"
+            ) as output:
+                total = 0
+                next_report = 16 * 1024 * 1024
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    output.write(chunk)
+                    total += len(chunk)
+                    if progress and total >= next_report:
+                        progress(f"Downloaded {total // (1024 * 1024)} MiB…")
+                        next_report += 16 * 1024 * 1024
+        except (OSError, urllib.error.URLError) as exc:
+            partial.unlink(missing_ok=True)
+            raise RuntimeDownloadError(f"Could not download {url}: {exc}") from exc
+
+        partial.replace(destination)
+
+    def ensure_platform(
+        self,
+        version: str,
+        python_tag: str,
+        *,
+        progress: Callable[[str], None] | None = None,
+        force: bool = False,
+    ) -> Path:
+        release = normalize_release_version(version)
+        if python_tag not in {"py2", "py3"}:
+            raise RuntimeDownloadError(f"Unsupported Ren'Py Python tag: {python_tag}")
+
+        major, minor, _patch = (int(part) for part in release.split("."))
+        if major < 7 or (major == 7 and minor < 5):
+            raise RuntimeDownloadError(
+                f"Ren'Py {release} predates official Linux AArch64 support. "
+                "Automatic conversion needs an official sdkarm release or a "
+                "manually supplied compatible runtime."
+            )
+
+        destination = self.platform_path(release, python_tag)
+        if not force:
+            found = self.find_platform(release, python_tag)
+            if found is not None:
+                if progress:
+                    progress(f"Using cached Ren'Py {release} ARM64 runtime")
+                return found
+
+        filename = f"renpy-{release}-sdkarm.tar.bz2"
+        release_url = f"{self.base_url}/{release}"
+        checksums_url = f"{release_url}/checksums.txt"
+        archive_url = f"{release_url}/{filename}"
+
+        if progress:
+            progress(f"Resolving official Ren'Py {release} sdkarm runtime")
+        checksums = self._read_url(checksums_url)
+        expected = _parse_sha256(checksums, filename)
+
+        downloads = self.cache_dir / "downloads"
+        archive_path = downloads / filename
+        if force or not archive_path.is_file() or _sha256(archive_path) != expected:
+            self._download(archive_url, archive_path, progress=progress)
+
+        actual = _sha256(archive_path)
+        if actual != expected:
+            archive_path.unlink(missing_ok=True)
+            raise RuntimeDownloadError(
+                f"SHA256 mismatch for {filename}: expected {expected}, got {actual}"
+            )
+        if progress:
+            progress("Ren'Py sdkarm checksum OK")
+
+        version_root = self.cache_dir / release
+        version_root.mkdir(parents=True, exist_ok=True)
+        temporary_parent = Path(
+            tempfile.mkdtemp(prefix=f".{release}-", dir=str(version_root))
+        )
+        extracted_root = temporary_parent / "extract"
+        extracted_root.mkdir()
+
+        try:
+            with tarfile.open(archive_path, "r:bz2") as archive:
+                members = _safe_tar_members(archive, destination.name)
+                if not members:
+                    raise RuntimeDownloadError(
+                        f"Ren'Py {release} sdkarm does not contain "
+                        f"lib/{destination.name}"
+                    )
+                archive.extractall(extracted_root, members=members)
+
+            found = [
+                path
+                for path in extracted_root.rglob(destination.name)
+                if path.is_dir()
+            ]
+            if len(found) != 1:
+                raise RuntimeDownloadError(
+                    f"Expected exactly one {destination.name} directory in "
+                    f"Ren'Py {release} sdkarm, found {len(found)}"
+                )
+
+            staged = temporary_parent / destination.name
+            shutil.copytree(found[0], staged, symlinks=True)
+            _validate_platform_dir(staged)
+
+            if destination.exists():
+                shutil.rmtree(destination)
+            staged.replace(destination)
+        finally:
+            shutil.rmtree(temporary_parent, ignore_errors=True)
+
+        if progress:
+            progress(
+                f"Cached Ren'Py {release} {destination.name} runtime at {destination}"
+            )
+        return destination
+
+    def find_runtime(self, version: str | None = None) -> Path | None:
+        if not self.cache_dir.is_dir():
+            return None
+        if version is not None:
+            root = self.cache_dir / normalize_release_version(version)
+            return root if root.is_dir() else None
+        versions = sorted(
+            path for path in self.cache_dir.iterdir()
+            if path.is_dir() and path.name != "downloads"
+        )
+        return versions[0] if versions else None
+
+    def install_runtime(self, source: Path, *, name: str | None = None) -> Path:
+        source = normalize_path(source)
+        if not source.is_dir():
+            raise RuntimeDownloadError(f"Runtime path is not a directory: {source}")
+        inspection = inspect_runtime(source)
+        if not inspection.is_renpy_runtime:
+            raise RuntimeDownloadError(f"Not a Ren'Py runtime: {source}")
+        target = self.cache_dir / (name or source.name)
+        if target.exists():
+            shutil.rmtree(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, target, symlinks=True)
+        return target
+
     def list_cached_runtimes(self) -> list[Path]:
-        """List cached runtime directories."""
         if not self.cache_dir.is_dir():
             return []
-        return sorted(p for p in self.cache_dir.iterdir() if p.is_dir())
+        return sorted(
+            path for path in self.cache_dir.iterdir()
+            if path.is_dir() and path.name != "downloads"
+        )
