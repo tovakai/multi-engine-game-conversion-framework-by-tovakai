@@ -80,7 +80,12 @@ def _make_root():
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.TkdndVersion = TkinterDnD._require(self)
-        root = CTkDnD()
+
+        try:
+            root = CTkDnD()
+        except Exception:
+            # Native tkdnd is optional. Browsing still gives the full converter UI.
+            root = ctk.CTk()
     else:
         root = ctk.CTk()
 
