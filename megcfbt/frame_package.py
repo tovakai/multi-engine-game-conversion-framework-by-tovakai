@@ -11,7 +11,7 @@ import stat
 import time
 import uuid
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 class FramePackageError(RuntimeError):
@@ -197,6 +197,15 @@ def load_frame_metadata(build_directory: Path) -> dict:
     launcher = payload.get("launcher")
     if not isinstance(launcher, str) or not launcher:
         raise FramePackageError(f"Frame build metadata has no launcher: {path}")
+    normalized = launcher.replace("\\", "/")
+    relative = PurePosixPath(normalized)
+    if (
+        relative.is_absolute()
+        or any(part in {"", ".."} or ":" in part for part in relative.parts)
+        or normalized.startswith("./../")
+    ):
+        raise FramePackageError(f"Frame build metadata has an unsafe launcher path: {launcher!r}")
+    payload["launcher"] = relative.as_posix()
     return payload
 
 
