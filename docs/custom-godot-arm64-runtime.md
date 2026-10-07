@@ -20,10 +20,12 @@ The first working recipe is:
 1. Godot 3.7-dev1, upstream commit
    `a117d512b00f1646db174e703e7e888519b64608`
 2. upstream Godot 3.x CanvasItem/CanvasItemMaterial cast fix from PR #123099
-3. GodotSteam 3.30, commit
+3. a release-safe missing-Variant-method guard matching the successful diagnostic build
+4. GodotSteam 3.30, commit
    `f73d138b56fe971a940dd0498e8b9d0fc8fdcffd`
-4. Steamworks 1.62 C++ header surface
-5. the Steam Frame's installed native ARM64 `libsteam_api.so`
+5. Steamworks 1.62 C++ header surface
+6. the Steam Frame's installed native ARM64 `libsteam_api.so`
+7. Zink/Turnip forced for the custom Godot 3.x launcher
 
 Brotato's Windows executable reports GodotSteam 3.31, but 3.31 uses Steam's
 newer flat API. The Frame ARM64 Steam library tested here exposes the classic
@@ -46,8 +48,9 @@ The backend:
 - fetches Valve Proton's vendored Steamworks 1.62 header tree
 - normalizes Proton's named-union/generated-header changes back to the C++ SDK
   semantics GodotSteam 3.30 expects
-- applies the upstream CanvasItem fix
+- applies the upstream CanvasItem fix and the release-safe Variant guard
 - builds the ARM64 Godot runtime
+- launches this custom Godot 3.x recipe through Zink/Turnip, matching the hardware-tested path
 - caches the finished runtime
 - bundles `godot.arm64`, `libsteam_api.so`, and runtime provenance
 - copies a game's `steam_data.json` beside the runtime when the original
