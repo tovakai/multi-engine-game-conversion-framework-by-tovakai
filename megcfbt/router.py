@@ -12,7 +12,12 @@ from renframe.models import Compatibility as RenpyCompatibility
 from rpgmframe.builder import BuildError as RPGMFrameBuildError
 from rpgmframe.builder import build_game as build_rpgm_game
 from rpgmframe.detector import inspect_game as inspect_rpgm_game
-from rpgmframe.packaging import PackagingError, create_tar_gz
+from megcfbt.frame_package import (
+    FramePackageError,
+    create_frame_zip,
+    embed_steam_cover,
+    write_frame_metadata,
+)
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
 
@@ -186,6 +191,7 @@ def build_source(
     runtime_version: str = DEFAULT_NWJS_VERSION,
     force: bool = False,
     archive: bool = True,
+    steam_cover: Path | str | None = None,
     allow_renpy_version_mismatch: bool = False,
     progress: Callable[[str], None] | None = None,
 ) -> UnifiedBuildResult:
@@ -234,11 +240,30 @@ def build_source(
             game_name = result.game_name
             engine_version = result.engine_version
 
-        archive_path = create_tar_gz(output_path, force=force) if archive else None
+        if launcher_path is None:
+            raise ConversionError("Converted build has no launcher to register or package.")
+
+        embed_steam_cover(output_path, steam_cover)
+        write_frame_metadata(
+            output_path,
+            name=game_name or output_path.name,
+            launcher_path=launcher_path,
+            engine=inspection.engine,
+            engine_version=engine_version,
+        )
+        archive_path = (
+            create_frame_zip(
+                output_path,
+                launcher_path=launcher_path,
+                force=force,
+            )
+            if archive
+            else None
+        )
     except (
         RenFrameBuildError,
         RPGMFrameBuildError,
-        PackagingError,
+        FramePackageError,
         SourceError,
     ) as exc:
         raise ConversionError(str(exc)) from exc
