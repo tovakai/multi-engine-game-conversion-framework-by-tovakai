@@ -40,7 +40,7 @@ def _hash(path: Path, algorithm: str) -> str:
 def _request_json(url: str) -> dict:
     request = urllib.request.Request(url, headers=_HEADERS)
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=15) as response:
             data = response.read()
     except (OSError, urllib.error.URLError) as exc:
         raise GodotRuntimeError(f"Could not query Godot release metadata: {exc}") from exc
@@ -129,9 +129,16 @@ class GodotRuntimeManager:
         binary = path / "godot.arm64"
         return binary.is_file() and read_elf_architecture(binary) == "aarch64"
 
-    def _resolve_release(self, version: str) -> tuple[str, str, str, str]:
+    def _resolve_release(
+        self,
+        version: str,
+        *,
+        progress: ProgressCallback | None = None,
+    ) -> tuple[str, str, str, str]:
         last_error: Exception | None = None
         for tag in _candidate_tags(version):
+            if progress:
+                progress(f"Checking official Godot release metadata: {tag}")
             try:
                 release = _request_json(f"{_GITHUB_API}/{tag}")
             except GodotRuntimeError as exc:
@@ -190,8 +197,11 @@ class GodotRuntimeManager:
             return tag, url, "sha512", expected
 
         raise GodotRuntimeError(
-            f"No stable Godot release matching PCK version {version} was found"
-            + (f": {last_error}" if last_error else "")
+            f"No stable Godot release matching PCK version {version} was found. "
+            "The game may have been exported with a Godot development or custom "
+            "build; automatic conversion then needs a matching Linux ARM64 engine "
+            "runtime."
+            + (f" Last lookup error: {last_error}" if last_error else "")
         )
 
     def ensure_godot(
@@ -206,7 +216,12 @@ class GodotRuntimeManager:
                 progress(f"Using cached Godot {version} ARM64: {final}")
             return final
 
-        tag, url, algorithm, expected = self._resolve_release(version)
+        if progress:
+            progress(f"Resolving Godot {version} Linux ARM64 runtime")
+        tag, url, algorithm, expected = self._resolve_release(
+            version,
+            progress=progress,
+        )
         final.parent.mkdir(parents=True, exist_ok=True)
 
         with tempfile.TemporaryDirectory(prefix=".download-", dir=final.parent) as temporary:
