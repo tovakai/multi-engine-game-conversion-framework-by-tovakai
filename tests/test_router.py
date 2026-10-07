@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import struct
 from pathlib import Path
 
 from megcfbt.router import inspect_source, output_path_for_source
@@ -9,6 +10,21 @@ from megcfbt.router import inspect_source, output_path_for_source
 def _write(path: Path, content: str = "") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def _write_bytes(path: Path, content: bytes = b"") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
+
+
+def _write_godot_pack(
+    path: Path,
+    *,
+    major: int = 4,
+    minor: int = 3,
+    patch: int = 0,
+) -> None:
+    _write_bytes(path, struct.pack("<IIIII", 0x43504447, 3, major, minor, patch))
 
 
 def test_detects_renpy_before_other_backends(tmp_path: Path) -> None:
@@ -45,6 +61,41 @@ def test_detects_rpg_maker_mv(tmp_path: Path) -> None:
     assert result.engine == "mv"
     assert result.engine_label == "RPG Maker MV"
 
+
+def test_detects_nested_godot_with_sibling_wrapper_directories(tmp_path: Path) -> None:
+    root = tmp_path / "wrapped-godot"
+    (root / "steam_settings").mkdir(parents=True)
+    game = root / "Brotato/common/Brotato"
+    _write_bytes(game / "Brotato.exe", b"MZ")
+    _write_godot_pack(game / "Brotato.pck")
+    _write_godot_pack(game / "BrotatoAbyssalTerrors.pck")
+
+    result = inspect_source(root)
+
+    assert result.backend == "rpgmframe"
+    assert result.engine == "godot"
+    assert result.engine_label == "Godot"
+    assert result.game_name == "Brotato"
+    assert result.buildable is True
+    assert any("subfolder" in warning.lower() for warning in result.warnings)
+
+
+def test_detects_nested_rpg_maker_with_sibling_wrapper_directories(tmp_path: Path) -> None:
+    root = tmp_path / "wrapped-mz"
+    (root / "steam_settings").mkdir(parents=True)
+    game = root / "Game/common/Game"
+    _write(game / "js/rmmz_core.js", 'Utils.RPGMAKER_VERSION = "1.8.0";\n')
+    _write(game / "data/System.json", json.dumps({"gameTitle": "Nested MZ"}))
+    _write(game / "index.html", "<html></html>")
+    _write(game / "package.json", json.dumps({"name": "nested-mz"}))
+
+    result = inspect_source(root)
+
+    assert result.backend == "rpgmframe"
+    assert result.engine == "mz"
+    assert result.game_name == "Nested MZ"
+    assert result.buildable is True
+    assert any("subfolder" in warning.lower() for warning in result.warnings)
 
 def test_unknown_source_is_not_buildable(tmp_path: Path) -> None:
     root = tmp_path / "mystery"
