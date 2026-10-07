@@ -10,6 +10,7 @@ from typing import Any
 
 class EngineFamily(str, Enum):
     RPG_MAKER = "rpgmaker"
+    CONSTRUCT = "construct"
     GODOT = "godot"
 
 
@@ -19,6 +20,8 @@ class EngineVariant(str, Enum):
     VX_ACE = "vxace"
     MV = "mv"
     MZ = "mz"
+    CONSTRUCT_2 = "construct2"
+    CONSTRUCT_3 = "construct3"
     GODOT = "godot"
     UNKNOWN = "unknown"
 
@@ -48,6 +51,7 @@ class GameInspection:
     game_name: str | None = None
     engine_version: str | None = None
     package_json: Path | None = None
+    payload_archive: Path | None = None
     evidence: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     compatibility: Compatibility = Compatibility.UNKNOWN
@@ -67,6 +71,7 @@ class GameInspection:
             "game_name": self.game_name,
             "engine_version": self.engine_version,
             "package_json": str(self.package_json) if self.package_json else None,
+            "payload_archive": str(self.payload_archive) if self.payload_archive else None,
             "evidence": list(self.evidence),
             "warnings": list(self.warnings),
             "compatibility": self.compatibility.value,

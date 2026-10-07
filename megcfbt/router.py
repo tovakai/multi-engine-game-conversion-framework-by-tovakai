@@ -105,6 +105,10 @@ def _rpgm_summary(root: Path) -> UnifiedInspection | None:
 
     if result.engine.value == "godot":
         label = "Godot"
+    elif result.engine.value == "construct2":
+        label = "Construct 2"
+    elif result.engine.value == "construct3":
+        label = "Construct 3"
     else:
         label = f"RPG Maker {result.engine.value.upper()}"
 
