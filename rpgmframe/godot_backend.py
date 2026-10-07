@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import uuid
 from collections.abc import Callable
@@ -125,17 +126,45 @@ def build_godot_game(
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
 
     fingerprint = inspect_godot_executable(inspection.game_root, pack)
+
     if runtime is None and fingerprint is not None and fingerprint.custom_build:
-        details = "custom Godot development build"
-        if fingerprint.godotsteam:
-            details += " with built-in GodotSteam"
-        raise GodotBuildError(
-            f"Detected {details} in {fingerprint.path.name}. "
-            "The official stable-runtime resolver cannot safely substitute this "
-            "engine. Supply a matching Linux ARM64 custom runtime instead."
+        from rpgmframe.godot_custom_runtime import (
+            CustomGodotRuntimeError,
+            CustomGodotRuntimeManager,
+            automatic_recipe_for,
         )
 
-    if runtime is None:
+        recipe = automatic_recipe_for(
+            inspection.engine_version,
+            custom_build=fingerprint.custom_build,
+            godotsteam=fingerprint.godotsteam,
+        )
+        if recipe is None:
+            details = "custom Godot development build"
+            if fingerprint.godotsteam:
+                details += " with built-in GodotSteam"
+            raise GodotBuildError(
+                f"Detected {details} in {fingerprint.path.name}. "
+                "No automatic ARM64 compatibility recipe matches this engine yet. "
+                "Supply a matching Linux ARM64 custom runtime instead."
+            )
+
+        stage(0.12, "Resolving custom GodotSteam ARM64 compatibility runtime")
+        configured_cache = os.environ.get("RPGMFRAME_CACHE_DIR")
+        cache_root = (
+            Path(configured_cache).expanduser()
+            if configured_cache
+            else output_path.parent / ".tovakai-runtime-cache"
+        )
+        manager = CustomGodotRuntimeManager(
+            cache_dir=cache_root,
+            work_dir=output_path.parent / ".tovakai-runtime-work" / recipe,
+        )
+        try:
+            runtime_path = manager.ensure_runtime(progress=progress)
+        except CustomGodotRuntimeError as exc:
+            raise GodotBuildError(str(exc)) from exc
+    elif runtime is None:
         stage(0.15, f"Resolving Godot {inspection.engine_version} ARM64 runtime")
         try:
             runtime_path = GodotRuntimeManager().ensure_godot(
@@ -187,6 +216,21 @@ def build_godot_game(
             symlinks=True,
             ignore_dangling_symlinks=True,
         )
+
+        # GodotSteam reads steam_data.json relative to the engine executable,
+        # not only from the PCK/game working directory. Preserve the original
+        # sidecar beside godot.arm64 when present.
+        if fingerprint is not None and fingerprint.godotsteam:
+            steam_data = inspection.game_root / "steam_data.json"
+            if steam_data.is_file():
+                shutil.copy2(steam_data, staging / "steam_data.json")
+                if progress:
+                    progress("Copied GodotSteam steam_data.json beside runtime")
+            else:
+                warnings.append(
+                    "Built-in GodotSteam detected but steam_data.json was not found "
+                    "beside the Windows game executable."
+                )
 
         pck_name = pack.path.with_suffix(".pck").name
         pck_target = game_dir / pck_name
