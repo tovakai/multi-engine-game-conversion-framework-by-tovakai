@@ -112,7 +112,11 @@ def build_game(
                     conversion_source,
                     output_zip=output_zip,
                     version_override=renpy_version_override,
-                    force=force,
+                    # Output replacement was already handled above. RenFrame's
+                    # force flag also refreshes cached runtimes/profile assets,
+                    # which is a different operation and should not happen just
+                    # because the user chose to overwrite an output archive.
+                    force=False,
                     work_dir=work / "work",
                     full_archive=full_renpy_archive,
                     log=log,
