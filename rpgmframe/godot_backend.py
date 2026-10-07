@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import uuid
@@ -139,7 +140,6 @@ def build_godot_game(
             candidate = _normalize(configured)
             manifest = candidate / "runtime.json"
             try:
-                import json
                 metadata = json.loads(manifest.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 metadata = None
@@ -227,13 +227,35 @@ def build_godot_game(
         # and install a companion beside godot.arm64.
         steam_data = inspection.game_root / "steam_data.json"
         if steam_data.is_file() and (runtime_path / "runtime.json").is_file():
-            import json
             try:
-                metadata = json.loads((runtime_path / "runtime.json").read_text(encoding="utf-8"))
+                metadata = json.loads(
+                    (runtime_path / "runtime.json").read_text(encoding="utf-8")
+                )
             except (OSError, ValueError):
                 metadata = {}
             if metadata.get("recipe") == "godot-3.7-dev1-godotsteam-3.30-arm64":
                 shutil.copy2(steam_data, staging / "steam_data.json")
+
+                # SteamAPI_RestartAppIfNecessary treats steam_appid.txt as a
+                # development launch and does not try to bounce the game through
+                # the host Steam bootstrapper. On Steam Frame that bootstrapper
+                # is the x86 desktop Steam runtime and cannot execute on ARM64.
+                try:
+                    steam_config = json.loads(steam_data.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    steam_config = {}
+                app_id = str(steam_config.get("app_id", "")).strip()
+                if app_id.isdigit():
+                    for appid_target in (
+                        staging / "steam_appid.txt",
+                        game_dir / "steam_appid.txt",
+                    ):
+                        appid_target.write_text(app_id + "\n", encoding="ascii")
+                    if progress:
+                        progress(
+                            "Installed Steam app id metadata for direct ARM64 launch: "
+                            + app_id
+                        )
                 if progress:
                     progress("Preserved GodotSteam steam_data.json beside runtime")
 
