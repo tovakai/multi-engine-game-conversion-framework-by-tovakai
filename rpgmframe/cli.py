@@ -39,7 +39,10 @@ def _build_parser() -> argparse.ArgumentParser:
     build_parser.add_argument(
         "--runtime",
         type=Path,
-        help="Use this extracted Linux ARM64 runtime instead of the cache (NW.js or mkxp-z)",
+        help=(
+            "Use this extracted Linux ARM64 runtime instead of automatic "
+            "resolution (NW.js, mkxp-z, or Godot custom runtime override)"
+        ),
     )
     build_parser.add_argument(
         "--runtime-version",
@@ -47,7 +50,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "NW.js version for MV/MZ when --runtime is omitted; "
             "XP/VX/VX Ace use RPGMFrame's pinned mkxp-z artifact; "
-            "Godot uses the exact version read from its PCK "
+            "Godot stable exports use the exact PCK version; eligible "
+            "Godot 3.7 custom + GodotSteam exports use the automatic compatibility recipe "
             f"(default NW.js: {DEFAULT_NWJS_VERSION})"
         ),
     )
