@@ -230,12 +230,16 @@ def build_source(
                 game_name = result.display_name or result.game_name
                 engine_version = result.source_version
         else:
+            def backend_stage(value: float, message: str) -> None:
+                stage(0.20 + (0.62 * max(0.0, min(1.0, value))), message)
+
             result = build_rpgm_game(
                 path,
                 output=output_path,
                 runtime_version=runtime_version,
                 force=force,
                 progress=progress,
+                stage_progress=backend_stage,
             )
             launcher_path = result.launcher_path
             warnings = tuple(result.warnings)
