@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import stat
 import unicodedata
 import uuid
+import zipfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -227,6 +229,66 @@ def _copy_root_companions(
     return copied
 
 
+def _safe_extract_package_nw(archive_path: Path, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    root = destination.resolve()
+
+    try:
+        archive = zipfile.ZipFile(archive_path)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise BuildError(f"Could not open package.nw: {archive_path}: {exc}") from exc
+
+    with archive:
+        for info in archive.infolist():
+            target = (destination / info.filename).resolve()
+            if target != root and root not in target.parents:
+                raise BuildError(
+                    f"Refusing unsafe path in package.nw: {info.filename}"
+                )
+            unix_mode = (info.external_attr >> 16) & 0o177777
+            if stat.S_ISLNK(unix_mode):
+                raise BuildError(
+                    f"Refusing symlink in package.nw: {info.filename}"
+                )
+        try:
+            archive.extractall(destination)
+        except OSError as exc:
+            raise BuildError(
+                f"Could not extract package.nw {archive_path}: {exc}"
+            ) from exc
+
+
+def _copy_archive_root_companions(
+    source_root: Path,
+    payload_archive: Path,
+    destination: Path,
+) -> list[str]:
+    copied: list[str] = []
+    for entry in source_root.iterdir():
+        if entry == payload_archive or entry.name == "package.json":
+            continue
+        if entry.name in _IGNORE_NAMES or entry.name.endswith(".pyc"):
+            continue
+        if _is_windows_runtime_baggage(entry):
+            continue
+
+        target = destination / entry.name
+        if entry.is_dir():
+            shutil.copytree(
+                entry,
+                target,
+                symlinks=True,
+                ignore=_ignore_junk,
+                ignore_dangling_symlinks=True,
+            )
+        elif entry.is_file():
+            shutil.copy2(entry, target, follow_symlinks=False)
+        else:
+            continue
+        copied.append(entry.name)
+    return copied
+
+
 def _staging_path(output: Path) -> Path:
     return output.parent / f".{output.name}.tmp-{uuid.uuid4().hex[:8]}"
 
@@ -332,7 +394,10 @@ def build_game(
             raise BuildError(
                 f"Detected {_engine_label(inspection.engine)} game has no payload root"
             )
-        if not (inspection.game_root / "index.html").is_file():
+        if (
+            inspection.payload_archive is None
+            and not (inspection.game_root / "index.html").is_file()
+        ):
             raise BuildError(
                 f"{_engine_label(inspection.engine)} payload is missing index.html: "
                 f"{inspection.game_root / 'index.html'}"
@@ -388,24 +453,46 @@ def build_game(
                 else:
                     payload_destination.unlink()
 
-            shutil.copytree(
-                inspection.game_root,
-                payload_destination,
-                symlinks=True,
-                ignore=_ignore_junk,
-                ignore_dangling_symlinks=True,
-            )
+            output_package_json = inspection.package_json
+            output_game_root = inspection.game_root
+            if inspection.payload_archive is not None:
+                _safe_extract_package_nw(
+                    inspection.payload_archive,
+                    payload_destination,
+                )
+                if not (payload_destination / "index.html").is_file():
+                    raise BuildError(
+                        f"{_engine_label(inspection.engine)} package.nw is missing index.html"
+                    )
+                extracted_package = payload_destination / "package.json"
+                output_package_json = (
+                    extracted_package if extracted_package.is_file() else None
+                )
+                output_game_root = payload_destination
+                companions = _copy_archive_root_companions(
+                    inspection.game_root,
+                    inspection.payload_archive,
+                    staging,
+                )
+            else:
+                shutil.copytree(
+                    inspection.game_root,
+                    payload_destination,
+                    symlinks=True,
+                    ignore=_ignore_junk,
+                    ignore_dangling_symlinks=True,
+                )
 
-            package_root = (
-                inspection.package_json.parent
-                if inspection.package_json is not None
-                else inspection.game_root
-            )
-            companions = _copy_root_companions(
-                package_root,
-                inspection.game_root,
-                staging,
-            )
+                package_root = (
+                    inspection.package_json.parent
+                    if inspection.package_json is not None
+                    else inspection.game_root
+                )
+                companions = _copy_root_companions(
+                    package_root,
+                    inspection.game_root,
+                    staging,
+                )
             if companions:
                 preview = ", ".join(sorted(companions)[:8])
                 if len(companions) > 8:
@@ -424,9 +511,9 @@ def build_game(
 
             _write_package(
                 staging / "package.json",
-                inspection.package_json,
+                output_package_json,
                 source_path,
-                inspection.game_root,
+                output_game_root,
             )
 
             nw_output = staging / "nw"
