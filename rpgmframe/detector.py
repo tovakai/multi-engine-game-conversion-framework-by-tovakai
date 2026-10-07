@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -261,18 +262,74 @@ def _collect_candidates(source_root: Path, *, evidence_root: Path) -> list[_Cand
     return candidates
 
 
-def _single_wrapper_child(root: Path) -> Path | None:
+_DISCOVERY_SKIP_DIRS = frozenset(
+    {
+        ".git",
+        "__macosx",
+        "__pycache__",
+        "steam_settings",
+    }
+)
+
+
+def _subdirectories(root: Path) -> list[Path]:
     try:
         children = [
             child
             for child in root.iterdir()
             if child.is_dir()
             and not child.name.startswith(".")
-            and child.name != "__MACOSX"
+            and child.name.casefold() not in _DISCOVERY_SKIP_DIRS
         ]
     except OSError:
-        return None
-    return children[0] if len(children) == 1 else None
+        return []
+    return sorted(children, key=lambda path: path.name.casefold())
+
+
+def _discover_candidates(
+    root: Path,
+    *,
+    max_depth: int = 5,
+    max_directories: int = 128,
+) -> list[_Candidate]:
+    """Find RPG Maker payloads below wrapper/package directories.
+
+    Search breadth-first so the shallowest valid payload wins. The scan is
+    deliberately bounded and stops exploring deeper levels as soon as an
+    engine signature is found at a given depth.
+    """
+    queue: deque[tuple[Path, int]] = deque([(root, 0)])
+    seen: set[Path] = set()
+    matches: list[_Candidate] = []
+    shallowest_match: int | None = None
+    visited = 0
+
+    while queue and visited < max_directories:
+        current, depth = queue.popleft()
+        if shallowest_match is not None and depth > shallowest_match:
+            break
+
+        try:
+            resolved = current.resolve()
+        except OSError:
+            resolved = current
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        visited += 1
+
+        candidates = _collect_candidates(current, evidence_root=root)
+        if candidates:
+            matches.extend(candidates)
+            shallowest_match = depth
+            continue
+
+        if depth >= max_depth:
+            continue
+        for child in _subdirectories(current):
+            queue.append((child, depth + 1))
+
+    return matches
 
 
 def _find_package_json(source_root: Path, game_root: Path) -> Path | None:
@@ -323,8 +380,8 @@ def inspect_game(path: Path | str) -> GameInspection:
     """
     Detect Godot plus RPG Maker XP/VX/VX Ace/MV/MZ signatures.
 
-    Wrapper descent remains conservative: RPGMFrame only descends while there
-    is exactly one obvious child directory.
+    Payload discovery is breadth-first and bounded so common wrapper layouts
+    can contain unrelated sibling directories without defeating detection.
     """
     root = _normalize_path(path)
 
@@ -345,22 +402,7 @@ def inspect_game(path: Path | str) -> GameInspection:
     if godot is not None and (godot.recognized or godot.family.value == "godot"):
         return godot
 
-    current_root = root
-    wrapper_chain: list[Path] = []
-    seen_roots = {root}
-    candidates = _collect_candidates(current_root, evidence_root=root)
-
-    while not candidates and len(wrapper_chain) < 16:
-        wrapper = _single_wrapper_child(current_root)
-        if wrapper is None:
-            break
-        resolved_wrapper = wrapper.resolve()
-        if resolved_wrapper in seen_roots:
-            break
-        seen_roots.add(resolved_wrapper)
-        wrapper_chain.append(wrapper)
-        current_root = wrapper
-        candidates = _collect_candidates(current_root, evidence_root=root)
+    candidates = _discover_candidates(root)
 
     if not candidates:
         return GameInspection(
@@ -368,6 +410,24 @@ def inspect_game(path: Path | str) -> GameInspection:
             warnings=[
                 "No supported game engine signature was found "
                 "(Godot PCK, XP/VX/VX Ace RGSS data, or MV/MZ JavaScript core)."
+            ],
+        )
+
+    candidate_roots = {candidate.source_root.resolve() for candidate in candidates}
+    if len(candidate_roots) > 1:
+        evidence = list(
+            dict.fromkeys(
+                item
+                for candidate in candidates
+                for item in candidate.evidence
+            )
+        )
+        return GameInspection(
+            source_path=root,
+            evidence=evidence,
+            warnings=[
+                "Multiple RPG Maker game roots were found at the same directory "
+                "depth; refusing to guess which payload is the main game."
             ],
         )
 
@@ -396,10 +456,10 @@ def inspect_game(path: Path | str) -> GameInspection:
             )
 
     warnings: list[str] = []
-    if wrapper_chain:
+    if best.source_root != root:
         warnings.append(
-            "Auto-descended through wrapper directories: "
-            f"{_relative(wrapper_chain[-1], root)}"
+            "Auto-discovered RPG Maker game root in subfolder: "
+            f"{_relative(best.source_root, root)}"
         )
 
     if best.engine in {EngineVariant.MV, EngineVariant.MZ}:
