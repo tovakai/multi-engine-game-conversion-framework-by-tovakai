@@ -411,6 +411,8 @@ class ConverterApp:
         self.inspection = None
         self.renpy_runtime = None
         self.last_result = None
+        self.steam_cover = None
+        self.cover_button.configure(text="Steam cover…")
         self.convert_btn.configure(state="disabled")
         self.steam_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
