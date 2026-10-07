@@ -4,11 +4,14 @@ import json
 import stat
 import zipfile
 
+from megcfbt import frame_package
 from megcfbt.frame_package import (
     create_frame_zip,
     create_install_manifest,
     embed_steam_cover,
+    framedrop_zip_compatible,
     write_frame_metadata,
+    zip_unpacked_size,
 )
 
 
@@ -103,3 +106,18 @@ def test_frame_metadata_rejects_escaping_launcher(tmp_path):
         assert "unsafe launcher" in str(exc)
     else:
         raise AssertionError("escaping launcher was accepted")
+
+
+def test_framedrop_compatibility_uses_total_unpacked_zip_size(tmp_path, monkeypatch):
+    package = tmp_path / "large-for-test.zip"
+    with zipfile.ZipFile(package, "w") as zf:
+        zf.writestr("a.bin", b"1234")
+        zf.writestr("b.bin", b"5678")
+
+    assert zip_unpacked_size(package) == 8
+
+    monkeypatch.setattr(frame_package, "FRAMEDROP_ZIP_UNPACK_LIMIT", 7)
+    assert not framedrop_zip_compatible(package)
+
+    monkeypatch.setattr(frame_package, "FRAMEDROP_ZIP_UNPACK_LIMIT", 8)
+    assert framedrop_zip_compatible(package)
