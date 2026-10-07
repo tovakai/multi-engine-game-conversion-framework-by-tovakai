@@ -162,10 +162,6 @@ git -C "$GODOT_DIR" checkout -q --detach FETCH_HEAD
 
 rm -rf "$GODOTSTEAM_WORK"
 if [[ -n "$GODOTSTEAM_SRC" ]]; then
-    if [[ ! -f "$GODOTSTEAM_SRC/SCsub" || ! -f "$GODOTSTEAM_SRC/godotsteam.cpp" ]]; then
-        echo "ERROR: --godotsteam-src does not look like a GodotSteam module tree." >&2
-        exit 2
-    fi
     echo "==> Copying supplied GodotSteam source"
     mkdir -p "$GODOTSTEAM_WORK"
     cp -a "$GODOTSTEAM_SRC/." "$GODOTSTEAM_WORK/"
@@ -179,20 +175,30 @@ else
     fi
 fi
 
+if [[ -f "$GODOTSTEAM_WORK/SCsub" && -f "$GODOTSTEAM_WORK/godotsteam.cpp" ]]; then
+    GODOTSTEAM_MODULE="$GODOTSTEAM_WORK"
+elif [[ -f "$GODOTSTEAM_WORK/godotsteam/SCsub" && -f "$GODOTSTEAM_WORK/godotsteam/godotsteam.cpp" ]]; then
+    GODOTSTEAM_MODULE="$GODOTSTEAM_WORK/godotsteam"
+else
+    echo "ERROR: GodotSteam source does not contain a recognizable Godot 3 module." >&2
+    echo "       Expected SCsub and godotsteam.cpp at the source root or godotsteam/." >&2
+    exit 2
+fi
+
 echo "==> Staging user-supplied Steamworks SDK"
-rm -rf "$GODOTSTEAM_WORK/sdk"
-mkdir -p "$GODOTSTEAM_WORK/sdk"
-cp -a "$SDK_DIR/public" "$GODOTSTEAM_WORK/sdk/"
+rm -rf "$GODOTSTEAM_MODULE/sdk"
+mkdir -p "$GODOTSTEAM_MODULE/sdk"
+cp -a "$SDK_DIR/public" "$GODOTSTEAM_MODULE/sdk/"
 
 # GodotSteam versions predating official Linux ARM64 support may still resolve
 # the 64-bit Linux library through redistributable_bin/linux64. Keep the actual
 # ARM64 library in both locations inside this disposable build tree. This does
 # not modify or redistribute the user's SDK.
 mkdir -p \
-    "$GODOTSTEAM_WORK/sdk/redistributable_bin/linuxarm64" \
-    "$GODOTSTEAM_WORK/sdk/redistributable_bin/linux64"
-cp -a "$STEAM_ARM64" "$GODOTSTEAM_WORK/sdk/redistributable_bin/linuxarm64/libsteam_api.so"
-cp -a "$STEAM_ARM64" "$GODOTSTEAM_WORK/sdk/redistributable_bin/linux64/libsteam_api.so"
+    "$GODOTSTEAM_MODULE/sdk/redistributable_bin/linuxarm64" \
+    "$GODOTSTEAM_MODULE/sdk/redistributable_bin/linux64"
+cp -a "$STEAM_ARM64" "$GODOTSTEAM_MODULE/sdk/redistributable_bin/linuxarm64/libsteam_api.so"
+cp -a "$STEAM_ARM64" "$GODOTSTEAM_MODULE/sdk/redistributable_bin/linux64/libsteam_api.so"
 
 if [[ -z "$JOBS" ]]; then
     if command -v nproc >/dev/null 2>&1; then
@@ -214,7 +220,7 @@ echo "==> Building Godot ARM64 release template with GodotSteam"
         production=yes \
         lto=none \
         speechd=no \
-        custom_modules="$GODOTSTEAM_WORK"
+        custom_modules="$GODOTSTEAM_MODULE"
 )
 
 BINARY="$(find "$GODOT_DIR/bin" -maxdepth 1 -type f -name 'godot.x11.opt*' | sort | head -n 1)"
