@@ -54,6 +54,22 @@ def _parser() -> argparse.ArgumentParser:
     )
     steam_cmd.add_argument("build", type=Path)
 
+    frame_control_cmd = sub.add_parser(
+        "frame-control-limit",
+        help="inspect, patch, or restore Frame Control's local upload-size guard",
+    )
+    frame_control_cmd.add_argument(
+        "action",
+        choices=("status", "patch", "restore"),
+        nargs="?",
+        default="status",
+    )
+    frame_control_cmd.add_argument(
+        "--path",
+        type=Path,
+        help="Frame Control server.py, Frame Control.exe, or install directory",
+    )
+
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
 
@@ -67,6 +83,39 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "frame-control-limit":
+            from megcfbt.frame_control_patch import (
+                FrameControlPatchError,
+                inspect_frame_control,
+                patch_upload_limit,
+                restore_upload_limit,
+            )
+
+            try:
+                if args.action == "patch":
+                    status = patch_upload_limit(args.path)
+                elif args.action == "restore":
+                    status = restore_upload_limit(args.path)
+                else:
+                    status = inspect_frame_control(args.path)
+            except FrameControlPatchError as exc:
+                print(f"ERROR: {exc}")
+                return 1
+
+            state = (
+                "patched"
+                if status.is_patched
+                else "stock"
+                if status.is_stock
+                else "custom"
+            )
+            print(f"Frame Control: {status.server_path}")
+            print(f"Upload limit:  {status.limit_gib} GiB ({state})")
+            print(f"Backup:        {status.backup_path if status.has_backup else 'none'}")
+            if args.action in ("patch", "restore"):
+                print("Restart Frame Control before using the changed limit.")
+            return 0
+
         if args.command == "steam-install":
             from megcfbt.steam_install import install_build
 
