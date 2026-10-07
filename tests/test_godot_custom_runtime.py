@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 from pathlib import Path
 
 from rpgmframe.godot_custom_runtime import (
@@ -102,3 +104,15 @@ def test_worker_script_contains_proven_compatibility_stack() -> None:
     assert "CanvasItem cast fix" in _WORKER_SCRIPT
     assert "arch=arm64" in _WORKER_SCRIPT
     assert "lto=none" in _WORKER_SCRIPT
+
+
+def test_worker_script_has_valid_bash_syntax() -> None:
+    bash = shutil.which("bash")
+    if bash is None:
+        return
+    subprocess.run(
+        [bash, "-n"],
+        input=_WORKER_SCRIPT,
+        text=True,
+        check=True,
+    )
