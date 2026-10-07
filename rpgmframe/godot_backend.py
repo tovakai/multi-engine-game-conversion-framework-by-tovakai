@@ -64,6 +64,11 @@ def _copy_runtime_bundle(runtime_path: Path, staging: Path) -> list[str]:
         shutil.copy2(companion, staging / companion.name)
         copied.append(companion.name)
 
+    manifest = runtime_path / "runtime.json"
+    if manifest.is_file():
+        shutil.copy2(manifest, staging / "runtime.json")
+        copied.append("runtime.json")
+
     return copied
 
 def _staging_path(output: Path) -> Path:
