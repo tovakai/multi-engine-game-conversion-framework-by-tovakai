@@ -21,7 +21,14 @@ def _parser() -> argparse.ArgumentParser:
     build_cmd = sub.add_parser("build", help="convert a supported game to Linux ARM64")
     build_cmd.add_argument("source", type=Path)
     build_cmd.add_argument("-o", "--output", type=Path)
-    build_cmd.add_argument("--renpy-runtime", type=Path)
+    build_cmd.add_argument(
+        "--renpy-runtime",
+        type=Path,
+        help=(
+            "manual Ren'Py ARM64 runtime override; exact detected Ren'Py 7/8 "
+            "versions otherwise resolve automatically"
+        ),
+    )
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
     build_cmd.add_argument("--no-archive", action="store_true")

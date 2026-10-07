@@ -22,6 +22,10 @@ _PORTABLE_EXECUTABLES = frozenset(
         "chrome-sandbox",
         "mkxp-z.aarch64",
         "godot.arm64",
+        "python",
+        "python3",
+        "pythonw",
+        "pythonw3",
     }
 )
 
@@ -30,8 +34,9 @@ def _portable_tar_filter(info: tarfile.TarInfo) -> tarfile.TarInfo:
     relative = Path(info.name)
     if info.isfile():
         name = relative.name
-        # launch.sh and the Linux NW.js helpers live at the converted package
-        # root. Shell helpers are executable wherever RPGMFrame adds them.
+        # Windows filesystems discard POSIX execute bits. Normalize launchers,
+        # native runtime entrypoints, and Ren'Py's embedded Python interpreter
+        # when creating a Linux transfer archive.
         if name in _PORTABLE_EXECUTABLES or name.endswith(".sh"):
             info.mode |= 0o111
     return info

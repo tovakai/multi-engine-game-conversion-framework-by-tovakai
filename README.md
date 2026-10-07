@@ -83,18 +83,25 @@ There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
 
-## Ren'Py runtime note
+## Ren'Py runtime resolution
 
-RPG Maker and Godot runtime acquisition is automatic through the imported
-RPGMFrame backend. RenFrame does not yet automatically acquire a matching ARM64
-Ren'Py runtime, so the combined application currently requires one explicitly:
+Exact detected Ren'Py 7.x and 8.x versions now resolve automatically through the
+official `renpy/renpy` GitHub releases. The framework looks specifically for
+`renpy-VERSION-sdkarm.tar.bz2`, verifies its published SHA256 digest (or the
+official `checksums.txt` fallback), safely extracts it, validates that the
+runtime is ARM64, and caches it for later builds.
+
+The converter does **not** substitute a nearby Ren'Py version when detection is
+ambiguous. If the source version cannot be determined exactly, or an official
+sdkarm asset does not exist, conversion stops and asks for a manually reviewed
+runtime override:
 
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build Game.zip \
   --renpy-runtime /path/to/renpy-arm64-runtime
 ```
 
-Automatic Ren'Py runtime resolution is an obvious next unification target.
+Set `TOVAKAI_CACHE_DIR` to relocate the automatic Ren'Py runtime cache.
 
 ## Design rule
 

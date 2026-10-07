@@ -403,14 +403,13 @@ class ConverterApp:
         )
 
         if result.engine == "renpy":
-            self.runtime_button.configure(
-                state="normal",
-                text=(
-                    f"Ren'Py runtime: {self.renpy_runtime.name}"
-                    if self.renpy_runtime
-                    else "Choose Ren'Py ARM64 runtime…"
-                ),
-            )
+            if self.renpy_runtime:
+                runtime_text = f"Ren'Py override: {self.renpy_runtime.name}"
+            elif result.engine_version:
+                runtime_text = f"Runtime: automatic Ren'Py {result.engine_version}  ·  override…"
+            else:
+                runtime_text = "Choose Ren'Py ARM64 runtime…"
+            self.runtime_button.configure(state="normal", text=runtime_text)
         else:
             self.runtime_button.configure(state="disabled", text="Runtime: automatic")
 
@@ -460,10 +459,14 @@ class ConverterApp:
             self.out_label.configure(text=f"Output: {self.output_dir}")
 
     def _pick_renpy_runtime(self) -> None:
-        folder = filedialog.askdirectory(title="Select matching Linux ARM64 Ren'Py runtime")
+        folder = filedialog.askdirectory(
+            title="Optional override: select matching Linux ARM64 Ren'Py runtime"
+        )
         if folder:
             self.renpy_runtime = Path(folder)
-            self.runtime_button.configure(text=f"Ren'Py runtime: {self.renpy_runtime.name}")
+            self.runtime_button.configure(
+                text=f"Ren'Py override: {self.renpy_runtime.name}"
+            )
 
     def _open_output(self) -> None:
         if self.last_archive and self.last_archive.exists():
@@ -476,7 +479,11 @@ class ConverterApp:
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
-        if self.inspection.engine == "renpy" and self.renpy_runtime is None:
+        if (
+            self.inspection.engine == "renpy"
+            and self.renpy_runtime is None
+            and not self.inspection.engine_version
+        ):
             self._pick_renpy_runtime()
             if self.renpy_runtime is None:
                 return

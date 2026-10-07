@@ -18,6 +18,7 @@ from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from megcfbt.renpy_runtime import RenpyRuntimeError, RenpyRuntimeManager
 
 
 class ConversionError(RuntimeError):
@@ -88,7 +89,11 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         game_name=result.game_name,
         compatibility=compatibility,
         confidence=(result.version_hints[0].confidence if result.version_hints else "low"),
-        runtime_kind="Ren'Py ARM64 runtime",
+        runtime_kind=(
+            f"official Ren'Py {result.renpy_version} ARM64 sdkarm"
+            if result.renpy_version
+            else "Ren'Py ARM64 runtime (manual exact match required)"
+        ),
         buildable=buildable,
         warnings=warnings,
         evidence=evidence,
@@ -202,11 +207,26 @@ def build_source(
 
     try:
         if inspection.backend == "renframe":
-            if renpy_runtime is None:
-                raise ConversionError(
-                    "Ren'Py conversion currently requires --renpy-runtime pointing "
-                    "to a matching Linux ARM64 Ren'Py runtime/SDK."
+            resolved_renpy_runtime: Path | str
+            if renpy_runtime is not None:
+                resolved_renpy_runtime = renpy_runtime
+                if progress:
+                    progress(
+                        "Using manually supplied Ren'Py ARM64 runtime override: "
+                        f"{Path(renpy_runtime).expanduser()}"
+                    )
+            else:
+                if not inspection.engine_version:
+                    raise ConversionError(
+                        "Ren'Py was detected, but its exact version could not be "
+                        "determined. Automatic runtime resolution refuses to guess; "
+                        "supply --renpy-runtime after manual review."
+                    )
+                resolved_renpy_runtime = RenpyRuntimeManager().ensure_runtime(
+                    inspection.engine_version,
+                    progress=progress,
                 )
+
             with prepare_source(path) as prepared:
                 prepared_inspection = _inspect_prepared(prepared.root)
                 if prepared_inspection.backend != "renframe":
@@ -214,7 +234,7 @@ def build_source(
                 result = build_renpy_game(
                     prepared_inspection.source_path,
                     output=output_path,
-                    runtime=renpy_runtime,
+                    runtime=resolved_renpy_runtime,
                     force=force,
                     allow_version_mismatch=allow_renpy_version_mismatch,
                 )
@@ -236,7 +256,13 @@ def build_source(
             engine_version = result.engine_version
 
         archive_path = create_tar_gz(output_path, force=force) if archive else None
-    except (RenFrameBuildError, RPGMFrameBuildError, PackagingError, SourceError) as exc:
+    except (
+        RenFrameBuildError,
+        RPGMFrameBuildError,
+        PackagingError,
+        SourceError,
+        RenpyRuntimeError,
+    ) as exc:
         raise ConversionError(str(exc)) from exc
 
     return UnifiedBuildResult(
