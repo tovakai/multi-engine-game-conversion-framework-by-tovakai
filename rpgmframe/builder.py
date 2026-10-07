@@ -48,6 +48,16 @@ _WINDOWS_RUNTIME_ROOT_NAMES = frozenset(
 _WINDOWS_RUNTIME_ROOT_SUFFIXES = frozenset({".dll", ".exe", ".pdb"})
 
 
+def _engine_label(engine: EngineVariant) -> str:
+    labels = {
+        EngineVariant.MV: "RPG Maker MV",
+        EngineVariant.MZ: "RPG Maker MZ",
+        EngineVariant.CONSTRUCT_2: "Construct 2",
+        EngineVariant.CONSTRUCT_3: "Construct 3",
+    }
+    return labels.get(engine, engine.value.upper())
+
+
 def _normalize_path(path: Path | str) -> Path:
     return Path(path).expanduser().resolve()
 
@@ -308,17 +318,23 @@ def build_game(
             except MkxpBuildError as exc:
                 raise BuildError(str(exc)) from exc
 
-        if inspection.engine not in {EngineVariant.MV, EngineVariant.MZ}:
+        web_engines = {
+            EngineVariant.MV,
+            EngineVariant.MZ,
+            EngineVariant.CONSTRUCT_2,
+            EngineVariant.CONSTRUCT_3,
+        }
+        if inspection.engine not in web_engines:
             raise BuildError(
-                f"Building RPG Maker {inspection.engine.value.upper()} is not enabled yet."
+                f"Building {_engine_label(inspection.engine)} is not enabled yet."
             )
         if inspection.game_root is None:
             raise BuildError(
-                f"Detected {inspection.engine.value.upper()} game has no payload root"
+                f"Detected {_engine_label(inspection.engine)} game has no payload root"
             )
         if not (inspection.game_root / "index.html").is_file():
             raise BuildError(
-                f"{inspection.engine.value.upper()} payload is missing index.html: "
+                f"{_engine_label(inspection.engine)} payload is missing index.html: "
                 f"{inspection.game_root / 'index.html'}"
             )
 
@@ -352,7 +368,7 @@ def build_game(
         if prepared.archive_type:
             warnings.insert(0, f"Built directly from {prepared.archive_type.upper()} input")
         warnings.append(
-            f"{inspection.engine.value.upper()} is being run on a modern ARM64 NW.js runtime "
+            f"{_engine_label(inspection.engine)} is being run on a modern ARM64 NW.js runtime "
             "rather than its original bundled runtime; test game-specific plugins and media."
         )
 
@@ -398,12 +414,13 @@ def build_game(
                     f"Preserved game-owned package-root companion entries: {preview}"
                 )
 
-            warnings.extend(
-                install_compatibility(
-                    payload_destination,
-                    engine=inspection.engine,
+            if inspection.engine in {EngineVariant.MV, EngineVariant.MZ}:
+                warnings.extend(
+                    install_compatibility(
+                        payload_destination,
+                        engine=inspection.engine,
+                    )
                 )
-            )
 
             _write_package(
                 staging / "package.json",
