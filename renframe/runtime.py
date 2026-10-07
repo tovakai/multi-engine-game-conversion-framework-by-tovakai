@@ -1,4 +1,4 @@
-"""ARM64 Ren'Py runtime inspection, layout detection, and cache stub."""
+"""ARM64 Ren'Py runtime inspection plus verified automatic sdkarm acquisition."""
 
 from __future__ import annotations
 

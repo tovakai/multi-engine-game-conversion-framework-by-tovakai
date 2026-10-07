@@ -372,6 +372,7 @@ class ConverterApp:
 
         self.source = source
         self.inspection = None
+        self.renpy_runtime = None
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
         self.drop_label.configure(text="Inspecting game…")

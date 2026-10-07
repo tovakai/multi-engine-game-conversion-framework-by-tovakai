@@ -85,23 +85,31 @@ one long command was not enough.
 
 ## Ren'Py runtime resolution
 
-Exact detected Ren'Py 7.x and 8.x versions now resolve automatically through the
-official `renpy/renpy` GitHub releases. The framework looks specifically for
-`renpy-VERSION-sdkarm.tar.bz2`, verifies its published SHA256 digest (or the
-official `checksums.txt` fallback), safely extracts it, validates that the
-runtime is ARM64, and caches it for later builds.
+Ren'Py now follows the same automatic-runtime philosophy as the other backends.
+When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
+
+1. normalizes the detected release to `X.Y.Z`
+2. downloads the official `renpy-X.Y.Z-sdkarm.tar.bz2` from renpy.org
+3. verifies its SHA-256 against the official `checksums.txt`
+4. extracts only the matching `py2-linux-aarch64` or
+   `py3-linux-aarch64` platform slice
+5. validates an AArch64 ELF runtime
+6. caches that platform slice for later conversions
+7. grafts it into a copy of the original distributed game
+
+The original game's `renpy/` engine tree and other payload files are preserved.
+This is intentionally more surgical than replacing the game with a complete SDK.
 
 The converter does **not** substitute a nearby Ren'Py version when detection is
-ambiguous. If the source version cannot be determined exactly, or an official
-sdkarm asset does not exist, conversion stops and asks for a manually reviewed
-runtime override:
+ambiguous. A manual runtime remains available as an escape hatch:
 
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build Game.zip \
-  --renpy-runtime /path/to/renpy-arm64-runtime
+  --renpy-runtime /path/to/reviewed-renpy-arm64-runtime
 ```
 
-Set `TOVAKAI_CACHE_DIR` to relocate the automatic Ren'Py runtime cache.
+Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
+honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 ## Design rule
 

@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="renframe",
         description=(
             "RenFrame inspects Ren'Py games and builds native Linux ARM64 "
-            "(Steam Frame) directories by swapping in an ARM Ren'Py runtime."
+            "(Steam Frame) directories using the exact official sdkarm runtime."
         ),
     )
     parser.add_argument(
@@ -58,8 +58,8 @@ def build_parser() -> argparse.ArgumentParser:
     build_p = sub.add_parser(
         "build",
         help=(
-            "Build a self-contained ARM64 Ren'Py game directory from a "
-            "supplied ARM runtime"
+            "Build a self-contained ARM64 Ren'Py game directory, resolving "
+            "the exact official sdkarm runtime automatically"
         ),
     )
     build_p.add_argument("directory", type=Path, help="Path to the source game")
@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--runtime",
         type=Path,
         default=None,
-        help="Path to an ARM64 Ren'Py SDK/runtime (required; no auto-download yet)",
+        help="Optional manual ARM64 Ren'Py runtime override",
     )
     build_p.add_argument(
         "--output",
