@@ -408,7 +408,7 @@ def _write_grafted_launcher(
     launcher.write_text(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
-        'ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"\n'
+        'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
         'export RENPY_PLATFORM="linux-aarch64"\n\n'
         + command
         + "\n",

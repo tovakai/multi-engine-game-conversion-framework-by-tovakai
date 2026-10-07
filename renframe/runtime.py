@@ -25,7 +25,7 @@ from renframe.utils import normalize_path
 
 _X86_ARCHES = frozenset({"x86_64", "x86", "amd64", "i386", "i686"})
 _ARM_ARCHES = frozenset({"aarch64", "arm64", "arm"})
-_RELEASE_VERSION_RE = re.compile(r"^(\\d+)\\.(\\d+)\\.(\\d+)(?:\\.\\d+)?$")
+_RELEASE_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.\d+)?$")
 _DEFAULT_BASE_URL = "https://www.renpy.org/dl"
 
 
