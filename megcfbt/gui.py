@@ -20,6 +20,7 @@ from megcfbt.frame_control_patch import (
     patch_upload_limit,
     restore_upload_limit,
 )
+from megcfbt.frame_package import FRAMEDROP_ZIP_UNPACK_LIMIT, zip_unpacked_size
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt.router import (
     ConversionError,
@@ -291,7 +292,7 @@ class ConverterApp:
 
         self.frame_control_button = ctk.CTkButton(
             options,
-            text="Frame Control…",
+            text="Frame tools…",
             width=128,
             height=30,
             fg_color="transparent",
@@ -543,9 +544,9 @@ class ConverterApp:
 
     def _open_frame_control_tools(self) -> None:
         window = ctk.CTkToplevel(self.root)
-        window.title("Frame Control integration")
-        window.geometry("690x410")
-        window.minsize(620, 380)
+        window.title("Frame transfer tools")
+        window.geometry("690x590")
+        window.minsize(620, 540)
         window.configure(fg_color=C_BG)
         window.transient(self.root)
 
@@ -774,6 +775,82 @@ class ConverterApp:
             text_color=C_MUTED,
             command=choose,
         ).pack(side="right")
+
+        framedrop = ctk.CTkFrame(
+            window,
+            fg_color=C_PANEL,
+            border_width=1,
+            border_color=C_BORDER,
+            corner_radius=10,
+        )
+        framedrop.pack(fill="x", padx=22, pady=(4, 16))
+        ctk.CTkLabel(
+            framedrop,
+            text="FrameDrop large-build compatibility",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color=C_TEXT,
+        ).pack(anchor="w", padx=12, pady=(10, 3))
+
+        if self.last_archive and self.last_archive.is_file():
+            try:
+                unpacked = zip_unpacked_size(self.last_archive)
+                over = unpacked > FRAMEDROP_ZIP_UNPACK_LIMIT
+                detail = (
+                    f"Current ZIP: {unpacked / 1024**3:.2f} GiB unpacked. "
+                    + (
+                        "FrameDrop will reject the ZIP, but folder drops bypass its ZIP extractor."
+                        if over
+                        else "This is within FrameDrop's current 4 GiB ZIP extraction guard."
+                    )
+                )
+                detail_color = C_ERR if over else C_OK
+            except Exception as exc:
+                detail = f"Could not inspect current ZIP: {exc}"
+                detail_color = C_ERR
+        else:
+            detail = (
+                f"FrameDrop currently rejects ZIPs over {FRAMEDROP_ZIP_UNPACK_LIMIT / 1024**3:.0f} GiB "
+                "total unpacked size. Folder drops do not use that ZIP extraction path."
+            )
+            detail_color = C_MUTED
+
+        ctk.CTkLabel(
+            framedrop,
+            text=detail,
+            text_color=detail_color,
+            justify="left",
+            wraplength=610,
+        ).pack(fill="x", padx=12, pady=(0, 8))
+        ctk.CTkLabel(
+            framedrop,
+            text=(
+                "FrameDrop is a closed-source frozen app, so RenFrame does not binary-patch it. "
+                "For builds above the ZIP guard, drag the converted build directory into FrameDrop instead."
+            ),
+            text_color=C_MUTED,
+            justify="left",
+            wraplength=610,
+        ).pack(fill="x", padx=12, pady=(0, 8))
+
+        folder_btn = ctk.CTkButton(
+            framedrop,
+            text="Open converted build folder",
+            width=190,
+            fg_color=C_TEAL,
+            hover_color=C_BORDER,
+            text_color="#07111f",
+            state=(
+                "normal"
+                if self.last_output is not None and self.last_output.is_dir()
+                else "disabled"
+            ),
+            command=(
+                (lambda: _open_path(self.last_output))
+                if self.last_output is not None and self.last_output.is_dir()
+                else None
+            ),
+        )
+        folder_btn.pack(anchor="w", padx=12, pady=(0, 10))
 
         refresh()
 
