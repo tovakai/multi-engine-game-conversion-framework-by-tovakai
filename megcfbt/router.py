@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
@@ -203,7 +205,10 @@ def build_source(
         inspection.backend == "rpgmframe"
         and inspection.engine == "godot"
         and inspection.runtime_kind == "godot-custom"
-        and backend_runtime is not None
+        and (
+            backend_runtime is not None
+            or bool(os.environ.get("TOVAKAI_GODOTSTEAM_ARM64_RUNTIME"))
+        )
     )
     if (not inspection.buildable and not custom_godot_override) or inspection.backend is None:
         extra = (
