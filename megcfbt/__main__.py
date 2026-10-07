@@ -1,0 +1,1 @@
+from megcfbt.cli import main\n\nraise SystemExit(main())\n
