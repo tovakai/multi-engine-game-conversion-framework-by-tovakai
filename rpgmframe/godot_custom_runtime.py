@@ -34,7 +34,8 @@ ProgressCallback = Callable[[str], None]
 
 RECIPE_ID = "godot-3.7-dev1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1"
 GODOT_REF = "a117d512b00f1646db174e703e7e888519b64608"
-GODOTSTEAM_REF = "f73d138b56fe971a940dd0498e8b9d0fc8fdcffd"
+GODOTSTEAM_REF = "v3.30"
+GODOTSTEAM_EXPECTED_SHA = "f73d138b56fe971a940dd0498e8b9d0fc8fdcffd"
 PROTON_REF = "5b89db940e0ebe3a137a6009a3589232fe084c09"
 DEFAULT_STEAM_API = Path("/opt/steamvr/bin/linuxarm64/libsteam_api.so")
 DEFAULT_DISTROBOX = "tovakai-godot-build"
@@ -145,6 +146,7 @@ set -euo pipefail
 : "${STEAM_API:?}"
 : "${GODOT_REF:?}"
 : "${GODOTSTEAM_REF:?}"
+: "${GODOTSTEAM_EXPECTED_SHA:?}"
 : "${PROTON_REF:?}"
 : "${RECIPE_ID:?}"
 
@@ -232,6 +234,38 @@ text = text[:insert_at] + declaration + "\n" + text[insert_at:]
 p.write_text(text)
 PY
 
+echo "==> Applying release-safe Variant missing-method guard"
+GODOT_DIR="$GODOT_DIR" python3 - <<'PY'
+import os
+from pathlib import Path
+
+p = Path(os.environ["GODOT_DIR"]) / "core/variant_call.cpp"
+text = p.read_text()
+old = """\t\tMap<StringName, _VariantCall::FuncData>::Element *E = _VariantCall::type_funcs[type].functions.find(p_method);
+#ifdef DEBUG_ENABLED
+\t\tif (!E) {
+\t\t\tr_error.error = Variant::CallError::CALL_ERROR_INVALID_METHOD;
+\t\t\treturn;
+\t\t}
+#endif
+\t\t_VariantCall::FuncData &funcdata = E->get();
+"""
+new = """\t\tMap<StringName, _VariantCall::FuncData>::Element *E = _VariantCall::type_funcs[type].functions.find(p_method);
+\t\tif (!E) {
+\t\t\tERR_PRINT("tovakai compatibility runtime: missing Variant method '" + String(p_method) + "' on type '" + Variant::get_type_name(type) + "'");
+\t\t\tr_error.error = Variant::CallError::CALL_ERROR_INVALID_METHOD;
+\t\t\treturn;
+\t\t}
+\t\t_VariantCall::FuncData &funcdata = E->get();
+"""
+count = text.count(old)
+if count != 1:
+    raise SystemExit(
+        f"Expected one Godot 3.7-dev1 Variant release guard block, found {count}"
+    )
+p.write_text(text.replace(old, new))
+PY
+
 if [[ ! -d "$GODOTSTEAM_DIR/.git" ]]; then
     echo "==> Fetching GodotSteam source"
     rm -rf "$GODOTSTEAM_DIR"
@@ -242,6 +276,13 @@ echo "==> Checking out GodotSteam 3.30"
 git -C "$GODOTSTEAM_DIR" fetch -q --depth 1 origin "$GODOTSTEAM_REF"
 git -C "$GODOTSTEAM_DIR" reset -q --hard FETCH_HEAD
 git -C "$GODOTSTEAM_DIR" clean -qfdx
+ACTUAL_GODOTSTEAM_SHA="$(git -C "$GODOTSTEAM_DIR" rev-parse HEAD)"
+if [[ "$ACTUAL_GODOTSTEAM_SHA" != "$GODOTSTEAM_EXPECTED_SHA" ]]; then
+    echo "ERROR: GodotSteam $GODOTSTEAM_REF resolved to unexpected commit:" >&2
+    echo "       expected $GODOTSTEAM_EXPECTED_SHA" >&2
+    echo "       got      $ACTUAL_GODOTSTEAM_SHA" >&2
+    exit 2
+fi
 
 if [[ ! -d "$PROTON_DIR/.git" ]]; then
     echo "==> Fetching Valve Proton Steamworks compatibility headers"
@@ -371,7 +412,10 @@ manifest = {
     "architecture": "aarch64",
     "godot_ref": os.environ["GODOT_SOURCE_SHA"],
     "godot_version_output": version,
-    "godot_patch": "upstream Godot PR #123099 CanvasItem ancestral-class fix",
+    "godot_patch": (
+        "upstream Godot PR #123099 CanvasItem ancestral-class fix + "
+        "release-safe Variant missing-method guard"
+    ),
     "godotsteam_ref": os.environ["GODOTSTEAM_SOURCE_SHA"],
     "godotsteam_compatibility_version": "3.30",
     "steamworks_headers": (
@@ -464,6 +508,7 @@ class CustomGodotRuntimeManager:
                     "STEAM_API",
                     "GODOT_REF",
                     "GODOTSTEAM_REF",
+                    "GODOTSTEAM_EXPECTED_SHA",
                     "PROTON_REF",
                     "RECIPE_ID",
                 )
@@ -535,6 +580,7 @@ class CustomGodotRuntimeManager:
                 "STEAM_API": str(self.steam_api),
                 "GODOT_REF": GODOT_REF,
                 "GODOTSTEAM_REF": GODOTSTEAM_REF,
+                "GODOTSTEAM_EXPECTED_SHA": GODOTSTEAM_EXPECTED_SHA,
                 "PROTON_REF": PROTON_REF,
                 "RECIPE_ID": RECIPE_ID,
             }
