@@ -13,9 +13,12 @@ from rpgmframe.builder import BuildError as RPGMFrameBuildError
 from rpgmframe.builder import build_game as build_rpgm_game
 from rpgmframe.detector import inspect_game as inspect_rpgm_game
 from megcfbt.frame_package import (
+    FRAMEDROP_ZIP_UNPACK_LIMIT,
     FramePackageError,
     create_frame_zip,
     embed_steam_cover,
+    framedrop_zip_compatible,
+    zip_unpacked_size,
     write_frame_metadata,
 )
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
@@ -260,6 +263,14 @@ def build_source(
             if archive
             else None
         )
+        if archive_path is not None and not framedrop_zip_compatible(archive_path):
+            unpacked = zip_unpacked_size(archive_path)
+            warnings += (
+                "FrameDrop's ZIP extraction path currently rejects packages over "
+                f"{FRAMEDROP_ZIP_UNPACK_LIMIT / 1024**3:.0f} GiB unpacked "
+                f"(this package is {unpacked / 1024**3:.2f} GiB unpacked). "
+                f"Drag the converted build folder into FrameDrop instead: {output_path}",
+            )
     except (
         RenFrameBuildError,
         RPGMFrameBuildError,
