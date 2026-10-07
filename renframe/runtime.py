@@ -334,6 +334,45 @@ def _safe_tar_members(
     return members
 
 
+def _extract_selected_members(
+    archive: tarfile.TarFile,
+    members: list[tarfile.TarInfo],
+    destination: Path,
+) -> None:
+    """Extract selected tar members without requiring symlink privileges."""
+    root = destination.resolve()
+    for member in members:
+        relative = PurePosixPath(member.name)
+        target = destination.joinpath(*relative.parts)
+        resolved = target.resolve()
+        if resolved != root and root not in resolved.parents:
+            raise RuntimeDownloadError(
+                f"Refusing unsafe path in official Ren'Py archive: {member.name}"
+            )
+
+        if member.isdir():
+            target.mkdir(parents=True, exist_ok=True)
+            continue
+
+        if not (member.isfile() or member.issym() or member.islnk()):
+            raise RuntimeDownloadError(
+                f"Refusing special file in official Ren'Py archive: {member.name}"
+            )
+
+        source = archive.extractfile(member)
+        if source is None:
+            raise RuntimeDownloadError(
+                f"Could not read file from official Ren'Py archive: {member.name}"
+            )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with source, target.open("wb") as output:
+            shutil.copyfileobj(source, output)
+        try:
+            target.chmod(member.mode)
+        except OSError:
+            pass
+
+
 def _validate_platform_dir(path: Path) -> None:
     if not path.is_dir():
         raise RuntimeDownloadError(f"Extracted Ren'Py platform is missing: {path}")
@@ -493,7 +532,7 @@ class RuntimeManager:
                         f"Ren'Py {release} sdkarm does not contain "
                         f"lib/{destination.name}"
                     )
-                archive.extractall(extracted_root, members=members)
+                _extract_selected_members(archive, members, extracted_root)
 
             found = [
                 path

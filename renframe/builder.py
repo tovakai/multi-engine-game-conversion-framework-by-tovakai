@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import shlex
+import re
 import shutil
 import uuid
 from collections.abc import Callable
@@ -392,6 +392,36 @@ def _find_source_launcher(root: Path) -> Path | None:
     return (preferred or fallback or [None])[0]
 
 
+def _patch_source_launcher_for_arm(path: Path) -> bool:
+    """Teach older distributed Ren'Py launchers about Linux AArch64."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+
+    if "linux-aarch64" in text:
+        return True
+
+    pattern = re.compile(r"(?m)^(?P<indent>[ \t]*)Linux-\*\)[ \t]*\n")
+    match = pattern.search(text)
+    if match is None:
+        # Newer launchers may already derive linux-$(uname -m) generically.
+        return "linux-$(uname -m)" in text
+
+    indent = match.group("indent")
+    snippet = (
+        f'{indent}*-aarch64|*-arm64)\n'
+        f'{indent}    RENPY_PLATFORM="linux-aarch64"\n'
+        f'{indent}    ;;\n'
+    )
+    path.write_text(
+        text[: match.start()] + snippet + text[match.start() :],
+        encoding="utf-8",
+        newline="\n",
+    )
+    return True
+
+
 def _write_grafted_launcher(
     root: Path,
     *,
@@ -399,11 +429,20 @@ def _write_grafted_launcher(
     platform_name: str,
 ) -> Path:
     launcher = root / "launch.sh"
-    if source_launcher is not None:
+    if source_launcher is not None and _patch_source_launcher_for_arm(source_launcher):
         relative = source_launcher.relative_to(root).as_posix()
-        command = f'exec "$ROOT"/{shlex.quote(relative)} "$@"'
+        command = f'exec "$ROOT/{relative}" "$ROOT" "$@"'
     else:
-        command = f'exec "$ROOT/lib/{platform_name}/renpy" "$ROOT" "$@"'
+        command = (
+            f'RUNTIME="$ROOT/lib/{platform_name}"\n'
+            'if [[ -x "$RUNTIME/renpy" ]]; then\n'
+            '    exec "$RUNTIME/renpy" "$ROOT" "$@"\n'
+            'elif [[ -x "$RUNTIME/python" && -f "$ROOT/renpy.py" ]]; then\n'
+            '    exec "$RUNTIME/python" "$ROOT/renpy.py" "$ROOT" "$@"\n'
+            'fi\n'
+            'echo "No usable Ren\\x27Py ARM64 runtime entrypoint found." >&2\n'
+            'exit 126'
+        )
 
     launcher.write_text(
         "#!/usr/bin/env bash\n"
