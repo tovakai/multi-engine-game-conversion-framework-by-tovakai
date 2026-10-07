@@ -1,1 +1,3 @@
-from megcfbt.cli import main\n\nraise SystemExit(main())\n
+from megcfbt.cli import main
+
+raise SystemExit(main())
