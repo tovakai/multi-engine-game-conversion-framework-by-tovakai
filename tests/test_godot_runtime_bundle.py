@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from rpgmframe.godot_backend import GodotBuildError, _copy_runtime_bundle
+from rpgmframe.godot_backend import (
+    GodotBuildError,
+    _copy_godotsteam_data,
+    _copy_runtime_bundle,
+)
 
 
 def _write_elf(path: Path, machine: int) -> None:
@@ -43,3 +47,24 @@ def test_custom_runtime_bundle_rejects_wrong_arch_shared_library(tmp_path: Path)
 
     with pytest.raises(GodotBuildError, match="not aarch64"):
         _copy_runtime_bundle(runtime, staging)
+
+
+def test_godotsteam_data_is_copied_beside_runtime(tmp_path: Path) -> None:
+    source = tmp_path / "game"
+    staging = tmp_path / "staging"
+    source.mkdir()
+    staging.mkdir()
+    (source / "steam_data.json").write_text('{"app_id":"1942280"}', encoding="utf-8")
+
+    assert _copy_godotsteam_data(source, staging) is True
+    assert (staging / "steam_data.json").read_text(encoding="utf-8") == '{"app_id":"1942280"}'
+
+
+def test_missing_godotsteam_data_is_not_invented(tmp_path: Path) -> None:
+    source = tmp_path / "game"
+    staging = tmp_path / "staging"
+    source.mkdir()
+    staging.mkdir()
+
+    assert _copy_godotsteam_data(source, staging) is False
+    assert not (staging / "steam_data.json").exists()
