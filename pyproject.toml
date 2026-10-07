@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-engine-game-conversion-framework-by-tovakai"
+version = "0.1.0"
+description = "Multi-engine game runtime conversion tooling for Linux ARM64."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "Tovakai" }]
+keywords = ["renpy", "rpg-maker", "godot", "arm64", "linux", "steam-frame"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.4.2"]
+build = ["pyinstaller>=6.3.0"]
+
+[project.scripts]
+multi-engine-game-conversion-framework-by-tovakai = "megcfbt.cli:main"
+multi-engine-game-conversion-framework-by-tovakai-gui = "megcfbt.gui:main"
+renframe = "renframe.cli:main"
+rpgmframe = "rpgmframe.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["megcfbt*", "renframe*", "rpgmframe*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
