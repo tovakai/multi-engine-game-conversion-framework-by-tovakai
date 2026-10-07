@@ -20,6 +20,28 @@ _STOCK_LINE = b"MAX_UPLOAD = 8 * 1024**3"
 _PATCHED_LINE = b"MAX_UPLOAD = 20 * 1024**3"
 
 
+def _exact_line_count(data: bytes, line: bytes) -> int:
+    return sum(part == line for part in data.splitlines())
+
+
+def _replace_exact_line(data: bytes, before: bytes, after: bytes) -> bytes:
+    output: list[bytes] = []
+    changed = 0
+    for raw in data.splitlines(keepends=True):
+        body = raw.rstrip(b"\r\n")
+        ending = raw[len(body) :]
+        if body == before:
+            output.append(after + ending)
+            changed += 1
+        else:
+            output.append(raw)
+    if changed != 1:
+        raise FrameControlPatchError(
+            "Frame Control changed while it was being inspected; refusing to patch."
+        )
+    return b"".join(output)
+
+
 class FrameControlPatchError(RuntimeError):
     """Raised when Frame Control cannot be identified or safely patched."""
 
@@ -132,8 +154,8 @@ def require_frame_control_server(selection: Path | str | None = None) -> Path:
 
 
 def _limit_from_bytes(data: bytes) -> int:
-    stock = data.count(_STOCK_LINE)
-    patched = data.count(_PATCHED_LINE)
+    stock = _exact_line_count(data, _STOCK_LINE)
+    patched = _exact_line_count(data, _PATCHED_LINE)
     if stock + patched != 1:
         if stock + patched > 1:
             raise FrameControlPatchError(
@@ -210,7 +232,7 @@ def patch_upload_limit(
         )
 
     data = status.server_path.read_bytes()
-    if data.count(_STOCK_LINE) != 1:
+    if _exact_line_count(data, _STOCK_LINE) != 1:
         raise FrameControlPatchError("Frame Control changed while it was being inspected.")
 
     backup = status.backup_path
@@ -229,7 +251,7 @@ def patch_upload_limit(
         except OSError as exc:
             raise FrameControlPatchError(f"Could not create backup {backup}: {exc}") from exc
 
-    patched = data.replace(_STOCK_LINE, _PATCHED_LINE, 1)
+    patched = _replace_exact_line(data, _STOCK_LINE, _PATCHED_LINE)
     _atomic_write(status.server_path, patched)
     result = inspect_frame_control(status.server_path)
     if not result.is_patched:
