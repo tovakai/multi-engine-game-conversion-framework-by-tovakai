@@ -33,7 +33,7 @@ def _parser() -> argparse.ArgumentParser:
         "--runtime",
         type=Path,
         help=(
-            "manual backend runtime override for RPG Maker/Godot; custom Godot "
+            "manual backend runtime override for RPG Maker/Construct/Godot; custom Godot "
             "runtime directories must contain godot.arm64"
         ),
     )
