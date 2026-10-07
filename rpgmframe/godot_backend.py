@@ -69,7 +69,13 @@ def build_godot_game(
     force: bool,
     archive_type: str | None,
     progress: Callable[[str], None] | None,
+    stage_progress: Callable[[float, str], None] | None = None,
 ) -> BuildResult:
+    def stage(value: float, message: str) -> None:
+        if stage_progress:
+            stage_progress(max(0.0, min(1.0, value)), message)
+
+    stage(0.05, "Validating Godot payload")
     if inspection.engine is not EngineVariant.GODOT:
         raise GodotBuildError("Godot backend received a non-Godot game")
     if inspection.game_root is None or inspection.engine_version is None:
@@ -85,6 +91,7 @@ def build_godot_game(
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
 
     if runtime is None:
+        stage(0.15, f"Resolving Godot {inspection.engine_version} ARM64 runtime")
         try:
             runtime_path = GodotRuntimeManager().ensure_godot(
                 inspection.engine_version,
@@ -102,6 +109,8 @@ def build_godot_game(
         if read_elf_architecture(binary) != "aarch64":
             raise GodotBuildError(f"Supplied Godot runtime is not AArch64: {binary}")
 
+    stage(0.35, "Godot ARM64 runtime ready")
+
     if output_path.exists() and not force:
         raise GodotBuildError(
             f"Output already exists: {output_path}. Pass --force to replace it."
@@ -116,12 +125,16 @@ def build_godot_game(
         warnings.insert(0, f"Built directly from {archive_type.upper()} input")
 
     try:
+        stage(0.45, "Preparing build staging area")
         staging.mkdir()
         shutil.copy2(runtime_path / "godot.arm64", staging / "godot.arm64")
         (staging / "godot.arm64").chmod(
             (staging / "godot.arm64").stat().st_mode | 0o755
         )
 
+        stage(0.55, "Copying Godot game payload")
+        if progress:
+            progress("Copying Godot game payload into ARM64 build")
         game_dir = staging / "game"
         shutil.copytree(
             inspection.game_root,
@@ -138,6 +151,7 @@ def build_godot_game(
         elif not pck_target.is_file():
             shutil.copy2(pack.path, pck_target)
 
+        stage(0.78, "Checking native Windows dependencies")
         dlls = list(inspection.game_root.rglob("*.dll"))
         if dlls:
             warnings.append(
@@ -145,6 +159,7 @@ def build_godot_game(
                 "GDExtension/GDNative plugins, Linux ARM64 equivalents will be required."
             )
 
+        stage(0.90, "Writing ARM64 launcher")
         launcher = staging / "launch.sh"
         launcher.write_text(
             godot_launcher_body(f"game/{pck_name}"),
@@ -153,6 +168,7 @@ def build_godot_game(
         )
         launcher.chmod(launcher.stat().st_mode | 0o755)
         _install(staging, output_path, force=force)
+        stage(1.0, "Godot ARM64 package complete")
     except GodotBuildError:
         shutil.rmtree(staging, ignore_errors=True)
         raise
