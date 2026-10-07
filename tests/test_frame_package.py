@@ -36,18 +36,28 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
     with zipfile.ZipFile(archive) as zf:
         names = set(zf.namelist())
         assert "Example-frame/launch.sh" in names
+        assert "Example-frame/payload/launch.sh" in names
         assert "Example-frame/.megcfbt/package.json" in names
         assert "Example-frame/.megcfbt/artwork/grid.png" in names
+        assert "Example-frame/payload/.megcfbt/package.json" in names
+
+        trampoline = zf.read("Example-frame/launch.sh").decode("utf-8")
+        assert 'PAYLOAD="$ROOT/payload"' in trampoline
+        assert 'exec "$PAYLOAD/$TARGET" "$@"' in trampoline
 
         launch_mode = zf.getinfo("Example-frame/launch.sh").external_attr >> 16
-        data_mode = zf.getinfo("Example-frame/data.txt").external_attr >> 16
+        payload_launch_mode = zf.getinfo("Example-frame/payload/launch.sh").external_attr >> 16
+        data_mode = zf.getinfo("Example-frame/payload/data.txt").external_attr >> 16
         assert stat.S_IMODE(launch_mode) == 0o755
+        assert stat.S_IMODE(payload_launch_mode) == 0o755
         assert stat.S_IMODE(data_mode) == 0o644
 
         metadata = json.loads(
             zf.read("Example-frame/.megcfbt/package.json").decode("utf-8")
         )
         assert metadata["launcher"] == "launch.sh"
+        assert metadata["payload"] == "payload"
+        assert metadata["payload_launcher"] == "launch.sh"
         assert metadata["runtime"] == "SteamLinuxRuntime_4-arm64"
 
 
