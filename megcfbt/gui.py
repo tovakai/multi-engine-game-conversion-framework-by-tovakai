@@ -84,8 +84,8 @@ def _make_root():
         root = ctk.CTk()
 
     root.title(APP_NAME)
-    root.geometry("1080x780")
-    root.minsize(920, 680)
+    root.geometry("1080x820")
+    root.minsize(920, 720)
     root.configure(fg_color=C_BG)
     return root
 
@@ -318,11 +318,52 @@ class ConverterApp:
         )
         self.notes_box.configure(state="disabled")
 
-        self.progress = ctk.CTkProgressBar(
-            self.root, mode="indeterminate", fg_color=C_PANEL, progress_color=C_TEAL
+        progress_panel = ctk.CTkFrame(self.root, fg_color="transparent")
+        progress_panel.pack(fill="x", padx=28, pady=(0, 6))
+
+        overall_row = ctk.CTkFrame(progress_panel, fg_color="transparent")
+        overall_row.pack(fill="x")
+        ctk.CTkLabel(
+            overall_row,
+            text="Overall",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+        ).pack(side="left")
+        self.progress_percent_label = ctk.CTkLabel(
+            overall_row,
+            text="0%",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
         )
-        self.progress.pack(fill="x", padx=28, pady=(0, 6))
-        self.progress.stop()
+        self.progress_percent_label.pack(side="right")
+
+        self.overall_progress = ctk.CTkProgressBar(
+            progress_panel,
+            mode="determinate",
+            fg_color=C_PANEL,
+            progress_color=C_TEAL,
+        )
+        self.overall_progress.pack(fill="x", pady=(2, 6))
+        self.overall_progress.set(0.0)
+
+        self.activity_label = ctk.CTkLabel(
+            progress_panel,
+            text="Current task: idle",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+            justify="left",
+            wraplength=980,
+        )
+        self.activity_label.pack(fill="x")
+        self.activity_progress = ctk.CTkProgressBar(
+            progress_panel,
+            mode="indeterminate",
+            fg_color=C_PANEL,
+            progress_color=C_ACCENT,
+        )
+        self.activity_progress.pack(fill="x", pady=(2, 0))
+        self.activity_progress.stop()
         self.status = ctk.CTkLabel(
             self.root, text="Ready", text_color=C_MUTED, font=ctk.CTkFont(size=12)
         )
@@ -351,15 +392,34 @@ class ConverterApp:
     def _set_status(self, message: str, color: str = C_MUTED) -> None:
         self._dispatch(lambda: self.status.configure(text=message, text_color=color))
 
+    def _set_progress(self, value: float, message: str) -> None:
+        clamped = max(0.0, min(1.0, value))
+
+        def update() -> None:
+            self.overall_progress.set(clamped)
+            self.progress_percent_label.configure(text=f"{round(clamped * 100)}%")
+            self.activity_label.configure(text=f"Current task: {message}")
+
+        self._dispatch(update)
+
+    def _progress_log(self, message: str) -> None:
+        self._log(message)
+        self._dispatch(
+            lambda: self.activity_label.configure(text=f"Current task: {message}")
+        )
+
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         if busy:
             self.convert_btn.configure(state="disabled", text="Working…")
-            self.progress.start()
+            self.overall_progress.set(0.0)
+            self.progress_percent_label.configure(text="0%")
+            self.activity_label.configure(text="Current task: starting conversion…")
+            self.activity_progress.start()
         else:
             allowed = bool(self.inspection and self.inspection.buildable)
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="Convert")
-            self.progress.stop()
+            self.activity_progress.stop()
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -380,6 +440,10 @@ class ConverterApp:
         self.engine_label.configure(text="Engine: inspecting…")
         self.backend_label.configure(text="Backend: inspecting…")
         self.compat_label.configure(text="Compatibility: checking…")
+        self.overall_progress.set(0.0)
+        self.progress_percent_label.configure(text="0%")
+        self.activity_label.configure(text="Current task: inspecting source…")
+        self.activity_progress.start()
         self._generation += 1
         generation = self._generation
 
@@ -393,6 +457,8 @@ class ConverterApp:
         threading.Thread(target=worker, daemon=True).start()
 
     def _show_inspection(self, result: UnifiedInspection) -> None:
+        self.activity_progress.stop()
+        self.activity_label.configure(text="Current task: ready")
         self.inspection = result
         version = f" {result.engine_version}" if result.engine_version else ""
         self.game_label.configure(text=result.game_name or "Unknown game")
@@ -426,6 +492,8 @@ class ConverterApp:
             self._log("Inspect: " + warning)
 
     def _inspection_failed(self, message: str) -> None:
+        self.activity_progress.stop()
+        self.activity_label.configure(text="Current task: inspection failed")
         self.inspection = None
         self.drop_label.configure(text="Inspection failed")
         self.engine_label.configure(text="Engine: inspection failed", text_color=C_ERR)
@@ -510,7 +578,8 @@ class ConverterApp:
                     renpy_runtime=self.renpy_runtime,
                     force=force,
                     archive=archive,
-                    progress=self._log,
+                    progress=self._progress_log,
+                    stage_progress=self._set_progress,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
@@ -521,6 +590,7 @@ class ConverterApp:
         threading.Thread(target=worker, daemon=True).start()
 
     def _done(self, result: UnifiedBuildResult) -> None:
+        self._set_progress(1.0, "Complete")
         self.last_output = result.output_path
         self.last_archive = result.archive_path
         self._set_busy(False)
@@ -540,6 +610,7 @@ class ConverterApp:
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)
+        self.activity_label.configure(text="Current task: failed")
         self._log("ERROR: " + message)
         self._set_status("Failed", C_ERR)
         messagebox.showerror(APP_NAME, message)
