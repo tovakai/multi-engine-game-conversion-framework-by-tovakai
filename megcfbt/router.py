@@ -188,9 +188,16 @@ def build_source(
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
     progress: Callable[[str], None] | None = None,
+    stage_progress: Callable[[float, str], None] | None = None,
 ) -> UnifiedBuildResult:
+    def stage(value: float, message: str) -> None:
+        if stage_progress:
+            stage_progress(max(0.0, min(1.0, value)), message)
+
     path = Path(source).expanduser().resolve()
+    stage(0.03, "Inspecting source")
     inspection = inspect_source(path)
+    stage(0.12, f"Detected {inspection.engine_label}")
     if not inspection.buildable or inspection.backend is None:
         raise ConversionError(
             f"Detected {inspection.engine_label}, but compatibility is "
@@ -204,6 +211,7 @@ def build_source(
     )
 
     try:
+        stage(0.20, "Building ARM64 package")
         if inspection.backend == "renframe":
             with prepare_source(path) as prepared:
                 prepared_inspection = _inspect_prepared(prepared.root)
@@ -234,7 +242,13 @@ def build_source(
             game_name = result.game_name
             engine_version = result.engine_version
 
-        archive_path = create_tar_gz(output_path, force=force) if archive else None
+        stage(0.82, "Game build complete")
+        if archive:
+            stage(0.88, "Creating transfer archive")
+            archive_path = create_tar_gz(output_path, force=force)
+        else:
+            archive_path = None
+        stage(1.0, "Complete")
     except (
         RenFrameBuildError,
         RPGMFrameBuildError,
