@@ -10,6 +10,7 @@ from typing import Any
 
 class EngineFamily(str, Enum):
     RPG_MAKER = "rpgmaker"
+    CONSTRUCT = "construct"
     GODOT = "godot"
 
 
@@ -19,6 +20,8 @@ class EngineVariant(str, Enum):
     VX_ACE = "vxace"
     MV = "mv"
     MZ = "mz"
+    CONSTRUCT_2 = "construct2"
+    CONSTRUCT_3 = "construct3"
     GODOT = "godot"
     UNKNOWN = "unknown"
 
