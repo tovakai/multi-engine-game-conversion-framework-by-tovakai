@@ -38,8 +38,10 @@ for file in "$BINARY" "$STEAM_LIB"; do
         exit 1
     }
 done
+# Do not use grep -q here: with pipefail enabled it can exit after the first
+# match, SIGPIPE readelf, and make a successful symbol check look like failure.
 for symbol in SteamInternal_FindOrCreateUserInterface SteamInternal_SteamAPI_Init; do
-    readelf -Ws "$STEAM_LIB" | grep -q "$symbol" || {
+    readelf -Ws "$STEAM_LIB" | grep "$symbol" >/dev/null || {
         echo "Steam API library missing $symbol" >&2
         exit 1
     }
