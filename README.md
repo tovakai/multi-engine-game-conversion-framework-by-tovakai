@@ -37,7 +37,10 @@ Multi-Engine Game Conversion Framework by Tovakai
                      |
              Linux ARM64 build
                      |
-             optional tar.gz
+          Frame-ready ZIP package
+                     |
+       FrameDrop / Frame Control
+          or local Steam install
 ```
 
 The current import points are recorded under `docs/backends/`.
@@ -72,6 +75,25 @@ Build it:
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build /path/to/game
 ```
+
+Successful builds now also produce a `*-linux-aarch64.zip` by default. The ZIP
+keeps Linux execute bits in its archive metadata so it can be dropped directly
+into FrameDrop or Frame Control as a native ARM64 title.
+
+On Linux ARM64, add the converted build straight to the local Steam library:
+
+```bash
+multi-engine-game-conversion-framework-by-tovakai steam-install /path/to/Game-frame
+```
+
+Or do both in one pass:
+
+```bash
+multi-engine-game-conversion-framework-by-tovakai build /path/to/game --add-to-steam
+```
+
+The GUI exposes the same flow as an **Add to Steam** button after conversion
+when running on Linux ARM64.
 
 Open the GUI:
 
@@ -110,6 +132,27 @@ multi-engine-game-conversion-framework-by-tovakai build Game.zip \
 
 Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
+
+## Steam artwork
+
+Pass a portrait/grid cover during conversion with:
+
+```bash
+multi-engine-game-conversion-framework-by-tovakai build /path/to/game \
+  --steam-cover /path/to/cover.png
+```
+
+The artwork is stored inside the converted build under
+`.megcfbt/artwork/`. The on-device Steam installer applies bundled grid art
+through the running Steam client's library API and also uses a bundled
+`icon.png` or `logo.png` as a shortcut icon when one exists. The metadata
+layout has slots for `grid`, `wide`, `hero`, `logo`, and `icon` so
+automatic source-art/SteamGridDB filling can be added without changing engine
+backends.
+
+Converted builds also contain `.megcfbt/package.json`, which records the
+canonical launcher and the `SteamLinuxRuntime_4-arm64` runtime. This keeps
+Steam/Frame integration outside RenFrame, RPGMFrame, and the Godot backend.
 
 ## Design rule
 
