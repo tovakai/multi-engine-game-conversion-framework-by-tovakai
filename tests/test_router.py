@@ -3,8 +3,16 @@ from __future__ import annotations
 import json
 import struct
 from pathlib import Path
+from types import SimpleNamespace
 
-from megcfbt.router import inspect_source, output_path_for_source
+import pytest
+
+from megcfbt.router import (
+    ConversionError,
+    build_source,
+    inspect_source,
+    output_path_for_source,
+)
 
 
 def _write(path: Path, content: str = "") -> None:
@@ -106,6 +114,64 @@ def test_custom_godot_build_is_detected_without_executing_it(tmp_path: Path) -> 
     assert any("godotsteam" in warning.lower() for warning in result.warnings)
     assert any("godotsteam" in evidence.lower() for evidence in result.evidence)
 
+
+
+def _write_custom_godot_export(root: Path) -> Path:
+    game = root / "Brotato"
+    _write_bytes(
+        game / "Brotato.exe",
+        (
+            b"MZ\\x00"
+            b"3.7.dev.custom_build\\x00"
+            b"modules/godotsteam/godotsteam.cpp\\x00"
+            b"get_godotsteam_version\\x00"
+        ),
+    )
+    _write_godot_pack(game / "Brotato.pck", major=3, minor=7, patch=0)
+    return game
+
+
+def test_custom_godot_build_requires_runtime_override(tmp_path: Path) -> None:
+    root = tmp_path / "custom-godot"
+    _write_custom_godot_export(root)
+
+    with pytest.raises(ConversionError, match="custom ARM64 runtime"):
+        build_source(root, output=tmp_path / "out", archive=False)
+
+
+def test_custom_godot_runtime_override_reaches_backend(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "custom-godot"
+    _write_custom_godot_export(root)
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    output = tmp_path / "out"
+    seen: dict[str, object] = {}
+
+    def fake_build(path, **kwargs):
+        seen["path"] = path
+        seen["runtime"] = kwargs.get("runtime")
+        return SimpleNamespace(
+            launcher_path=output / "launch.sh",
+            warnings=[],
+            game_name="Brotato",
+            engine_version="3.7.0",
+        )
+
+    monkeypatch.setattr("megcfbt.router.build_rpgm_game", fake_build)
+
+    result = build_source(
+        root,
+        output=output,
+        backend_runtime=runtime,
+        archive=False,
+    )
+
+    assert seen["runtime"] == runtime
+    assert result.engine == "godot"
+    assert result.game_name == "Brotato"
 
 
 def test_detects_nested_rpg_maker_with_sibling_wrapper_directories(tmp_path: Path) -> None:
