@@ -42,6 +42,30 @@ def _ignore_windows_export(directory: str, contents: list[str]) -> list[str]:
     return ignored
 
 
+def _copy_runtime_bundle(runtime_path: Path, staging: Path) -> list[str]:
+    """Copy the ARM64 Godot entrypoint and portable sibling shared libraries."""
+    copied: list[str] = []
+
+    binary = runtime_path / "godot.arm64"
+    shutil.copy2(binary, staging / "godot.arm64")
+    (staging / "godot.arm64").chmod(
+        (staging / "godot.arm64").stat().st_mode | 0o755
+    )
+    copied.append("godot.arm64")
+
+    for companion in sorted(runtime_path.glob("*.so*"), key=lambda path: path.name):
+        if not companion.is_file():
+            continue
+        architecture = read_elf_architecture(companion)
+        if architecture is not None and architecture != "aarch64":
+            raise GodotBuildError(
+                f"Runtime companion is {architecture}, not aarch64: {companion}"
+            )
+        shutil.copy2(companion, staging / companion.name)
+        copied.append(companion.name)
+
+    return copied
+
 def _staging_path(output: Path) -> Path:
     return output.parent / f".{output.name}.tmp-{uuid.uuid4().hex[:8]}"
 
@@ -143,10 +167,9 @@ def build_godot_game(
     try:
         stage(0.45, "Preparing build staging area")
         staging.mkdir()
-        shutil.copy2(runtime_path / "godot.arm64", staging / "godot.arm64")
-        (staging / "godot.arm64").chmod(
-            (staging / "godot.arm64").stat().st_mode | 0o755
-        )
+        runtime_files = _copy_runtime_bundle(runtime_path, staging)
+        if progress:
+            progress("Runtime bundle: " + ", ".join(runtime_files))
 
         stage(0.55, "Copying Godot game payload")
         if progress:
