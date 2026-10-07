@@ -39,7 +39,7 @@ PROTON_REF = "5b89db940e0ebe3a137a6009a3589232fe084c09"
 DEFAULT_STEAM_API = Path("/opt/steamvr/bin/linuxarm64/libsteam_api.so")
 DEFAULT_DISTROBOX = "tovakai-godot-build"
 
-_REQUIRED_COMMANDS = ("git", "python3", "scons", "pkg-config", "gcc", "g++")
+_REQUIRED_COMMANDS = ("bash", "git", "python3", "scons", "pkg-config", "gcc", "g++")
 _REQUIRED_PKG_CONFIG = (
     "x11",
     "xcursor",
@@ -432,17 +432,34 @@ class CustomGodotRuntimeManager:
             return False
         return isinstance(value, dict) and value.get("recipe_id") == RECIPE_ID
 
-    def _build_command(self) -> tuple[list[str], str]:
+    def _build_command(
+        self,
+        build_env: dict[str, str],
+    ) -> tuple[list[str], str]:
         worker = self.work_dir / "build-runtime.sh"
         if _distrobox_toolchain_available(self.distrobox_name):
             distrobox = _distrobox_command()
             assert distrobox is not None
+            forwarded = [
+                f"{key}={build_env[key]}"
+                for key in (
+                    "WORK_DIR",
+                    "OUTPUT_DIR",
+                    "STEAM_API",
+                    "GODOT_REF",
+                    "GODOTSTEAM_REF",
+                    "PROTON_REF",
+                    "RECIPE_ID",
+                )
+            ]
             return (
                 [
                     distrobox,
                     "enter",
                     self.distrobox_name,
                     "--",
+                    "env",
+                    *forwarded,
                     "bash",
                     str(worker),
                 ],
@@ -494,13 +511,6 @@ class CustomGodotRuntimeManager:
         temporary = final.parent / f".{RECIPE_ID}.tmp-{uuid.uuid4().hex[:8]}"
         shutil.rmtree(temporary, ignore_errors=True)
 
-        command, runner = self._build_command()
-        if progress:
-            progress(
-                "Building automatic Godot 3.7/GodotSteam compatibility runtime "
-                f"using {runner}"
-            )
-
         env = dict(os.environ)
         env.update(
             {
@@ -513,6 +523,13 @@ class CustomGodotRuntimeManager:
                 "RECIPE_ID": RECIPE_ID,
             }
         )
+
+        command, runner = self._build_command(env)
+        if progress:
+            progress(
+                "Building automatic Godot 3.7/GodotSteam compatibility runtime "
+                f"using {runner}"
+            )
 
         try:
             process = subprocess.Popen(
