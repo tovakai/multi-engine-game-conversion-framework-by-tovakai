@@ -1,4 +1,4 @@
-"""Desktop GUI for Multi-Engine Game Conversion Framework by Tovakai."""
+"""Desktop GUI for Multi-Engine Game Conversion Framework by tovakai."""
 
 from __future__ import annotations
 
@@ -19,19 +19,27 @@ from megcfbt.router import (
     output_path_for_source,
 )
 
-APP_TAG = "Ren'Py + RPG Maker + Godot → Linux ARM64"
+APP_TAG = "CONVERSION DECK // Ren'Py · RPG Maker · Godot → Linux ARM64"
 
-C_BG = "#07111f"
-C_PANEL = "#12233a"
-C_PANEL_2 = "#1a3050"
-C_BORDER = "#2a4a6a"
-C_TEXT = "#f0e6d8"
-C_MUTED = "#9eb0c4"
-C_ACCENT = "#ff7a45"
-C_ACCENT_HOVER = "#ff9466"
-C_TEAL = "#3db8a8"
-C_OK = "#5ecf8e"
-C_ERR = "#ff6b7a"
+# Cassette-futurist palette: smoked plastic, phosphor teal, warm transport orange.
+C_BG = "#05070b"
+C_BG_2 = "#090e15"
+C_PANEL = "#101722"
+C_PANEL_2 = "#172232"
+C_PANEL_3 = "#0b1119"
+C_BORDER = "#29485a"
+C_BORDER_GLOW = "#49d3c6"
+C_TEXT = "#f1e8d8"
+C_MUTED = "#9babb3"
+C_DIM = "#657682"
+C_ACCENT = "#ff8452"
+C_ACCENT_HOVER = "#ff9a73"
+C_TEAL = "#49d3c6"
+C_TEAL_SOFT = "#2b8f89"
+C_MAGENTA = "#d86df0"
+C_OK = "#70d995"
+C_ERR = "#ff667c"
+C_WARN = "#ffb86c"
 
 ctk: Any = None
 tk: Any = None
@@ -125,31 +133,57 @@ class ConverterApp:
         self.root.after(25, self._drain_ui_queue)
 
     def _build_ui(self) -> None:
-        ctk.CTkFrame(self.root, fg_color=C_ACCENT, height=4, corner_radius=0).pack(
+        ctk.CTkFrame(self.root, fg_color=C_ACCENT, height=3, corner_radius=0).pack(
+            fill="x", side="top"
+        )
+        ctk.CTkFrame(self.root, fg_color=C_TEAL_SOFT, height=1, corner_radius=0).pack(
             fill="x", side="top"
         )
 
         header = ctk.CTkFrame(self.root, fg_color="transparent")
-        header.pack(fill="x", padx=28, pady=(18, 4))
+        header.pack(fill="x", padx=28, pady=(18, 8))
+
+        header_left = ctk.CTkFrame(header, fg_color="transparent")
+        header_left.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(
-            header,
+            header_left,
             text=APP_NAME,
             font=ctk.CTkFont(size=27, weight="bold"),
             text_color=C_TEXT,
         ).pack(anchor="w")
         ctk.CTkLabel(
-            header,
-            text=APP_TAG + "  ·  detect first, route second, replace runtimes carefully",
-            font=ctk.CTkFont(size=14),
-            text_color=C_MUTED,
+            header_left,
+            text=APP_TAG,
+            font=ctk.CTkFont(family="Courier", size=13, weight="bold"),
+            text_color=C_TEAL,
         ).pack(anchor="w", pady=(4, 0))
+
+        deck_badge = ctk.CTkFrame(
+            header,
+            fg_color=C_PANEL_3,
+            border_width=1,
+            border_color=C_BORDER,
+            corner_radius=4,
+        )
+        deck_badge.pack(side="right", padx=(16, 0))
+        ctk.CTkLabel(
+            deck_badge,
+            text="tovakai systems //\nFRAME CONVERSION UNIT // MK I",
+            font=ctk.CTkFont(family="Courier", size=10, weight="bold"),
+            text_color=C_MUTED,
+            justify="right",
+        ).pack(padx=10, pady=7)
+
+        ctk.CTkFrame(
+            self.root, fg_color=C_BORDER, height=1, corner_radius=0
+        ).pack(fill="x", padx=28)
 
         self.drop = ctk.CTkFrame(
             self.root,
-            fg_color=C_PANEL,
+            fg_color=C_PANEL_3,
             border_width=2,
-            border_color=C_BORDER,
-            corner_radius=16,
+            border_color=C_BORDER_GLOW,
+            corner_radius=8,
             height=132,
         )
         self.drop.pack(fill="x", padx=28, pady=14)
@@ -157,14 +191,14 @@ class ConverterApp:
 
         self.drop_label = ctk.CTkLabel(
             self.drop,
-            text="Drop a Ren'Py, RPG Maker, or Godot game folder / .zip here",
-            font=ctk.CTkFont(size=20, weight="bold"),
+            text="INSERT GAME PAYLOAD",
+            font=ctk.CTkFont(family="Courier", size=20, weight="bold"),
             text_color=C_TEXT,
         )
         self.drop_label.pack(expand=True, pady=(22, 2))
         self.path_label = ctk.CTkLabel(
             self.drop,
-            text="or Browse…  ·  source files remain untouched",
+            text="DROP FOLDER OR .ZIP HERE  //  SOURCE REMAINS UNTOUCHED",
             font=ctk.CTkFont(size=13),
             text_color=C_MUTED,
         )
@@ -181,7 +215,7 @@ class ConverterApp:
         controls.pack(fill="x", padx=28, pady=(0, 6))
         ctk.CTkButton(
             controls,
-            text="Browse…",
+            text="BROWSE",
             width=120,
             height=40,
             fg_color=C_PANEL_2,
@@ -191,7 +225,7 @@ class ConverterApp:
 
         self.convert_btn = ctk.CTkButton(
             controls,
-            text="Convert",
+            text="CONVERT",
             state="disabled",
             width=168,
             height=40,
@@ -205,7 +239,7 @@ class ConverterApp:
 
         ctk.CTkButton(
             controls,
-            text="Output folder…",
+            text="OUTPUT FOLDER",
             width=132,
             height=40,
             fg_color="transparent",
@@ -216,7 +250,7 @@ class ConverterApp:
         ).pack(side="right")
         ctk.CTkButton(
             controls,
-            text="Open output",
+            text="OPEN OUTPUT",
             width=120,
             height=40,
             fg_color="transparent",
@@ -230,14 +264,14 @@ class ConverterApp:
         options.pack(fill="x", padx=28, pady=(0, 8))
         ctk.CTkCheckBox(
             options,
-            text="Create transfer .tar.gz",
+            text="CREATE TRANSFER .TAR.GZ",
             variable=self.archive_var,
             fg_color=C_TEAL,
             text_color=C_MUTED,
         ).pack(side="left")
         ctk.CTkCheckBox(
             options,
-            text="Replace existing output",
+            text="REPLACE EXISTING OUTPUT",
             variable=self.force_var,
             fg_color=C_ACCENT,
             text_color=C_MUTED,
@@ -245,7 +279,7 @@ class ConverterApp:
 
         self.runtime_button = ctk.CTkButton(
             options,
-            text="Runtime: automatic",
+            text="RUNTIME // AUTOMATIC",
             width=250,
             height=30,
             fg_color=C_PANEL_2,
@@ -258,7 +292,7 @@ class ConverterApp:
 
         self.out_label = ctk.CTkLabel(
             self.root,
-            text=f"Output: {self.output_dir}",
+            text=f"OUTPUT // {self.output_dir}",
             text_color=C_MUTED,
             font=ctk.CTkFont(size=12),
         )
@@ -270,11 +304,13 @@ class ConverterApp:
         left = ctk.CTkFrame(body, fg_color=C_PANEL, corner_radius=14)
         left.pack(side="left", fill="both", expand=True, padx=(0, 10))
         ctk.CTkLabel(
-            left, text="Progress", text_color=C_TEAL,
-            font=ctk.CTkFont(size=13, weight="bold")
+            left, text="ACTIVITY LOG", text_color=C_TEAL,
+            font=ctk.CTkFont(family="Courier", size=13, weight="bold")
         ).pack(anchor="w", padx=16, pady=(14, 4))
         self.log_box = ctk.CTkTextbox(
-            left, fg_color=C_BG, text_color=C_TEXT, corner_radius=10, wrap="word"
+            left, fg_color=C_PANEL_3, text_color=C_TEXT, corner_radius=6, wrap="word",
+            border_width=1, border_color=C_BORDER,
+            font=ctk.CTkFont(family="Courier", size=12)
         )
         self.log_box.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
@@ -283,8 +319,8 @@ class ConverterApp:
         right.pack_propagate(False)
 
         ctk.CTkLabel(
-            right, text="Detected game", text_color=C_ACCENT,
-            font=ctk.CTkFont(size=13, weight="bold")
+            right, text="DETECTED PAYLOAD", text_color=C_ACCENT,
+            font=ctk.CTkFont(family="Courier", size=13, weight="bold")
         ).pack(anchor="w", padx=14, pady=(14, 8))
         self.game_label = ctk.CTkLabel(
             right, text="No game selected", text_color=C_TEXT,
@@ -307,14 +343,16 @@ class ConverterApp:
         self.compat_label.pack(fill="x", padx=14, pady=(2, 10))
 
         self.notes_box = ctk.CTkTextbox(
-            right, fg_color=C_BG, text_color=C_MUTED,
-            corner_radius=10, wrap="word"
+            right, fg_color=C_PANEL_3, text_color=C_MUTED,
+            corner_radius=6, wrap="word", border_width=1, border_color=C_BORDER,
+            font=ctk.CTkFont(family="Courier", size=11)
         )
         self.notes_box.pack(fill="both", expand=True, padx=12, pady=(2, 12))
         self.notes_box.insert(
             "1.0",
-            "The umbrella application keeps RenFrame and RPGMFrame as focused "
-            "backends. Detection decides which backend owns the conversion."
+            "ROUTING MATRIX ONLINE.\n\n"
+            "RenFrame and RPGMFrame remain focused backends. Engine detection "
+            "selects the conversion path; source payloads stay untouched."
         )
         self.notes_box.configure(state="disabled")
 
@@ -325,7 +363,7 @@ class ConverterApp:
         overall_row.pack(fill="x")
         ctk.CTkLabel(
             overall_row,
-            text="Overall",
+            text="OVERALL",
             text_color=C_MUTED,
             font=ctk.CTkFont(size=11),
         ).pack(side="left")
@@ -348,7 +386,7 @@ class ConverterApp:
 
         self.activity_label = ctk.CTkLabel(
             progress_panel,
-            text="Current task: idle",
+            text="CURRENT OPERATION // IDLE",
             text_color=C_MUTED,
             font=ctk.CTkFont(size=11),
             anchor="w",
@@ -364,10 +402,21 @@ class ConverterApp:
         )
         self.activity_progress.pack(fill="x", pady=(2, 0))
         self.activity_progress.stop()
+        status_row = ctk.CTkFrame(self.root, fg_color="transparent")
+        status_row.pack(fill="x", padx=28, pady=(0, 14))
         self.status = ctk.CTkLabel(
-            self.root, text="Ready", text_color=C_MUTED, font=ctk.CTkFont(size=12)
+            status_row,
+            text="SYSTEM READY",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(family="Courier", size=11, weight="bold"),
         )
-        self.status.pack(anchor="w", padx=28, pady=(0, 14))
+        self.status.pack(side="left")
+        ctk.CTkLabel(
+            status_row,
+            text="tovakai // ARM64 conversion deck",
+            text_color=C_DIM,
+            font=ctk.CTkFont(family="Courier", size=10),
+        ).pack(side="right")
 
     def _dispatch(self, callback) -> None:
         if threading.current_thread() is threading.main_thread():
@@ -398,27 +447,27 @@ class ConverterApp:
         def update() -> None:
             self.overall_progress.set(clamped)
             self.progress_percent_label.configure(text=f"{round(clamped * 100)}%")
-            self.activity_label.configure(text=f"Current task: {message}")
+            self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
 
         self._dispatch(update)
 
     def _progress_log(self, message: str) -> None:
         self._log(message)
         self._dispatch(
-            lambda: self.activity_label.configure(text=f"Current task: {message}")
+            lambda: self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
         )
 
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         if busy:
-            self.convert_btn.configure(state="disabled", text="Working…")
+            self.convert_btn.configure(state="disabled", text="WORKING…")
             self.overall_progress.set(0.0)
             self.progress_percent_label.configure(text="0%")
-            self.activity_label.configure(text="Current task: starting conversion…")
+            self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
         else:
             allowed = bool(self.inspection and self.inspection.buildable)
-            self.convert_btn.configure(state="normal" if allowed else "disabled", text="Convert")
+            self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
 
     def _set_source(self, path: Path) -> None:
@@ -435,14 +484,14 @@ class ConverterApp:
         self.renpy_runtime = None
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
-        self.drop_label.configure(text="Inspecting game…")
+        self.drop_label.configure(text="SCANNING PAYLOAD…")
         self.game_label.configure(text=source.stem if source.is_file() else source.name)
         self.engine_label.configure(text="Engine: inspecting…")
         self.backend_label.configure(text="Backend: inspecting…")
         self.compat_label.configure(text="Compatibility: checking…")
         self.overall_progress.set(0.0)
         self.progress_percent_label.configure(text="0%")
-        self.activity_label.configure(text="Current task: inspecting source…")
+        self.activity_label.configure(text="CURRENT OPERATION // INSPECTING SOURCE…")
         self.activity_progress.start()
         self._generation += 1
         generation = self._generation
@@ -458,7 +507,7 @@ class ConverterApp:
 
     def _show_inspection(self, result: UnifiedInspection) -> None:
         self.activity_progress.stop()
-        self.activity_label.configure(text="Current task: ready")
+        self.activity_label.configure(text="CURRENT OPERATION // READY")
         self.inspection = result
         version = f" {result.engine_version}" if result.engine_version else ""
         self.game_label.configure(text=result.game_name or "Unknown game")
@@ -473,16 +522,18 @@ class ConverterApp:
             if self.renpy_runtime:
                 runtime_text = f"Ren'Py override: {self.renpy_runtime.name}"
             elif result.engine_version:
-                runtime_text = f"Runtime: automatic Ren'Py {result.engine_version}  ·  override…"
+                runtime_text = f"RUNTIME // AUTO REN'PY {result.engine_version}  //  OVERRIDE…"
             else:
-                runtime_text = "Choose Ren'Py ARM64 runtime…"
+                runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
         else:
-            self.runtime_button.configure(state="disabled", text="Runtime: automatic")
+            self.runtime_button.configure(state="disabled", text="RUNTIME // AUTOMATIC")
 
         self.convert_btn.configure(state="normal" if result.buildable else "disabled")
         self.drop_label.configure(
-            text="Ready to convert" if result.buildable else "Detected, but not automatically buildable"
+            text="PAYLOAD LOCKED"
+            if result.buildable
+            else "DETECTED // MANUAL HANDLING REQUIRED"
         )
         self._set_status(
             f"Detected {result.engine_label}" if result.backend else "No supported engine detected",
@@ -493,12 +544,12 @@ class ConverterApp:
 
     def _inspection_failed(self, message: str) -> None:
         self.activity_progress.stop()
-        self.activity_label.configure(text="Current task: inspection failed")
+        self.activity_label.configure(text="CURRENT OPERATION // INSPECTION FAILED")
         self.inspection = None
-        self.drop_label.configure(text="Inspection failed")
+        self.drop_label.configure(text="SCAN FAILED")
         self.engine_label.configure(text="Engine: inspection failed", text_color=C_ERR)
         self.convert_btn.configure(state="disabled")
-        self._set_status("Inspection failed", C_ERR)
+        self._set_status("SCAN FAILED", C_ERR)
         self._log("Inspect error: " + message)
 
     def _browse(self) -> None:
@@ -525,7 +576,7 @@ class ConverterApp:
         folder = filedialog.askdirectory(title="Output folder", initialdir=str(self.output_dir))
         if folder:
             self.output_dir = Path(folder)
-            self.out_label.configure(text=f"Output: {self.output_dir}")
+            self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_renpy_runtime(self) -> None:
         folder = filedialog.askdirectory(
@@ -568,7 +619,7 @@ class ConverterApp:
         self._log(f"Backend: {self.inspection.backend}")
         self._log(f"Output: {output}")
         self._set_busy(True)
-        self._set_status("Converting…", C_TEAL)
+        self._set_status("CONVERSION IN PROGRESS", C_TEAL)
 
         def worker() -> None:
             try:
@@ -610,9 +661,9 @@ class ConverterApp:
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)
-        self.activity_label.configure(text="Current task: failed")
+        self.activity_label.configure(text="CURRENT OPERATION // FAILED")
         self._log("ERROR: " + message)
-        self._set_status("Failed", C_ERR)
+        self._set_status("CONVERSION FAILED", C_ERR)
         messagebox.showerror(APP_NAME, message)
 
     def run(self) -> None:

@@ -84,7 +84,15 @@ def create_tar_gz(
 
     temporary = archive.parent / f".{archive.name}.tmp-{uuid.uuid4().hex[:8]}"
     try:
-        with tarfile.open(temporary, "w:gz", format=tarfile.PAX_FORMAT) as tar:
+        # Game payloads such as PCK/archives are commonly already compressed.
+        # Level 1 keeps transfer archives portable while avoiding a long,
+        # single-threaded recompression pass for negligible size savings.
+        with tarfile.open(
+            temporary,
+            "w:gz",
+            format=tarfile.PAX_FORMAT,
+            compresslevel=1,
+        ) as tar:
             tar.add(
                 source,
                 arcname=source.name,
