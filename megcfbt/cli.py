@@ -33,8 +33,9 @@ def _parser() -> argparse.ArgumentParser:
         "--runtime",
         type=Path,
         help=(
-            "manual backend runtime override for RPG Maker/Godot; custom Godot "
-            "runtime directories must contain godot.arm64"
+            "manual backend runtime override for RPG Maker/Godot; eligible "
+            "Godot 3.7 custom + GodotSteam exports can build a compatibility "
+            "runtime automatically on Linux ARM64"
         ),
     )
     build_cmd.add_argument("--runtime-version", default=None)

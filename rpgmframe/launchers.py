@@ -81,12 +81,26 @@ exec "$ROOT/mkxp-z.aarch64" "$@"
 
 
 
-def godot_launcher_body(pack_relative: str) -> str:
+def godot_launcher_body(
+    pack_relative: str,
+    *,
+    force_zink: bool = False,
+) -> str:
     pack = shlex.quote(pack_relative)
+    zink = (
+        '''# The proven Godot 3.x custom runtime on Steam Frame uses Zink over
+# Turnip instead of the host GLX path.
+export MESA_LOADER_DRIVER_OVERRIDE="${MESA_LOADER_DRIVER_OVERRIDE:-zink}"
+export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
+
+'''
+        if force_zink
+        else ""
+    )
     return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
 # may ship shared libraries beside the engine runtime.
 export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 
-cd "$ROOT/game"
+{zink}cd "$ROOT/game"
 exec "$ROOT/godot.arm64" --main-pack "$ROOT"/{pack} "$@"
 '''

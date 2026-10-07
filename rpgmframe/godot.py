@@ -411,9 +411,10 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
         if fingerprint.custom_build:
             warnings.append(
                 "Custom Godot development build detected in "
-                f"{fingerprint.path.name}. Automatic stable-runtime resolution "
-                "is disabled because the matching ARM64 runtime may require "
-                "engine patches or built-in modules."
+                f"{fingerprint.path.name}. Stable-runtime substitution is disabled "
+                "because the matching ARM64 runtime may require engine patches or "
+                "built-in modules. Supported custom signatures may use an explicit "
+                "compatibility recipe instead."
             )
         if fingerprint.godotsteam:
             warnings.append(

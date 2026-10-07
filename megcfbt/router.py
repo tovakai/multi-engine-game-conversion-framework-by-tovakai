@@ -12,6 +12,10 @@ from renframe.models import Compatibility as RenpyCompatibility
 from rpgmframe.builder import BuildError as RPGMFrameBuildError
 from rpgmframe.builder import build_game as build_rpgm_game
 from rpgmframe.detector import inspect_game as inspect_rpgm_game
+from rpgmframe.godot_custom_runtime import (
+    automatic_recipe_for,
+    host_can_build_automatic_runtime,
+)
 from rpgmframe.packaging import PackagingError, create_tar_gz
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
@@ -155,6 +159,26 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
     )
 
 
+def automatic_custom_godot_runtime_available(
+    inspection: UnifiedInspection,
+) -> bool:
+    """Whether this host can build the narrow custom GodotSteam recipe."""
+    if (
+        inspection.backend != "rpgmframe"
+        or inspection.engine != "godot"
+        or inspection.runtime_kind != "godot-custom"
+    ):
+        return False
+
+    godotsteam = any("godotsteam" in item.casefold() for item in inspection.evidence)
+    recipe = automatic_recipe_for(
+        inspection.engine_version,
+        custom_build=True,
+        godotsteam=godotsteam,
+    )
+    return recipe is not None and host_can_build_automatic_runtime()
+
+
 def inspect_source(source: Path | str) -> UnifiedInspection:
     path = Path(source).expanduser().resolve()
     try:
@@ -205,9 +229,16 @@ def build_source(
         and inspection.runtime_kind == "godot-custom"
         and backend_runtime is not None
     )
-    if (not inspection.buildable and not custom_godot_override) or inspection.backend is None:
+    custom_godot_auto = automatic_custom_godot_runtime_available(inspection)
+    if (
+        not inspection.buildable
+        and not custom_godot_override
+        and not custom_godot_auto
+    ) or inspection.backend is None:
         extra = (
-            " Supply a matching custom ARM64 runtime to continue."
+            " Supply a matching custom ARM64 runtime to continue. "
+            "The automatic GodotSteam recipe is available only on a compatible "
+            "Linux ARM64 host with the Frame Steam API and build toolchain."
             if inspection.runtime_kind == "godot-custom"
             else ""
         )

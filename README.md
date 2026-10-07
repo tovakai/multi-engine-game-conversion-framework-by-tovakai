@@ -13,7 +13,7 @@ There is no short public product name. You have to say the whole thing.
 | Ren'Py | RenFrame | replace the distributed runtime with a matching Linux ARM64 Ren'Py runtime | proven separately in RenFrame; combined path needs validation |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
-| Godot | RPGMFrame / Godot | preserve PCK and launch it with the exact matching official Linux ARM64 Godot runtime | Godot 4.3 title running on Steam Frame |
+| Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
@@ -110,6 +110,25 @@ multi-engine-game-conversion-framework-by-tovakai build Game.zip \
 
 Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
+
+## Custom Godot / GodotSteam compatibility runtime
+
+Custom Godot development exports are still treated conservatively. The first
+automatic compatibility recipe is deliberately narrow: Godot 3.7.0 custom
+builds with a built-in GodotSteam marker on native Linux ARM64.
+
+On Steam Frame, the converter can build and cache the proven compatibility
+stack automatically:
+
+- Godot 3.7-dev1 at `a117d512...`
+- upstream CanvasItem cast fix from Godot PR #123099
+- GodotSteam 3.30 using the classic Steam C++ interface path
+- Steamworks 1.62 header surface from ValveSoftware/Proton
+- the Frame's installed native ARM64 `libsteam_api.so`
+
+A manual custom runtime remains available as an override. See
+`docs/custom-godot-arm64-runtime.md` for the exact recipe and host
+requirements.
 
 ## Design rule
 

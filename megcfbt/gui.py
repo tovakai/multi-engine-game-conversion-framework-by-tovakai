@@ -14,6 +14,7 @@ from megcfbt import APP_NAME
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt.router import (
     ConversionError,
+    automatic_custom_godot_runtime_available,
     build_source,
     inspect_source,
     output_path_for_source,
@@ -463,6 +464,8 @@ class ConverterApp:
             return False
         if self.inspection.buildable:
             return True
+        if automatic_custom_godot_runtime_available(self.inspection):
+            return True
         return bool(
             self.inspection.engine == "godot"
             and self.inspection.runtime_kind == "godot-custom"
@@ -527,9 +530,14 @@ class ConverterApp:
         self.game_label.configure(text=result.game_name or "Unknown game")
         self.engine_label.configure(text=f"Engine: {result.engine_label}{version}", text_color=C_TEXT)
         self.backend_label.configure(text=f"Backend: {result.backend or 'none'}", text_color=C_MUTED)
+        auto_custom_runtime = automatic_custom_godot_runtime_available(result)
         self.compat_label.configure(
             text=f"Compatibility: {result.compatibility}  ·  confidence {result.confidence}",
-            text_color=C_OK if result.buildable else C_ERR,
+            text_color=(
+                C_OK if result.buildable
+                else C_WARN if auto_custom_runtime
+                else C_ERR
+            ),
         )
 
         if result.engine == "renpy":
@@ -543,6 +551,8 @@ class ConverterApp:
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
+            elif auto_custom_runtime:
+                runtime_text = "RUNTIME // AUTO GODOTSTEAM COMPAT  //  OVERRIDE…"
             else:
                 runtime_text = "RUNTIME // SELECT CUSTOM ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
@@ -554,6 +564,8 @@ class ConverterApp:
         )
         if result.buildable:
             drop_text = "PAYLOAD LOCKED"
+        elif auto_custom_runtime:
+            drop_text = "PAYLOAD LOCKED // AUTO COMPAT RUNTIME"
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             drop_text = "CUSTOM RUNTIME REQUIRED"
         else:
@@ -663,6 +675,7 @@ class ConverterApp:
             self.inspection.engine == "godot"
             and self.inspection.runtime_kind == "godot-custom"
             and self.backend_runtime is None
+            and not automatic_custom_godot_runtime_available(self.inspection)
         ):
             self._pick_backend_runtime()
             if self.backend_runtime is None:

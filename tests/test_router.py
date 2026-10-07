@@ -131,12 +131,56 @@ def _write_custom_godot_export(root: Path) -> Path:
     return game
 
 
-def test_custom_godot_build_requires_runtime_override(tmp_path: Path) -> None:
+def test_custom_godot_build_requires_runtime_override(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     root = tmp_path / "custom-godot"
     _write_custom_godot_export(root)
+    monkeypatch.setattr(
+        "megcfbt.router.host_can_build_automatic_runtime",
+        lambda: False,
+    )
 
     with pytest.raises(ConversionError, match="custom ARM64 runtime"):
         build_source(root, output=tmp_path / "out", archive=False)
+
+
+def test_custom_godot_automatic_runtime_reaches_backend_without_override(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "custom-godot"
+    _write_custom_godot_export(root)
+    output = tmp_path / "out"
+    seen: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        "megcfbt.router.host_can_build_automatic_runtime",
+        lambda: True,
+    )
+
+    def fake_build(path, **kwargs):
+        seen["path"] = path
+        seen["runtime"] = kwargs.get("runtime")
+        return SimpleNamespace(
+            launcher_path=output / "launch.sh",
+            warnings=[],
+            game_name="Brotato",
+            engine_version="3.7.0",
+        )
+
+    monkeypatch.setattr("megcfbt.router.build_rpgm_game", fake_build)
+
+    result = build_source(
+        root,
+        output=output,
+        archive=False,
+    )
+
+    assert seen["runtime"] is None
+    assert result.engine == "godot"
+    assert result.game_name == "Brotato"
 
 
 def test_custom_godot_runtime_override_reaches_backend(
