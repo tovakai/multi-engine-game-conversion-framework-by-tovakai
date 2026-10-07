@@ -32,6 +32,20 @@ _RESERVED_IDS = {"steam", "steamdeckard", "steamvr", "steamvrdeckard", "devkit-s
 _NEW_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{1,63}$")
 _MAX_ARTWORK = 12 * 1024 * 1024
 _ARTWORK_TYPES = {"grid": 0, "hero": 1, "logo": 2, "wide": 3}
+_EXECUTABLE_NAMES = {
+    "launch.sh",
+    "launch-steam.sh",
+    "nw",
+    "chrome_crashpad_handler",
+    "chrome-sandbox",
+    "mkxp-z.aarch64",
+    "godot.arm64",
+    "python",
+    "python3",
+    "pythonw",
+    "pythonw3",
+    "renpy",
+}
 
 
 def is_supported_host() -> bool:
@@ -126,10 +140,21 @@ def _install_tree(source: Path, gameid: str, launcher: str) -> Path:
             symlinks=False,
             ignore_dangling_symlinks=True,
         )
-        launcher_path = staging / launcher
-        if not launcher_path.is_file():
-            raise SteamInstallError(f"Converted launcher is missing: {launcher}")
-        launcher_path.chmod(launcher_path.stat().st_mode | 0o755)
+        launcher_path = (staging / launcher).resolve()
+        staging_root = staging.resolve()
+        if staging_root not in launcher_path.parents or not launcher_path.is_file():
+            raise SteamInstallError(f"Converted launcher is missing or unsafe: {launcher}")
+
+        for candidate in staging.rglob("*"):
+            if not candidate.is_file() or candidate.is_symlink():
+                continue
+            parent = candidate.parent.name
+            if (
+                candidate.name in _EXECUTABLE_NAMES
+                or candidate.name.endswith(".sh")
+                or parent in {"py2-linux-aarch64", "py3-linux-aarch64"}
+            ):
+                candidate.chmod(candidate.stat().st_mode | 0o755)
 
         if destination.exists():
             destination.rename(backup)
@@ -280,7 +305,11 @@ def _shortcut_appid(gameid: str, directory: Path) -> int | None:
         if (!details) continue;
         const exe = String(details.strShortcutExe || "").replace(/^"|"$/g, "");
         const start = String(details.strShortcutStartDir || "").replace(/^"|"$/g, "");
-        if (exe.startsWith({json.dumps(root + "/")}) || start === {json.dumps(root)}) return app.appid;
+        if (
+          exe.startsWith({json.dumps(root + "/")}) ||
+          start === {json.dumps(root)} ||
+          start.startsWith({json.dumps(root + "/")})
+        ) return app.appid;
       }}
       return null;
     }})()"""
