@@ -93,8 +93,9 @@ MV/MZ. Detection recognizes Construct 2's `c2runtime.js` and Construct 3's
 
 This path is currently marked **needs testing** rather than universally supported:
 wrapper-specific APIs, Steam integrations, and third-party addons may depend on
-Construct's original desktop wrapper. Packed-only exports such as opaque
-`assets.dat`/single-file wrappers are not unpacked by this detector yet.
+Construct's original desktop wrapper. Construct 2's ZIP-based `package.nw`
+payload is detected and unpacked safely. Modern opaque `assets.dat` and
+single-file WebView2/CEF wrappers are not unpacked by this backend yet.
 
 Modern Construct 3 also has an official Linux CEF exporter with ARM64 support. If
 a game already ships that build, conversion should not be necessary; the converter
