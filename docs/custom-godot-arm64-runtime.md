@@ -5,104 +5,126 @@ Some Windows Godot games are not built with an official stable engine. Brotato
 
 - PCK header: Godot 3.7.0
 - executable: `3.7.dev.custom_build`
-- embedded engine build hash: `74e86be5492080f6a4e903a973f2f4f7e9471af2`
+- embedded engine build hash observed at runtime:
+  `74e86be5492080f6a4e903a973f2f4f7e9471af2`
 - built-in GodotSteam: 3.31
 
-For these games, substituting a stock stable Godot runtime is unsafe. tovakai
-therefore requires an explicit matching Linux ARM64 runtime bundle.
+The original private/custom Godot source is not available, so tovakai does not
+pretend to reproduce it byte-for-byte. Instead it builds a compatible native
+runtime whose game-facing API matches what the PCK expects.
 
-## First runtime candidate
+## Proven Steam Frame compatibility recipe
 
-The initial Brotato experiment deliberately starts from the public Godot
-3.7-dev1 baseline, commit:
+The first working recipe is:
 
-`a117d512b00f1646db174e703e7e888519b64608`
+1. Godot 3.7-dev1, upstream commit
+   `a117d512b00f1646db174e703e7e888519b64608`
+2. upstream Godot 3.x CanvasItem/CanvasItemMaterial cast fix from PR #123099
+3. GodotSteam 3.30, commit
+   `f73d138b56fe971a940dd0498e8b9d0fc8fdcffd`
+4. Steamworks 1.62 C++ header surface
+5. the Steam Frame's installed native ARM64 `libsteam_api.so`
 
-and compiles it for native Linux ARM64 with GodotSteam 3.31. This is a
-compatibility candidate, not a claim that it exactly reproduces Brotato's
-private/custom engine tree.
+Brotato's Windows executable reports GodotSteam 3.31, but 3.31 uses Steam's
+newer flat API. The Frame ARM64 Steam library tested here exposes the classic
+`SteamInternal_*` interface path instead. GodotSteam 3.30 preserves the
+game-facing Godot API needed by Brotato while using that classic Steam API.
 
-The builder is:
+This compatibility substitution has been hardware-tested for roughly 30
+minutes of actual Brotato gameplay on Steam Frame, not merely to first boot.
 
-`scripts/build-custom-godot-arm64.sh`
+## Automatic conversion path
 
-## Why native ARM64 first
+For a Godot 3.7.0 custom/development export with the built-in GodotSteam marker,
+tovakai now offers the recipe automatically on a compatible Linux ARM64 host.
 
-Godot 3.x's X11 build logic supports ARM64 output on an ARM64 host, but its
-cross-compilation path is not a general x86-to-ARM solution. The first recipe
-therefore builds natively on Linux ARM64 so that engine compatibility can be
-tested independently from a cross-toolchain.
+The backend:
 
-Once the runtime is proven, a reproducible cross-build/container can be added
-as a separate layer.
+- finds the native Frame Steam API at
+  `/opt/steamvr/bin/linuxarm64/libsteam_api.so`
+- fetches the pinned Godot and GodotSteam sources
+- fetches Valve Proton's vendored Steamworks 1.62 header tree
+- normalizes Proton's named-union/generated-header changes back to the C++ SDK
+  semantics GodotSteam 3.30 expects
+- applies the upstream CanvasItem fix
+- builds the ARM64 Godot runtime
+- caches the finished runtime
+- bundles `godot.arm64`, `libsteam_api.so`, and runtime provenance
+- copies a game's `steam_data.json` beside the runtime when the original
+  export provides one
 
-## Steamworks SDK
+The source PCK and game data remain untouched.
 
-GodotSteam requires the Steamworks SDK headers and runtime library. tovakai
-does not download, vendor, or redistribute Valve's SDK.
+## Build host
 
-The user supplies a Steamworks SDK directory when invoking the builder. Linux
-ARM64 requires a Steamworks SDK containing:
+The automatic recipe currently requires native Linux ARM64.
 
-`sdk/redistributable_bin/linuxarm64/libsteam_api.so`
+tovakai first tries an existing distrobox named:
 
-which means SDK 1.63 or newer.
+`tovakai-godot-build`
 
-The script copies the ARM64 Steam API library only into its disposable build
-workspace and resulting local runtime bundle.
+If that container has the normal compiler/SCons/X11 development toolchain, it
+is used automatically. Otherwise the same dependencies may be installed on the
+native host.
 
-## GodotSteam source
-
-By default the builder attempts to fetch GodotSteam v3.31 from the upstream
-Codeberg repository. If that is unavailable, provide a local source checkout:
-
-```bash
-scripts/build-custom-godot-arm64.sh \
-  --steamworks-sdk /path/to/steamworks_sdk \
-  --godotsteam-src /path/to/godotsteam-3.31
-```
-
-The source directory must contain the normal Godot module files such as
-`SCsub` and `godotsteam.cpp`.
-
-## Build prerequisites
-
-The current recipe expects a native ARM64 Linux environment with:
+The required build commands are:
 
 - Git
 - Python 3
 - SCons
 - GCC/G++
 - pkg-config
-- Linux/X11 development packages for X11, Xcursor, Xinerama, Xext, XRandR,
-  XRender, Xi, and OpenGL
 
-The script checks these before starting a long engine build.
+The required pkg-config development packages are X11, Xcursor, Xinerama, Xext,
+XRandR, XRender, Xi, and OpenGL.
 
-## Resulting runtime bundle
+A manual custom-runtime override remains available when automatic building is
+not possible.
 
-A successful build produces a directory containing at least:
+## Steamworks provenance
 
-```text
-godot.arm64
-libsteam_api.so
-runtime.json
+tovakai does not vendor or redistribute Valve's Steamworks SDK binaries.
+
+The ARM64 Steam API shared library is taken from the user's installed Steam
+Frame runtime. The build recipe obtains the 1.62 compatibility headers from
+ValveSoftware/Proton at a pinned revision and patches only the compatibility
+transformations Proton applies to those headers.
+
+The path can be overridden with:
+
+`TOVAKAI_STEAM_API_ARM64=/path/to/libsteam_api.so`
+
+The distrobox name can be overridden with:
+
+`TOVAKAI_GODOT_DISTROBOX=my-build-box`
+
+## Cache and workspace
+
+Automatic runtime output is cached under a hidden runtime cache beside the
+selected conversion output unless `RPGMFRAME_CACHE_DIR` is configured.
+
+The large source/build workspace is also placed beside the conversion output so
+a Steam Frame with a small internal home partition can keep the multi-gigabyte
+engine build on the same storage volume as the converted game.
+
+## Standalone builder
+
+The developer helper now invokes the same code path as the application:
+
+```bash
+scripts/build-custom-godot-arm64.sh
 ```
 
-`godot.arm64` and any sibling `.so` files are copied into the converted game
-package. The generated launcher prepends the package root to
-`LD_LIBRARY_PATH`, allowing modules such as GodotSteam to resolve
-`libsteam_api.so`.
+Optional overrides:
 
-## Using it in tovakai
+```bash
+scripts/build-custom-godot-arm64.sh \
+  --work-dir /path/with/plenty/of/space \
+  --steam-api /path/to/libsteam_api.so \
+  --distrobox tovakai-godot-build \
+  --output /path/to/runtime-bundle
+```
 
-Custom Godot detections expose the runtime selector instead of permanently
-disabling conversion.
-
-Select the generated runtime directory. tovakai validates `godot.arm64` as an
-AArch64 ELF binary, then permits the conversion despite the source game's
-otherwise-unknown compatibility status.
-
-The first useful result is not necessarily a successful game launch. An engine
-error from the candidate runtime is actionable evidence about what differs
-between the public 3.7-dev1 baseline and the game's custom engine build.
+Keeping the standalone helper and GUI/CLI on one implementation is intentional:
+the experimental recipe should not quietly diverge from the runtime the
+application actually uses.
