@@ -1,4 +1,4 @@
-"""Conservative game engine detection for RPG Maker and Godot."""
+"""Conservative game engine detection for RPG Maker, Construct, and Godot."""
 
 from __future__ import annotations
 
@@ -134,6 +134,61 @@ def _score_web_candidate(
     )
 
 
+def _score_construct_candidate(
+    evidence_root: Path,
+    source_root: Path,
+    *,
+    engine: EngineVariant,
+    game_root: Path,
+    marker_names: tuple[str, ...],
+) -> _Candidate | None:
+    marker = next(
+        (
+            game_root / marker_name
+            for marker_name in marker_names
+            if (game_root / marker_name).is_file()
+        ),
+        None,
+    )
+    if marker is None:
+        return None
+
+    evidence: list[str] = [_relative(marker, evidence_root)]
+    score = 6
+
+    index_html = game_root / "index.html"
+    if index_html.is_file():
+        score += 2
+        evidence.append(_relative(index_html, evidence_root))
+
+    package_candidates = (source_root / "package.json", game_root / "package.json")
+    package = next((p for p in package_candidates if p.is_file()), None)
+    if package is not None:
+        score += 1
+        evidence.append(_relative(package, evidence_root))
+
+    data_names = (
+        ("data.js",)
+        if engine is EngineVariant.CONSTRUCT_2
+        else ("data.json", "scripts/main.js", "main.js")
+    )
+    for data_name in data_names:
+        data_file = game_root / data_name
+        if data_file.is_file():
+            score += 1
+            evidence.append(_relative(data_file, evidence_root))
+            break
+
+    return _Candidate(
+        engine=engine,
+        source_root=source_root,
+        game_root=game_root,
+        marker_file=marker,
+        score=score,
+        evidence=tuple(dict.fromkeys(evidence)),
+    )
+
+
 def _score_rgss_candidate(
     evidence_root: Path,
     source_root: Path,
@@ -245,6 +300,34 @@ def _collect_candidates(source_root: Path, *, evidence_root: Path) -> list[_Cand
             engine=EngineVariant.MZ,
             game_root=source_root / "www",
             core_name="rmmz_core.js",
+        ),
+        _score_construct_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_2,
+            game_root=source_root,
+            marker_names=("c2runtime.js",),
+        ),
+        _score_construct_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_2,
+            game_root=source_root / "www",
+            marker_names=("c2runtime.js",),
+        ),
+        _score_construct_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_3,
+            game_root=source_root,
+            marker_names=("c3runtime.js", "scripts/c3runtime.js"),
+        ),
+        _score_construct_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_3,
+            game_root=source_root / "www",
+            marker_names=("c3runtime.js", "scripts/c3runtime.js"),
         ),
     ):
         if candidate:
@@ -378,7 +461,7 @@ def _confidence_for_score(score: int) -> Confidence:
 
 def inspect_game(path: Path | str) -> GameInspection:
     """
-    Detect Godot plus RPG Maker XP/VX/VX Ace/MV/MZ signatures.
+    Detect Godot, RPG Maker XP/VX/VX Ace/MV/MZ, and Construct 2/3 signatures.
 
     Payload discovery is breadth-first and bounded so common wrapper layouts
     can contain unrelated sibling directories without defeating detection.
@@ -409,7 +492,7 @@ def inspect_game(path: Path | str) -> GameInspection:
             source_path=root,
             warnings=[
                 "No supported game engine signature was found "
-                "(Godot PCK, XP/VX/VX Ace RGSS data, or MV/MZ JavaScript core)."
+                "(Godot PCK, RPG Maker data/runtime, or Construct 2/3 runtime)."
             ],
         )
 
@@ -444,10 +527,18 @@ def inspect_game(path: Path | str) -> GameInspection:
                     "Conflicting MV and MZ engine signatures have equal "
                     "confidence; refusing to guess."
                 )
+            elif engines == {
+                EngineVariant.CONSTRUCT_2,
+                EngineVariant.CONSTRUCT_3,
+            }:
+                warning = (
+                    "Conflicting Construct 2 and Construct 3 signatures have equal "
+                    "confidence; refusing to guess."
+                )
             else:
                 warning = (
-                    "Conflicting RPG Maker generation signatures have equal "
-                    "confidence; refusing to guess."
+                    "Conflicting engine signatures have equal confidence; "
+                    "refusing to guess."
                 )
             return GameInspection(
                 source_path=root,
@@ -460,6 +551,37 @@ def inspect_game(path: Path | str) -> GameInspection:
         warnings.append(
             "Auto-discovered RPG Maker game root in subfolder: "
             f"{_relative(best.source_root, root)}"
+        )
+
+    if best.engine in {
+        EngineVariant.CONSTRUCT_2,
+        EngineVariant.CONSTRUCT_3,
+    }:
+        package_json = _find_package_json(best.source_root, best.game_root)
+        if not (best.game_root / "index.html").is_file():
+            warnings.append(
+                "Construct runtime found, but index.html is missing; "
+                "this may be an incomplete or bundled export."
+            )
+        generation = "2" if best.engine is EngineVariant.CONSTRUCT_2 else "3"
+        warnings.append(
+            f"Construct {generation} will be re-wrapped with a modern ARM64 NW.js "
+            "runtime; desktop-wrapper integrations and third-party addons need testing."
+        )
+        return GameInspection(
+            source_path=root,
+            family=EngineFamily.CONSTRUCT,
+            engine=best.engine,
+            runtime="nwjs",
+            confidence=_confidence_for_score(best.score),
+            game_root=best.game_root,
+            game_name=_detect_web_game_name(best.game_root, package_json)
+            or best.source_root.name,
+            engine_version=None,
+            package_json=package_json,
+            evidence=list(best.evidence),
+            warnings=warnings,
+            compatibility=Compatibility.NEEDS_TESTING,
         )
 
     if best.engine in {EngineVariant.MV, EngineVariant.MZ}:
