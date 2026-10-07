@@ -7,15 +7,13 @@ from megcfbt import router
 from megcfbt.models import UnifiedInspection
 
 
-def test_renpy_build_resolves_runtime_automatically(
+def test_renpy_router_delegates_automatic_runtime_to_backend(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     source = tmp_path / "game"
     (source / "game").mkdir(parents=True)
     (source / "game/script.rpy").write_text("label start:\n    pass\n")
-    runtime = tmp_path / "runtime"
-    runtime.mkdir()
 
     inspection = UnifiedInspection(
         source_path=source,
@@ -26,18 +24,65 @@ def test_renpy_build_resolves_runtime_automatically(
         game_name="Synthetic",
         compatibility="LIKELY_COMPATIBLE",
         confidence="high",
-        runtime_kind="official Ren'Py 8.5.3 ARM64 sdkarm",
+        runtime_kind="official Ren'Py 8.5.3 sdkarm platform (automatic)",
         buildable=True,
     )
     monkeypatch.setattr(router, "inspect_source", lambda path: inspection)
     monkeypatch.setattr(router, "_inspect_prepared", lambda root: inspection)
 
-    class FakeManager:
-        def ensure_runtime(self, version, *, progress=None):
-            assert version == "8.5.3"
-            return runtime
+    seen = {}
 
-    monkeypatch.setattr(router, "RenpyRuntimeManager", FakeManager)
+    def fake_build(source_path, **kwargs):
+        seen["runtime"] = kwargs["runtime"]
+        seen["progress"] = kwargs["progress"]
+        out = Path(kwargs["output"])
+        out.mkdir(parents=True)
+        launcher = out / "launch.sh"
+        launcher.write_text("#!/bin/sh\n")
+        return SimpleNamespace(
+            launcher_path=launcher,
+            warnings=["automatic backend"],
+            display_name="Synthetic",
+            game_name="Synthetic",
+            source_version="8.5.3",
+        )
+
+    monkeypatch.setattr(router, "build_renpy_game", fake_build)
+
+    progress = lambda message: None
+    result = router.build_source(source, archive=False, progress=progress)
+
+    assert seen["runtime"] is None
+    assert seen["progress"] is progress
+    assert result.engine == "renpy"
+    assert result.engine_version == "8.5.3"
+    assert "automatic backend" in result.warnings
+
+
+def test_renpy_router_passes_manual_runtime_override_through(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    source = tmp_path / "game"
+    (source / "game").mkdir(parents=True)
+    (source / "game/script.rpy").write_text("label start:\n    pass\n")
+    manual = tmp_path / "manual-runtime"
+    manual.mkdir()
+
+    inspection = UnifiedInspection(
+        source_path=source,
+        backend="renframe",
+        engine="renpy",
+        engine_label="Ren'Py",
+        engine_version="8.5.3",
+        game_name="Synthetic",
+        compatibility="LIKELY_COMPATIBLE",
+        confidence="high",
+        runtime_kind="official Ren'Py 8.5.3 sdkarm platform (automatic)",
+        buildable=True,
+    )
+    monkeypatch.setattr(router, "inspect_source", lambda path: inspection)
+    monkeypatch.setattr(router, "_inspect_prepared", lambda root: inspection)
 
     seen = {}
 
@@ -56,10 +101,7 @@ def test_renpy_build_resolves_runtime_automatically(
         )
 
     monkeypatch.setattr(router, "build_renpy_game", fake_build)
-    monkeypatch.setattr(router, "create_tar_gz", lambda output, force=False: None)
 
-    result = router.build_source(source, archive=False)
+    router.build_source(source, archive=False, renpy_runtime=manual)
 
-    assert seen["runtime"] == runtime
-    assert result.engine == "renpy"
-    assert result.engine_version == "8.5.3"
+    assert seen["runtime"] == manual
