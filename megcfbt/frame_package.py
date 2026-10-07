@@ -24,6 +24,11 @@ _ARTWORK_DIR = "artwork"
 _ARTWORK_SLOTS = frozenset({"grid", "wide", "hero", "logo", "icon"})
 _IMAGE_SUFFIXES = frozenset({".png", ".jpg", ".jpeg"})
 
+# FrameDrop 1.0.37's frozen framedrop.detect._safe_unzip rejects a ZIP when
+# the sum of its unpacked members is over 4 GiB. Folder drops bypass that
+# extraction path entirely.
+FRAMEDROP_ZIP_UNPACK_LIMIT = 4 * 1024**3
+
 _PORTABLE_EXECUTABLES = frozenset(
     {
         "launch.sh",
@@ -399,6 +404,23 @@ def create_frame_zip(
         raise FramePackageError(f"Could not create Frame package {archive}: {exc}") from exc
 
     return archive
+
+def zip_unpacked_size(path: Path | str) -> int:
+    """Return the sum of uncompressed file sizes stored in a ZIP archive."""
+    archive = Path(path).expanduser().resolve()
+    if not archive.is_file() or archive.suffix.lower() != ".zip":
+        raise FramePackageError(f"Expected a ZIP package: {archive}")
+    try:
+        with zipfile.ZipFile(archive) as zf:
+            return sum(info.file_size for info in zf.infolist() if not info.is_dir())
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise FramePackageError(f"Could not inspect ZIP package {archive}: {exc}") from exc
+
+
+def framedrop_zip_compatible(path: Path | str) -> bool:
+    """Whether FrameDrop's current 4 GiB ZIP extraction guard will accept it."""
+    return zip_unpacked_size(path) <= FRAMEDROP_ZIP_UNPACK_LIMIT
+
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
