@@ -18,6 +18,21 @@ from rpgmframe.models import (
 PCK_MAGIC = 0x43504447
 PCK_MAGIC_BYTES = b"GDPC"
 
+_CUSTOM_BUILD_MARKER = b".dev.custom_build"
+_GODOTSTEAM_MARKERS = (
+    b"modules/godotsteam/godotsteam.cpp",
+    b"get_godotsteam_version",
+)
+_BINARY_SCAN_CHUNK = 1024 * 1024
+_BINARY_SCAN_OVERLAP = 256
+
+
+@dataclass(frozen=True)
+class GodotExecutableFingerprint:
+    path: Path
+    custom_build: bool
+    godotsteam: bool
+
 
 @dataclass(frozen=True)
 class GodotPack:
@@ -220,6 +235,83 @@ def find_godot_pack(root: Path) -> GodotPack | None:
     return packs[0] if len(packs) == 1 else None
 
 
+
+def _matching_windows_executable(root: Path, pack: GodotPack) -> Path | None:
+    try:
+        executables = sorted(
+            (
+                path
+                for path in root.iterdir()
+                if path.is_file() and path.suffix.casefold() == ".exe"
+            ),
+            key=lambda path: path.name.casefold(),
+        )
+    except OSError:
+        return None
+
+    if not executables:
+        return None
+
+    matching = [
+        path for path in executables
+        if path.stem.casefold() == pack.path.stem.casefold()
+    ]
+    if len(matching) == 1:
+        return matching[0]
+    if len(executables) == 1:
+        return executables[0]
+    return None
+
+
+def inspect_godot_executable(
+    root: Path,
+    pack: GodotPack | None = None,
+) -> GodotExecutableFingerprint | None:
+    """Inspect a Windows Godot executable without executing untrusted code.
+
+    We intentionally keep this static and conservative. Custom Godot builds and
+    built-in modules materially affect runtime compatibility, so spotting those
+    markers prevents the automatic resolver from inventing a stable runtime that
+    cannot actually match the game.
+    """
+    selected_pack = pack or find_godot_pack(root)
+    if selected_pack is None:
+        return None
+
+    executable = _matching_windows_executable(root, selected_pack)
+    if executable is None:
+        return None
+
+    custom_build = False
+    godotsteam = False
+    carry = b""
+
+    try:
+        with executable.open("rb") as handle:
+            while True:
+                chunk = handle.read(_BINARY_SCAN_CHUNK)
+                if not chunk:
+                    break
+                data = carry + chunk
+                custom_build = custom_build or _CUSTOM_BUILD_MARKER in data
+                godotsteam = godotsteam or any(
+                    marker in data for marker in _GODOTSTEAM_MARKERS
+                )
+                if custom_build and godotsteam:
+                    break
+                carry = data[-_BINARY_SCAN_OVERLAP:]
+    except OSError:
+        return None
+
+    if not custom_build and not godotsteam:
+        return None
+    return GodotExecutableFingerprint(
+        path=executable,
+        custom_build=custom_build,
+        godotsteam=godotsteam,
+    )
+
+
 def is_csharp_export(root: Path) -> bool:
     try:
         entries = list(root.rglob("*"))
@@ -309,8 +401,31 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
             "the pack without modifying the source executable."
         )
 
+    fingerprint = inspect_godot_executable(current, pack)
+    if fingerprint is not None:
+        try:
+            executable_path = fingerprint.path.relative_to(root).as_posix()
+        except ValueError:
+            executable_path = fingerprint.path.as_posix()
+
+        if fingerprint.custom_build:
+            warnings.append(
+                "Custom Godot development build detected in "
+                f"{fingerprint.path.name}. Automatic stable-runtime resolution "
+                "is disabled because the matching ARM64 runtime may require "
+                "engine patches or built-in modules."
+            )
+        if fingerprint.godotsteam:
+            warnings.append(
+                "Built-in GodotSteam module detected. A compatible Linux ARM64 "
+                "runtime must include the matching GodotSteam API and Steamworks "
+                "support."
+            )
+
     csharp = is_csharp_export(current)
     compatibility = Compatibility.NEEDS_TESTING
+    if fingerprint is not None and fingerprint.custom_build:
+        compatibility = Compatibility.UNKNOWN
     if csharp:
         compatibility = Compatibility.UNKNOWN
         warnings.append(
@@ -322,12 +437,28 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
         source_path=root,
         family=EngineFamily.GODOT,
         engine=EngineVariant.GODOT,
-        runtime="godot",
+        runtime=(
+            "godot-custom"
+            if fingerprint is not None and fingerprint.custom_build
+            else "godot"
+        ),
         confidence=Confidence.HIGH,
         game_root=current,
         game_name=pack.path.stem,
         engine_version=pack.version,
-        evidence=[evidence_path],
+        evidence=(
+            [evidence_path]
+            + (
+                [f"{executable_path}: custom Godot development build"]
+                if fingerprint is not None and fingerprint.custom_build
+                else []
+            )
+            + (
+                [f"{executable_path}: built-in GodotSteam module"]
+                if fingerprint is not None and fingerprint.godotsteam
+                else []
+            )
+        ),
         warnings=warnings,
         compatibility=compatibility,
     )
