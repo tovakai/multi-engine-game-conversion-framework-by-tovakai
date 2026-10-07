@@ -280,7 +280,7 @@ def _shortcut_appid(gameid: str, directory: Path) -> int | None:
         if (!details) continue;
         const exe = String(details.strShortcutExe || "").replace(/^"|"$/g, "");
         const start = String(details.strShortcutStartDir || "").replace(/^"|"$/g, "");
-        if (exe.startsWith({json.dumps(root + "/")}) || start === {json.dumps(root)}}) return app.appid;
+        if (exe.startsWith({json.dumps(root + "/")}) || start === {json.dumps(root)}) return app.appid;
       }}
       return null;
     }})()"""
