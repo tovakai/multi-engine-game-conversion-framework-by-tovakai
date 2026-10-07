@@ -1,4 +1,4 @@
-"""Desktop GUI for Multi-Engine Game Conversion Framework by Tovakai."""
+"""Desktop GUI for Multi-Engine Game Conversion Framework by tovakai."""
 
 from __future__ import annotations
 
@@ -19,19 +19,27 @@ from megcfbt.router import (
     output_path_for_source,
 )
 
-APP_TAG = "Ren'Py + RPG Maker + Godot → Linux ARM64"
+APP_TAG = "CONVERSION DECK // Ren'Py · RPG Maker · Godot → Linux ARM64"
 
-C_BG = "#07111f"
-C_PANEL = "#12233a"
-C_PANEL_2 = "#1a3050"
-C_BORDER = "#2a4a6a"
-C_TEXT = "#f0e6d8"
-C_MUTED = "#9eb0c4"
-C_ACCENT = "#ff7a45"
-C_ACCENT_HOVER = "#ff9466"
-C_TEAL = "#3db8a8"
-C_OK = "#5ecf8e"
-C_ERR = "#ff6b7a"
+# Cassette-futurist palette: smoked plastic, phosphor teal, warm transport orange.
+C_BG = "#05070b"
+C_BG_2 = "#090e15"
+C_PANEL = "#101722"
+C_PANEL_2 = "#172232"
+C_PANEL_3 = "#0b1119"
+C_BORDER = "#29485a"
+C_BORDER_GLOW = "#49d3c6"
+C_TEXT = "#f1e8d8"
+C_MUTED = "#9babb3"
+C_DIM = "#657682"
+C_ACCENT = "#ff8452"
+C_ACCENT_HOVER = "#ff9a73"
+C_TEAL = "#49d3c6"
+C_TEAL_SOFT = "#2b8f89"
+C_MAGENTA = "#d86df0"
+C_OK = "#70d995"
+C_ERR = "#ff667c"
+C_WARN = "#ffb86c"
 
 ctk: Any = None
 tk: Any = None
@@ -125,24 +133,50 @@ class ConverterApp:
         self.root.after(25, self._drain_ui_queue)
 
     def _build_ui(self) -> None:
-        ctk.CTkFrame(self.root, fg_color=C_ACCENT, height=4, corner_radius=0).pack(
+        ctk.CTkFrame(self.root, fg_color=C_ACCENT, height=3, corner_radius=0).pack(
+            fill="x", side="top"
+        )
+        ctk.CTkFrame(self.root, fg_color=C_TEAL_SOFT, height=1, corner_radius=0).pack(
             fill="x", side="top"
         )
 
         header = ctk.CTkFrame(self.root, fg_color="transparent")
-        header.pack(fill="x", padx=28, pady=(18, 4))
+        header.pack(fill="x", padx=28, pady=(18, 8))
+
+        header_left = ctk.CTkFrame(header, fg_color="transparent")
+        header_left.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(
-            header,
+            header_left,
             text=APP_NAME,
             font=ctk.CTkFont(size=27, weight="bold"),
             text_color=C_TEXT,
         ).pack(anchor="w")
         ctk.CTkLabel(
-            header,
-            text=APP_TAG + "  ·  detect first, route second, replace runtimes carefully",
-            font=ctk.CTkFont(size=14),
-            text_color=C_MUTED,
+            header_left,
+            text=APP_TAG,
+            font=ctk.CTkFont(family="Courier", size=13, weight="bold"),
+            text_color=C_TEAL,
         ).pack(anchor="w", pady=(4, 0))
+
+        deck_badge = ctk.CTkFrame(
+            header,
+            fg_color=C_PANEL_3,
+            border_width=1,
+            border_color=C_BORDER,
+            corner_radius=4,
+        )
+        deck_badge.pack(side="right", padx=(16, 0))
+        ctk.CTkLabel(
+            deck_badge,
+            text="tovakai systems //\nFRAME CONVERSION UNIT // MK I",
+            font=ctk.CTkFont(family="Courier", size=10, weight="bold"),
+            text_color=C_MUTED,
+            justify="right",
+        ).pack(padx=10, pady=7)
+
+        ctk.CTkFrame(
+            self.root, fg_color=C_BORDER, height=1, corner_radius=0
+        ).pack(fill="x", padx=28)
 
         self.drop = ctk.CTkFrame(
             self.root,
