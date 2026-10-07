@@ -26,6 +26,9 @@ def test_install_tree_writes_devkit_sidecars_and_launcher_mode(tmp_path, monkeyp
     source.mkdir()
     launcher = source / "launch.sh"
     launcher.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    runtime = source / "godot.arm64"
+    runtime.write_bytes(b"native")
+    runtime.chmod(0o644)
 
     devkit = tmp_path / "devkit-game"
     monkeypatch.setattr(steam_install, "_DEVKIT_ROOT", devkit)
@@ -34,6 +37,7 @@ def test_install_tree_writes_devkit_sidecars_and_launcher_mode(tmp_path, monkeyp
 
     assert destination == devkit / "Example_Game"
     assert stat.S_IMODE((destination / "launch.sh").stat().st_mode) & 0o111
+    assert stat.S_IMODE((destination / "godot.arm64").stat().st_mode) & 0o111
     assert json.loads((devkit / "Example_Game-argv.json").read_text()) == ["launch.sh"]
     assert json.loads((devkit / "Example_Game-env.json").read_text()) == {}
     settings = json.loads((devkit / "Example_Game-settings.json").read_text())
