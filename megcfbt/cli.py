@@ -31,8 +31,28 @@ def _parser() -> argparse.ArgumentParser:
     )
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
-    build_cmd.add_argument("--no-archive", action="store_true")
+    build_cmd.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="do not create the FrameDrop/Frame Control compatible ZIP package",
+    )
+    build_cmd.add_argument(
+        "--steam-cover",
+        type=Path,
+        help="optional PNG/JPEG portrait artwork to bundle for Steam",
+    )
+    build_cmd.add_argument(
+        "--add-to-steam",
+        action="store_true",
+        help="after conversion, add the build directly to local Steam (Linux ARM64 only)",
+    )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
+
+    steam_cmd = sub.add_parser(
+        "steam-install",
+        help="add an existing converted build to local Steam on Linux ARM64",
+    )
+    steam_cmd.add_argument("build", type=Path)
 
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
@@ -47,6 +67,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "steam-install":
+            from megcfbt.steam_install import install_build
+
+            installed = install_build(args.build, progress=print)
+            print(f"Steam:   {installed['name']} ({installed['id']})")
+            print(f"Path:    {installed['directory']}")
+            for warning in installed["warnings"]:
+                print(f"Warning: {warning}")
+            return 0
+
         if args.command == "inspect":
             result = inspect_source(args.source)
             payload = {
@@ -89,17 +119,25 @@ def main(argv: list[str] | None = None) -> int:
             renpy_runtime=args.renpy_runtime,
             force=args.force,
             archive=not args.no_archive,
+            steam_cover=args.steam_cover,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             **kwargs,
         )
         print(f"Built:   {result.output_path}")
         if result.archive_path:
-            print(f"Archive: {result.archive_path}")
+            print(f"Package: {result.archive_path}")
         for warning in result.warnings:
             print(f"Warning: {warning}")
+        if args.add_to_steam:
+            from megcfbt.steam_install import install_build
+
+            installed = install_build(result.output_path, progress=print)
+            print(f"Steam:   {installed['name']} ({installed['id']})")
+            for warning in installed["warnings"]:
+                print(f"Warning: {warning}")
         return 0
-    except ConversionError as exc:
+    except (ConversionError, RuntimeError) as exc:
         print(f"ERROR: {exc}")
         return 1
 
