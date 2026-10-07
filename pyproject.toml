@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-engine-game-conversion-framework-by-tovakai"
+version = "0.1.0a0"
+description = "Multi-engine game runtime conversion framework for Linux ARM64."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "Tovakai" }]
+keywords = ["renpy", "rpg-maker", "godot", "arm64", "steam-frame", "linux"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+
+[project.optional-dependencies]
+gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.4.2"]
+dev = ["pytest>=8.0"]
+build = ["pyinstaller>=6.3.0"]
+
+[project.scripts]
+multi-engine-game-conversion-framework-by-tovakai = "multi_engine_game_conversion_framework_by_tovakai.cli:main"
+multi-engine-game-conversion-framework-by-tovakai-gui = "multi_engine_game_conversion_framework_by_tovakai.gui:main"
+
+[tool.setuptools.packages.find]
+include = [
+    "multi_engine_game_conversion_framework_by_tovakai*",
+    "renframe*",
+    "renpy_arm*",
+    "rpgmframe*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
