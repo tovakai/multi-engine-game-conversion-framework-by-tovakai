@@ -39,7 +39,17 @@ def _parser() -> argparse.ArgumentParser:
     )
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
-    build_cmd.add_argument("--no-archive", action="store_true")
+    archive_group = build_cmd.add_mutually_exclusive_group()
+    archive_group.add_argument(
+        "--archive",
+        action="store_true",
+        help="also create a portable transfer archive (default)",
+    )
+    archive_group.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="skip the portable transfer archive",
+    )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
 
     sub.add_parser("gui", help="open the desktop frontend")
