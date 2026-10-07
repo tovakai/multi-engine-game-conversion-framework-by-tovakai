@@ -120,6 +120,44 @@ def _read_text_head(path: Path, limit: int = 65536) -> str | None:
     return None
 
 
+def strategy_vc_version_py(root: Path) -> VersionHint | None:
+    """Parse renpy/vc_version.py used by many distributed Ren'Py builds."""
+    candidate = root / "renpy" / "vc_version.py"
+    if not candidate.is_file():
+        return None
+    text = _read_text_head(candidate)
+    if not text:
+        return None
+
+    match = re.search(
+        r"""(?m)^\s*(?:version|vc_version)\s*=\s*['"](?P<version>\d+\.\d+\.\d+(?:\.\d+)?)['"]""",
+        text,
+    )
+    if match:
+        version = ".".join(match.group("version").split(".")[:3])
+        return VersionHint(
+            version=version,
+            generation=_generation_from_version(version),
+            source="renpy/vc_version.py",
+            confidence="high",
+        )
+
+    tuple_match = re.search(
+        r"""(?m)^\s*vc_version\s*=\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)""",
+        text,
+    )
+    if tuple_match:
+        version = ".".join(tuple_match.groups())
+        return VersionHint(
+            version=version,
+            generation=_generation_from_version(version),
+            source="renpy/vc_version.py",
+            confidence="high",
+        )
+
+    return None
+
+
 def strategy_versions_py(root: Path) -> VersionHint | None:
     """Parse renpy/versions.py (common in modern SDKs)."""
     candidate = root / "renpy" / "versions.py"
@@ -271,6 +309,7 @@ def strategy_lib_python_generation(root: Path) -> VersionHint | None:
 
 
 DEFAULT_VERSION_STRATEGIES: tuple[VersionStrategy, ...] = (
+    strategy_vc_version_py,
     strategy_versions_py,
     strategy_renpy_init,
     strategy_script_version,
