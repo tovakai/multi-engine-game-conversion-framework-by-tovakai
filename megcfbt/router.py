@@ -183,6 +183,7 @@ def build_source(
     *,
     output: Path | str | None = None,
     renpy_runtime: Path | str | None = None,
+    backend_runtime: Path | str | None = None,
     runtime_version: str = DEFAULT_NWJS_VERSION,
     force: bool = False,
     archive: bool = True,
@@ -198,10 +199,21 @@ def build_source(
     stage(0.03, "Inspecting source")
     inspection = inspect_source(path)
     stage(0.12, f"Detected {inspection.engine_label}")
-    if not inspection.buildable or inspection.backend is None:
+    custom_godot_override = bool(
+        inspection.backend == "rpgmframe"
+        and inspection.engine == "godot"
+        and inspection.runtime_kind == "godot-custom"
+        and backend_runtime is not None
+    )
+    if (not inspection.buildable and not custom_godot_override) or inspection.backend is None:
+        extra = (
+            " Supply a matching custom ARM64 runtime to continue."
+            if inspection.runtime_kind == "godot-custom"
+            else ""
+        )
         raise ConversionError(
             f"Detected {inspection.engine_label}, but compatibility is "
-            f"{inspection.compatibility}; refusing automatic conversion."
+            f"{inspection.compatibility}; refusing automatic conversion.{extra}"
         )
 
     output_path = (
@@ -236,6 +248,7 @@ def build_source(
             result = build_rpgm_game(
                 path,
                 output=output_path,
+                runtime=backend_runtime,
                 runtime_version=runtime_version,
                 force=force,
                 progress=progress,

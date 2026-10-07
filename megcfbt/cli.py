@@ -29,6 +29,14 @@ def _parser() -> argparse.ArgumentParser:
             "versions otherwise resolve automatically"
         ),
     )
+    build_cmd.add_argument(
+        "--runtime",
+        type=Path,
+        help=(
+            "manual backend runtime override for RPG Maker/Godot; custom Godot "
+            "runtime directories must contain godot.arm64"
+        ),
+    )
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
     build_cmd.add_argument("--no-archive", action="store_true")
@@ -87,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             output=args.output,
             renpy_runtime=args.renpy_runtime,
+            backend_runtime=args.runtime,
             force=args.force,
             archive=not args.no_archive,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,

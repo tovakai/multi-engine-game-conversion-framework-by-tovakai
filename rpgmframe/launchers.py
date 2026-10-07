@@ -83,6 +83,10 @@ exec "$ROOT/mkxp-z.aarch64" "$@"
 
 def godot_launcher_body(pack_relative: str) -> str:
     pack = shlex.quote(pack_relative)
-    return _FRAME_ENV_PREAMBLE + f'''cd "$ROOT/game"
+    return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
+# may ship shared libraries beside the engine runtime.
+export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+
+cd "$ROOT/game"
 exec "$ROOT/godot.arm64" --main-pack "$ROOT"/{pack} "$@"
 '''

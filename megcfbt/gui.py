@@ -117,6 +117,7 @@ class ConverterApp:
         self.source: Path | None = None
         self.inspection: UnifiedInspection | None = None
         self.renpy_runtime: Path | None = None
+        self.backend_runtime: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.output_dir = Path.home() / "Desktop"
@@ -286,7 +287,7 @@ class ConverterApp:
             hover_color=C_BORDER,
             text_color=C_MUTED,
             state="disabled",
-            command=self._pick_renpy_runtime,
+            command=self._pick_runtime,
         )
         self.runtime_button.pack(side="right")
 
@@ -457,6 +458,17 @@ class ConverterApp:
             lambda: self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
         )
 
+    def _conversion_allowed(self) -> bool:
+        if self.inspection is None:
+            return False
+        if self.inspection.buildable:
+            return True
+        return bool(
+            self.inspection.engine == "godot"
+            and self.inspection.runtime_kind == "godot-custom"
+            and self.backend_runtime is not None
+        )
+
     def _set_busy(self, busy: bool) -> None:
         self._busy = busy
         if busy:
@@ -466,7 +478,7 @@ class ConverterApp:
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
         else:
-            allowed = bool(self.inspection and self.inspection.buildable)
+            allowed = self._conversion_allowed()
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
 
@@ -482,6 +494,8 @@ class ConverterApp:
         self.source = source
         self.inspection = None
         self.renpy_runtime = None
+        self.backend_runtime = None
+        self.log_box.delete("1.0", "end")
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
         self.drop_label.configure(text="SCANNING PAYLOAD…")
@@ -520,21 +534,31 @@ class ConverterApp:
 
         if result.engine == "renpy":
             if self.renpy_runtime:
-                runtime_text = f"Ren'Py override: {self.renpy_runtime.name}"
+                runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
             elif result.engine_version:
                 runtime_text = f"RUNTIME // AUTO REN'PY {result.engine_version}  //  OVERRIDE…"
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
+        elif result.engine == "godot" and result.runtime_kind == "godot-custom":
+            if self.backend_runtime:
+                runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
+            else:
+                runtime_text = "RUNTIME // SELECT CUSTOM ARM64…"
+            self.runtime_button.configure(state="normal", text=runtime_text)
         else:
             self.runtime_button.configure(state="disabled", text="RUNTIME // AUTOMATIC")
 
-        self.convert_btn.configure(state="normal" if result.buildable else "disabled")
-        self.drop_label.configure(
-            text="PAYLOAD LOCKED"
-            if result.buildable
-            else "DETECTED // MANUAL HANDLING REQUIRED"
+        self.convert_btn.configure(
+            state="normal" if self._conversion_allowed() else "disabled"
         )
+        if result.buildable:
+            drop_text = "PAYLOAD LOCKED"
+        elif result.engine == "godot" and result.runtime_kind == "godot-custom":
+            drop_text = "CUSTOM RUNTIME REQUIRED"
+        else:
+            drop_text = "DETECTED // MANUAL HANDLING REQUIRED"
+        self.drop_label.configure(text=drop_text)
         self._set_status(
             f"Detected {result.engine_label}" if result.backend else "No supported engine detected",
             C_TEAL if result.backend else C_ERR,
@@ -578,6 +602,13 @@ class ConverterApp:
             self.output_dir = Path(folder)
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
+    def _pick_runtime(self) -> None:
+        if self.inspection is None or self.inspection.engine == "renpy":
+            self._pick_renpy_runtime()
+            return
+        if self.inspection.engine == "godot" and self.inspection.runtime_kind == "godot-custom":
+            self._pick_backend_runtime()
+
     def _pick_renpy_runtime(self) -> None:
         folder = filedialog.askdirectory(
             title="Optional override: select matching Linux ARM64 Ren'Py runtime"
@@ -585,8 +616,29 @@ class ConverterApp:
         if folder:
             self.renpy_runtime = Path(folder)
             self.runtime_button.configure(
-                text=f"Ren'Py override: {self.renpy_runtime.name}"
+                text=f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
             )
+
+    def _pick_backend_runtime(self) -> None:
+        folder = filedialog.askdirectory(
+            title="Select custom Godot Linux ARM64 runtime bundle"
+        )
+        if not folder:
+            return
+        runtime = Path(folder)
+        if not (runtime / "godot.arm64").is_file():
+            messagebox.showerror(
+                APP_NAME,
+                "Custom Godot runtime must contain godot.arm64 in its root folder.",
+            )
+            return
+        self.backend_runtime = runtime
+        self.runtime_button.configure(text=f"CUSTOM RUNTIME // {runtime.name}")
+        self.convert_btn.configure(
+            state="normal" if self._conversion_allowed() else "disabled"
+        )
+        self.drop_label.configure(text="PAYLOAD LOCKED // CUSTOM RUNTIME")
+        self._set_status("CUSTOM ARM64 RUNTIME ARMED", C_WARN)
 
     def _open_output(self) -> None:
         if self.last_archive and self.last_archive.exists():
@@ -606,6 +658,14 @@ class ConverterApp:
         ):
             self._pick_renpy_runtime()
             if self.renpy_runtime is None:
+                return
+        if (
+            self.inspection.engine == "godot"
+            and self.inspection.runtime_kind == "godot-custom"
+            and self.backend_runtime is None
+        ):
+            self._pick_backend_runtime()
+            if self.backend_runtime is None:
                 return
 
         source = self.source
@@ -627,6 +687,7 @@ class ConverterApp:
                     source,
                     output=output,
                     renpy_runtime=self.renpy_runtime,
+                    backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,
                     progress=self._progress_log,
