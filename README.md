@@ -89,6 +89,26 @@ Runtime selection remains backend-specific:
 - RPG Maker XP/VX/VX Ace uses the pinned mkxp-z ARM64 artifact.
 - Godot reads the engine version from the PCK and resolves the matching official ARM64 release.
 
+## Native desktop builds
+
+Windows x64:
+
+~~~powershell
+py -3.12 -m venv .venv-win
+.\.venv-win\Scripts\Activate.ps1
+powershell -ExecutionPolicy Bypass -File build\build_windows.ps1
+~~~
+
+Linux ARM64 / Steam Frame:
+
+~~~bash
+python3 -m venv .venv
+source .venv/bin/activate
+bash build/build_linux_aarch64.sh
+~~~
+
+The application filename is also **Multi-Engine Game Conversion Framework by Tovakai**. There is no shorter product alias.
+
 ## Development
 
 ~~~bash
