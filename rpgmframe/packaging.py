@@ -26,6 +26,7 @@ _PORTABLE_EXECUTABLES = frozenset(
         "python3",
         "pythonw",
         "pythonw3",
+        "renpy",
     }
 )
 
