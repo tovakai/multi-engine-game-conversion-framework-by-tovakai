@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import struct
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -100,18 +101,80 @@ def _embedded_pack(path: Path) -> GodotPack | None:
     )
 
 
-def _single_wrapper_child(root: Path) -> Path | None:
+_DISCOVERY_SKIP_DIRS = frozenset(
+    {
+        ".git",
+        "__macosx",
+        "__pycache__",
+        "steam_settings",
+    }
+)
+
+
+def _subdirectories(root: Path) -> list[Path]:
     try:
         children = [
             child
             for child in root.iterdir()
             if child.is_dir()
             and not child.name.startswith(".")
-            and child.name != "__MACOSX"
+            and child.name.casefold() not in _DISCOVERY_SKIP_DIRS
         ]
     except OSError:
-        return None
-    return children[0] if len(children) == 1 else None
+        return []
+    return sorted(children, key=lambda path: path.name.casefold())
+
+
+def _discover_pack_roots(
+    root: Path,
+    *,
+    max_depth: int = 5,
+    max_directories: int = 128,
+) -> list[tuple[int, Path, list[GodotPack]]]:
+    """Find the shallowest Godot payload roots below a selected directory.
+
+    Real-world Windows game bundles frequently wrap the actual install under
+    paths such as Game/common/Game and place unrelated helper directories
+    beside it. The old single-child descent stopped as soon as a sibling such
+    as steam_settings existed.
+
+    Discovery is breadth-first, bounded, and conservative: once any Godot
+    payload is found at a depth, deeper directories are ignored. Multiple
+    payload roots at the same shallowest depth remain ambiguous instead of
+    being guessed.
+    """
+    queue: deque[tuple[Path, int]] = deque([(root, 0)])
+    seen: set[Path] = set()
+    matches: list[tuple[int, Path, list[GodotPack]]] = []
+    shallowest_match: int | None = None
+    visited = 0
+
+    while queue and visited < max_directories:
+        current, depth = queue.popleft()
+        if shallowest_match is not None and depth > shallowest_match:
+            break
+
+        try:
+            resolved = current.resolve()
+        except OSError:
+            resolved = current
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        visited += 1
+
+        packs = _candidate_packs(current)
+        if packs:
+            matches.append((depth, current, packs))
+            shallowest_match = depth
+            continue
+
+        if depth >= max_depth:
+            continue
+        for child in _subdirectories(current):
+            queue.append((child, depth + 1))
+
+    return matches
 
 
 def _candidate_packs(root: Path) -> list[GodotPack]:
@@ -193,27 +256,29 @@ def materialize_pack(pack: GodotPack, destination: Path) -> None:
 
 def inspect_godot(path: Path | str) -> GameInspection | None:
     root = Path(path).expanduser().resolve()
-    current = root
-    wrapper_chain: list[Path] = []
-    seen = {root}
-
-    for _ in range(17):
-        packs = _candidate_packs(current)
-        if packs:
-            break
-        wrapper = _single_wrapper_child(current)
-        if wrapper is None:
-            return None
-        resolved = wrapper.resolve()
-        if resolved in seen:
-            return None
-        seen.add(resolved)
-        wrapper_chain.append(wrapper)
-        current = wrapper
-    else:
+    matches = _discover_pack_roots(root)
+    if not matches:
         return None
 
-    packs = _candidate_packs(current)
+    if len(matches) != 1:
+        evidence: list[str] = []
+        for _, candidate_root, packs in matches:
+            for pack in packs:
+                try:
+                    evidence.append(pack.path.relative_to(root).as_posix())
+                except ValueError:
+                    evidence.append(pack.path.as_posix())
+        return GameInspection(
+            source_path=root,
+            family=EngineFamily.GODOT,
+            evidence=evidence,
+            warnings=[
+                "Multiple Godot game roots were found at the same directory "
+                "depth; refusing to guess which payload is the main game."
+            ],
+        )
+
+    _, current, packs = matches[0]
     if len(packs) != 1:
         evidence = [pack.path.relative_to(root).as_posix() for pack in packs]
         return GameInspection(
@@ -233,10 +298,10 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
         evidence_path = pack.path.as_posix()
 
     warnings: list[str] = []
-    if wrapper_chain:
+    if current != root:
         warnings.append(
-            "Auto-descended through wrapper directories: "
-            + wrapper_chain[-1].relative_to(root).as_posix()
+            "Auto-discovered Godot game root in subfolder: "
+            + current.relative_to(root).as_posix()
         )
     if pack.embedded:
         warnings.append(
