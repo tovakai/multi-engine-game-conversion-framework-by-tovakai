@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+import shlex
 import shutil
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 from renframe.inspect_service import inspect_game
 from renframe.models import BuildResult, Compatibility, GameInspection, RuntimeInspection
 from renframe.runtime import (
+    RuntimeDownloadError,
+    RuntimeManager,
     detect_runtime_layout,
     inspect_runtime,
+    normalize_release_version,
+    python_tag_for_generation,
     runtime_architecture_is_clearly_x86,
 )
 from renframe.utils import (
@@ -362,6 +368,100 @@ def _copy_runtime_and_game(
     return generate_launcher(staging, launcher_fs_name)
 
 
+def _find_source_launcher(root: Path) -> Path | None:
+    """Find an existing distributed Ren'Py shell launcher when one is present."""
+    ignored = {
+        "launch.sh",
+        "launch-steam.sh",
+        "add-to-steam.sh",
+        "make-linux-arm.sh",
+    }
+    preferred: list[Path] = []
+    fallback: list[Path] = []
+    for path in sorted(root.glob("*.sh")):
+        if path.name in ignored:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if "RENPY_PLATFORM" in text or "lib/" in text:
+            preferred.append(path)
+        else:
+            fallback.append(path)
+    return (preferred or fallback or [None])[0]
+
+
+def _write_grafted_launcher(
+    root: Path,
+    *,
+    source_launcher: Path | None,
+    platform_name: str,
+) -> Path:
+    launcher = root / "launch.sh"
+    if source_launcher is not None:
+        relative = source_launcher.relative_to(root).as_posix()
+        command = f'exec "$ROOT"/{shlex.quote(relative)} "$@"'
+    else:
+        command = f'exec "$ROOT/lib/{platform_name}/renpy" "$ROOT" "$@"'
+
+    launcher.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n\n"
+        'ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"\n'
+        'export RENPY_PLATFORM="linux-aarch64"\n\n'
+        + command
+        + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    try:
+        launcher.chmod(launcher.stat().st_mode | 0o755)
+    except OSError:
+        pass
+    return launcher
+
+
+def _copy_source_and_arm_platform(
+    *,
+    source: Path,
+    platform: Path,
+    staging: Path,
+) -> Path:
+    """Preserve the distributed game and graft in only the ARM64 platform slice."""
+    shutil.copytree(
+        source,
+        staging,
+        symlinks=True,
+        ignore=_ignore_dev_junk,
+        dirs_exist_ok=False,
+        ignore_dangling_symlinks=True,
+    )
+
+    destination = staging / "lib" / platform.name
+    if destination.exists():
+        if destination.is_dir():
+            shutil.rmtree(destination)
+        else:
+            destination.unlink()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(platform, destination, symlinks=True)
+
+    for child in destination.iterdir():
+        if child.is_file() and not child.is_symlink():
+            try:
+                child.chmod(child.stat().st_mode | 0o755)
+            except OSError:
+                pass
+
+    source_launcher = _find_source_launcher(staging)
+    return _write_grafted_launcher(
+        staging,
+        source_launcher=source_launcher,
+        platform_name=platform.name,
+    )
+
+
 def build_game(
     source: Path | str,
     *,
@@ -370,33 +470,25 @@ def build_game(
     force: bool = False,
     dry_run: bool = False,
     allow_version_mismatch: bool = False,
+    progress: Callable[[str], None] | None = None,
+    runtime_manager: RuntimeManager | None = None,
 ) -> BuildResult:
     """
-    Create a self-contained ARM64 Ren'Py game directory.
+    Create a self-contained Linux ARM64 Ren'Py game directory.
 
-    Strategy: copy the supplied ARM runtime/template, replace its ``game/``
-    with the source project's ``game/``, and generate a launcher. The original
-    source tree is never modified.
+    Automatic mode preserves the distributed game tree and grafts the exact
+    official sdkarm AArch64 platform slice into it. A manually supplied runtime
+    keeps the older full-runtime replacement path as an escape hatch.
     """
-    if runtime is None:
-        raise BuildError(
-            "--runtime is required. Automatic runtime download is not "
-            "implemented yet; pass a local ARM64 Ren'Py SDK/runtime path."
-        )
-
     source_path = normalize_path(source)
-    runtime_path = normalize_path(runtime)
     output_path = (
         normalize_path(output) if output is not None else default_output_path(source_path)
     )
 
     if not source_path.exists() or not source_path.is_dir():
         raise BuildError(f"Source path is not a directory: {source_path}")
-    if not runtime_path.exists() or not runtime_path.is_dir():
-        raise BuildError(f"Runtime path is not a directory: {runtime_path}")
 
     warnings: list[str] = []
-
     game_inspection = inspect_game(source_path)
     warnings.extend(
         _validate_source_inspection(
@@ -406,31 +498,69 @@ def build_game(
     )
     warnings.extend(game_inspection.warnings)
 
-    runtime_inspection = inspect_runtime(runtime_path)
-    warnings.extend(_validate_runtime_inspection(runtime_inspection))
+    automatic_runtime = runtime is None
+    runtime_inspection: RuntimeInspection | None = None
 
-    warnings.extend(
-        check_version_compatibility(
-            game_inspection,
-            runtime_inspection,
-            allow_mismatch=allow_version_mismatch,
-        )
-    )
+    if automatic_runtime:
+        if not game_inspection.renpy_version:
+            raise BuildError(
+                "Could not determine an exact Ren'Py release for automatic ARM64 "
+                "runtime acquisition. Supply --renpy-runtime after manual review."
+            )
+        try:
+            release = normalize_release_version(game_inspection.renpy_version)
+            python_tag = python_tag_for_generation(game_inspection.generation)
+            manager = runtime_manager or RuntimeManager()
+            runtime_path = manager.platform_path(release, python_tag)
+            if not dry_run:
+                runtime_path = manager.ensure_platform(
+                    release,
+                    python_tag,
+                    progress=progress,
+                )
+        except RuntimeDownloadError as exc:
+            raise BuildError(str(exc)) from exc
 
-    # Ensure the runtime tree is launchable before we copy anything.
-    layout = detect_runtime_layout(runtime_path)
-    if layout.launcher is None and not (
-        layout.python_bin is not None and layout.renpy_py is not None
-    ):
-        raise BuildError(
-            "Runtime has no usable launcher entrypoint "
-            "(need renpy.sh, or ARM lib/python + renpy.py)"
+        runtime_version = release
+        runtime_architecture = "aarch64"
+        warnings.append(
+            f"Automatically resolved official Ren'Py {release} "
+            f"{python_tag}-linux-aarch64 runtime"
         )
+    else:
+        runtime_path = normalize_path(runtime)
+        if not runtime_path.exists() or not runtime_path.is_dir():
+            raise BuildError(f"Runtime path is not a directory: {runtime_path}")
+
+        runtime_inspection = inspect_runtime(runtime_path)
+        warnings.extend(_validate_runtime_inspection(runtime_inspection))
+        warnings.extend(
+            check_version_compatibility(
+                game_inspection,
+                runtime_inspection,
+                allow_mismatch=allow_version_mismatch,
+            )
+        )
+
+        layout = detect_runtime_layout(runtime_path)
+        if layout.launcher is None and not (
+            layout.python_bin is not None and layout.renpy_py is not None
+        ):
+            raise BuildError(
+                "Runtime has no usable launcher entrypoint "
+                "(need renpy.sh, or ARM lib/python + renpy.py)"
+            )
+        runtime_version = runtime_inspection.version
+        runtime_architecture = runtime_inspection.architecture
 
     validate_output_paths(source_path, output_path, runtime_path)
 
     display_name, fs_name = _resolve_names(game_inspection, source_path)
-    launcher_path = output_path / f"{fs_name}.sh"
+    launcher_path = (
+        output_path / "launch.sh"
+        if automatic_runtime
+        else output_path / f"{fs_name}.sh"
+    )
 
     if output_path.exists() and not force and not dry_run:
         raise BuildError(
@@ -447,12 +577,12 @@ def build_game(
         output_path=output_path,
         launcher_path=launcher_path,
         source_version=game_inspection.renpy_version,
-        runtime_version=runtime_inspection.version,
+        runtime_version=runtime_version,
         game_name=fs_name,
         display_name=display_name,
         source_path=source_path,
         runtime_path=runtime_path,
-        runtime_architecture=runtime_inspection.architecture,
+        runtime_architecture=runtime_architecture,
         warnings=_dedupe_warnings(warnings),
         dry_run=dry_run,
     )
@@ -465,14 +595,20 @@ def build_game(
         shutil.rmtree(staging)
 
     try:
-        built_launcher = _copy_runtime_and_game(
-            runtime=runtime_path,
-            source=source_path,
-            staging=staging,
-            launcher_fs_name=fs_name,
-        )
+        if automatic_runtime:
+            built_launcher = _copy_source_and_arm_platform(
+                source=source_path,
+                platform=runtime_path,
+                staging=staging,
+            )
+        else:
+            built_launcher = _copy_runtime_and_game(
+                runtime=runtime_path,
+                source=source_path,
+                staging=staging,
+                launcher_fs_name=fs_name,
+            )
         _replace_output(staging, output_path, force=force)
-        # Launcher path after rename matches the planned location.
         result.launcher_path = output_path / built_launcher.name
     except BuildError:
         if staging.exists():
@@ -483,7 +619,6 @@ def build_game(
             shutil.rmtree(staging, ignore_errors=True)
         raise BuildError(f"Build failed: {exc}") from exc
     finally:
-        # If rename succeeded, staging is gone; if not, cleaned above.
         if staging.exists() and not output_path.exists():
             shutil.rmtree(staging, ignore_errors=True)
 
