@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import zipfile
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,6 +47,7 @@ class _Candidate:
     marker_file: Path
     score: int
     evidence: tuple[str, ...]
+    payload_archive: Path | None = None
 
 
 def _normalize_path(path: Path | str) -> Path:
@@ -190,6 +192,76 @@ def _score_construct_candidate(
     )
 
 
+def _archive_members(archive_path: Path) -> dict[str, str]:
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            names = [
+                name.replace("\\", "/").lstrip("./")
+                for name in archive.namelist()
+                if name and not name.endswith("/")
+            ]
+    except (OSError, zipfile.BadZipFile):
+        return {}
+    return {name.casefold(): name for name in names}
+
+
+def _score_construct_archive_candidate(
+    evidence_root: Path,
+    source_root: Path,
+    *,
+    engine: EngineVariant,
+    marker_names: tuple[str, ...],
+) -> _Candidate | None:
+    package_archive = source_root / "package.nw"
+    if not package_archive.is_file():
+        return None
+
+    members = _archive_members(package_archive)
+    if not members:
+        return None
+
+    marker = next(
+        (members.get(name.casefold()) for name in marker_names if name.casefold() in members),
+        None,
+    )
+    if marker is None:
+        return None
+
+    archive_label = _relative(package_archive, evidence_root)
+    evidence: list[str] = [f"{archive_label}::{marker}"]
+    score = 7
+
+    if "index.html" in members:
+        score += 2
+        evidence.append(f"{archive_label}::{members['index.html']}")
+
+    if "package.json" in members:
+        score += 1
+        evidence.append(f"{archive_label}::{members['package.json']}")
+
+    data_names = (
+        ("data.js",)
+        if engine is EngineVariant.CONSTRUCT_2
+        else ("data.json", "scripts/main.js", "main.js")
+    )
+    for data_name in data_names:
+        member = members.get(data_name.casefold())
+        if member is not None:
+            score += 1
+            evidence.append(f"{archive_label}::{member}")
+            break
+
+    return _Candidate(
+        engine=engine,
+        source_root=source_root,
+        game_root=source_root,
+        marker_file=package_archive,
+        score=score,
+        evidence=tuple(dict.fromkeys(evidence)),
+        payload_archive=package_archive,
+    )
+
+
 def _score_rgss_candidate(
     evidence_root: Path,
     source_root: Path,
@@ -330,6 +402,18 @@ def _collect_candidates(source_root: Path, *, evidence_root: Path) -> list[_Cand
             game_root=source_root / "www",
             marker_names=("c3runtime.js", "scripts/c3runtime.js"),
         ),
+        _score_construct_archive_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_2,
+            marker_names=("c2runtime.js",),
+        ),
+        _score_construct_archive_candidate(
+            evidence_root,
+            source_root,
+            engine=EngineVariant.CONSTRUCT_3,
+            marker_names=("c3runtime.js", "scripts/c3runtime.js"),
+        ),
     ):
         if candidate:
             candidates.append(candidate)
@@ -376,7 +460,7 @@ def _discover_candidates(
     max_depth: int = 5,
     max_directories: int = 128,
 ) -> list[_Candidate]:
-    """Find RPG Maker payloads below wrapper/package directories.
+    """Find supported payloads below wrapper/package directories.
 
     Search breadth-first so the shallowest valid payload wins. The scan is
     deliberately bounded and stops exploring deeper levels as soon as an
@@ -441,6 +525,30 @@ def _detect_web_game_name(game_root: Path, package_json: Path | None) -> str | N
             name = package.get("name")
             if isinstance(name, str) and name.strip():
                 return name.strip()
+    return None
+
+
+def _detect_archive_game_name(package_archive: Path) -> str | None:
+    members = _archive_members(package_archive)
+    package_member = members.get("package.json")
+    if package_member is None:
+        return None
+    try:
+        with zipfile.ZipFile(package_archive) as archive:
+            raw = archive.read(package_member)
+        package = json.loads(raw.decode("utf-8-sig"))
+    except (OSError, KeyError, UnicodeDecodeError, json.JSONDecodeError, zipfile.BadZipFile):
+        return None
+    if not isinstance(package, dict):
+        return None
+    window = package.get("window")
+    if isinstance(window, dict):
+        title = window.get("title")
+        if isinstance(title, str) and title.strip():
+            return title.strip()
+    name = package.get("name")
+    if isinstance(name, str) and name.strip():
+        return name.strip()
     return None
 
 
@@ -558,11 +666,24 @@ def inspect_game(path: Path | str) -> GameInspection:
         EngineVariant.CONSTRUCT_2,
         EngineVariant.CONSTRUCT_3,
     }:
-        package_json = _find_package_json(best.source_root, best.game_root)
-        if not (best.game_root / "index.html").is_file():
+        package_json = None
+        if best.payload_archive is not None:
+            members = _archive_members(best.payload_archive)
+            has_index = "index.html" in members
+            game_name = _detect_archive_game_name(best.payload_archive)
+            warnings.append(
+                "Detected Construct payload inside package.nw; it will be safely "
+                "unpacked before ARM64 re-wrapping."
+            )
+        else:
+            package_json = _find_package_json(best.source_root, best.game_root)
+            has_index = (best.game_root / "index.html").is_file()
+            game_name = _detect_web_game_name(best.game_root, package_json)
+
+        if not has_index:
             warnings.append(
                 "Construct runtime found, but index.html is missing; "
-                "this may be an incomplete or bundled export."
+                "this may be an incomplete export."
             )
         generation = "2" if best.engine is EngineVariant.CONSTRUCT_2 else "3"
         warnings.append(
@@ -576,10 +697,10 @@ def inspect_game(path: Path | str) -> GameInspection:
             runtime="nwjs",
             confidence=_confidence_for_score(best.score),
             game_root=best.game_root,
-            game_name=_detect_web_game_name(best.game_root, package_json)
-            or best.source_root.name,
+            game_name=game_name or best.source_root.name,
             engine_version=None,
             package_json=package_json,
+            payload_archive=best.payload_archive,
             evidence=list(best.evidence),
             warnings=warnings,
             compatibility=Compatibility.NEEDS_TESTING,
