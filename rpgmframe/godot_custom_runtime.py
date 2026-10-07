@@ -18,6 +18,7 @@ surface exported by the Frame's ARM64 Steam library.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import platform
@@ -555,3 +556,52 @@ class CustomGodotRuntimeManager:
         if progress:
             progress(f"Cached custom Godot compatibility runtime: {final}")
         return final
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="python -m rpgmframe.godot_custom_runtime",
+        description=(
+            "Build/cache the automatic Godot 3.7 + GodotSteam Steam Frame "
+            "compatibility runtime."
+        ),
+    )
+    parser.add_argument("--cache-dir", type=Path)
+    parser.add_argument("--work-dir", type=Path)
+    parser.add_argument("--steam-api", type=Path)
+    parser.add_argument("--distrobox", dest="distrobox_name")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="also copy the finished runtime bundle to this directory",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _build_parser().parse_args(argv)
+    manager = CustomGodotRuntimeManager(
+        cache_dir=args.cache_dir,
+        work_dir=args.work_dir,
+        steam_api=args.steam_api,
+        distrobox_name=args.distrobox_name,
+    )
+    try:
+        runtime = manager.ensure_runtime(progress=print)
+    except CustomGodotRuntimeError as exc:
+        print(f"ERROR: {exc}")
+        return 2
+
+    if args.output is not None:
+        output = args.output.expanduser().resolve()
+        if output.exists():
+            shutil.rmtree(output)
+        shutil.copytree(runtime, output)
+        runtime = output
+
+    print(f"Runtime: {runtime}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
