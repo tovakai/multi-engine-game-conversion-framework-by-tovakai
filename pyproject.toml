@@ -26,7 +26,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
-gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.4.2"]
+gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.6.3"]
 build = ["pyinstaller>=6.3.0"]
 
 [project.scripts]
