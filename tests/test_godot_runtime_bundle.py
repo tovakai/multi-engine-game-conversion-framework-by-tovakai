@@ -9,6 +9,7 @@ from rpgmframe.godot_backend import (
     _copy_godotsteam_data,
     _copy_runtime_bundle,
 )
+from rpgmframe.launchers import godot_launcher_body
 
 
 def _write_elf(path: Path, machine: int) -> None:
@@ -68,3 +69,18 @@ def test_missing_godotsteam_data_is_not_invented(tmp_path: Path) -> None:
 
     assert _copy_godotsteam_data(source, staging) is False
     assert not (staging / "steam_data.json").exists()
+
+
+def test_custom_godot_launcher_uses_proven_zink_path() -> None:
+    launcher = godot_launcher_body("game/Brotato.pck", force_zink=True)
+
+    assert 'MESA_LOADER_DRIVER_OVERRIDE="${MESA_LOADER_DRIVER_OVERRIDE:-zink}"' in launcher
+    assert 'GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"' in launcher
+    assert 'LD_LIBRARY_PATH="$ROOT' in launcher
+
+
+def test_stable_godot_launcher_does_not_force_zink() -> None:
+    launcher = godot_launcher_body("game/Test.pck")
+
+    assert "MESA_LOADER_DRIVER_OVERRIDE" not in launcher
+    assert "GALLIUM_DRIVER" not in launcher
