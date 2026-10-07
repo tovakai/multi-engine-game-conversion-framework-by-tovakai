@@ -78,3 +78,28 @@ def test_shared_install_manifest_contains_hash_size_and_explicit_launcher(tmp_pa
     assert len(entry["sha256"]) == 64
     assert entry["size"] == package.stat().st_size
     assert entry["exe"] == "Example-frame/launch.sh"
+
+
+def test_frame_metadata_rejects_escaping_launcher(tmp_path):
+    from megcfbt.frame_package import FramePackageError, load_frame_metadata
+
+    build = tmp_path / "Bad-frame"
+    meta = build / ".megcfbt"
+    meta.mkdir(parents=True)
+    (meta / "package.json").write_text(
+        json.dumps(
+            {
+                "schema": "megcfbt.frame-build/v1",
+                "name": "Bad",
+                "launcher": "../outside.sh",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        load_frame_metadata(build)
+    except FramePackageError as exc:
+        assert "unsafe launcher" in str(exc)
+    else:
+        raise AssertionError("escaping launcher was accepted")
