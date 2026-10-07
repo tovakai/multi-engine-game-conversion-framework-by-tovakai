@@ -20,7 +20,7 @@ from rpgmframe.elf import read_elf_architecture
 ProgressCallback = Callable[[str], None]
 _GITHUB_API = "https://api.github.com/repos/godotengine/godot/releases/tags"
 _HEADERS = {
-    "User-Agent": "RPGMFrame/0.0.1 (+https://github.com/AZumD/RPGMFrame)",
+    "User-Agent": "Multi-Engine-Game-Conversion-Framework-by-Tovakai/0.1 (+https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai)",
     "Accept": "application/vnd.github+json",
 }
 

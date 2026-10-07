@@ -8,7 +8,7 @@ The name is not abbreviated. Please enjoy typing it.
 
 | Engine | Conversion path | Current Steam Frame status |
 | --- | --- | --- |
-| Ren'Py 7/8 | RenFrame sdkarm runtime conversion | Hardware-proven across modern Ren'Py; selected legacy titles use compatibility profiles |
+| Ren'Py 7/8 | RenFrame sdkarm runtime conversion | Hardware-proven on tested modern Ren'Py titles; selected legacy titles use compatibility profiles |
 | RPG Maker XP / VX / VX Ace | Linux ARM64 mkxp-z | XP hardware-proven to title screen with To the Moon |
 | RPG Maker MV / MZ | Linux ARM64 NW.js | Hardware-proven with multiple MV/MZ games |
 | Godot | Matching official Linux ARM64 Godot runtime | Godot 4.3 hardware-proven with a converted title |
@@ -72,11 +72,7 @@ Show the integrated backend matrix:
 multi-engine-game-conversion-framework-by-tovakai backends
 ~~~
 
-The inherited RenFrame mod-library maintainer tool is available through:
-
-~~~bash
-multi-engine-game-conversion-framework-by-tovakai mod-library
-~~~
+RenFrame's mod-library code is preserved in the source tree for later integration, but the maintainer UI is not exposed by the unified application yet. The original seed catalog is intentionally not part of this bootstrap merge.
 
 ## Input and output behavior
 

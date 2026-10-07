@@ -65,7 +65,6 @@ def _parser() -> argparse.ArgumentParser:
     build_p.add_argument("--json", action="store_true", help="Print build result as JSON.")
 
     sub.add_parser("gui", help=f"Open {APP_NAME}.")
-    sub.add_parser("mod-library", help="Open the inherited RenFrame mod-library manager.")
     sub.add_parser("backends", help="Show the currently integrated engine backends.")
     return parser
 
@@ -157,11 +156,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "gui":
         from .gui import main as gui_main
         gui_main()
-        return 0
-
-    if args.command == "mod-library":
-        from renframe.library_manager import main as library_main
-        library_main()
         return 0
 
     if args.command == "backends":

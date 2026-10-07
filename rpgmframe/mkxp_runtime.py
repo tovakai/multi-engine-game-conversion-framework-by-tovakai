@@ -29,7 +29,7 @@ DEFAULT_MKXPZ_DOWNLOAD_URL = (
 ProgressCallback = Callable[[str], None]
 
 _HTTP_HEADERS = {
-    "User-Agent": "RPGMFrame/0.0.1 (+https://github.com/AZumD/RPGMFrame)",
+    "User-Agent": "Multi-Engine-Game-Conversion-Framework-by-Tovakai/0.1 (+https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai)",
     "Accept": "*/*",
 }
 
