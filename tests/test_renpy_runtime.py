@@ -210,6 +210,7 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
 
     # Only the exact ARM platform slice is grafted in.
     assert (output / "lib/py3-linux-aarch64/renpy").is_file()
+    assert (output / "lib/py3-linux-aarch64/Game").is_file()
     assert (output / "lib/py3-linux-aarch64/runtime-marker.txt").read_text(
         encoding="utf-8"
     ) == "arm"

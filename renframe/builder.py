@@ -494,6 +494,24 @@ def _copy_source_and_arm_platform(
                 pass
 
     source_launcher = _find_source_launcher(staging)
+    if source_launcher is not None:
+        runtime_entry = next(
+            (
+                candidate
+                for candidate in (destination / "renpy", destination / "python")
+                if candidate.is_file()
+            ),
+            None,
+        )
+        if runtime_entry is not None:
+            game_entry = destination / source_launcher.stem
+            if game_entry != runtime_entry:
+                shutil.copy2(runtime_entry, game_entry)
+                try:
+                    game_entry.chmod(game_entry.stat().st_mode | 0o755)
+                except OSError:
+                    pass
+
     return _write_grafted_launcher(
         staging,
         source_launcher=source_launcher,

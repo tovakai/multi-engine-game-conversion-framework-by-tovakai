@@ -35,10 +35,20 @@ def _portable_tar_filter(info: tarfile.TarInfo) -> tarfile.TarInfo:
     relative = Path(info.name)
     if info.isfile():
         name = relative.name
+        parent = relative.parent.name
+        renpy_arm_entry = parent in {
+            "py2-linux-aarch64",
+            "py3-linux-aarch64",
+        }
         # Windows filesystems discard POSIX execute bits. Normalize launchers,
-        # native runtime entrypoints, and Ren'Py's embedded Python interpreter
-        # when creating a Linux transfer archive.
-        if name in _PORTABLE_EXECUTABLES or name.endswith(".sh"):
+        # native runtime entrypoints, and direct Ren'Py ARM platform files.
+        # Ren'Py distributions name the executable after the game's .sh file,
+        # so that final case cannot be represented by a fixed filename list.
+        if (
+            name in _PORTABLE_EXECUTABLES
+            or name.endswith(".sh")
+            or renpy_arm_entry
+        ):
             info.mode |= 0o111
     return info
 
