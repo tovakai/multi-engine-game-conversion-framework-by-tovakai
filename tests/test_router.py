@@ -80,6 +80,34 @@ def test_detects_nested_godot_with_sibling_wrapper_directories(tmp_path: Path) -
     assert any("subfolder" in warning.lower() for warning in result.warnings)
 
 
+
+def test_custom_godot_build_is_detected_without_executing_it(tmp_path: Path) -> None:
+    root = tmp_path / "custom-godot"
+    game = root / "Brotato"
+    _write_bytes(
+        game / "Brotato.exe",
+        (
+            b"MZ\\x00"
+            b"3.7.dev.custom_build\\x00"
+            b"modules/godotsteam/godotsteam.cpp\\x00"
+            b"get_godotsteam_version\\x00"
+        ),
+    )
+    _write_godot_pack(game / "Brotato.pck", major=3, minor=7, patch=0)
+
+    result = inspect_source(root)
+
+    assert result.backend == "rpgmframe"
+    assert result.engine == "godot"
+    assert result.engine_version == "3.7.0"
+    assert result.buildable is False
+    assert result.runtime_kind == "godot-custom"
+    assert any("custom godot development build" in warning.lower() for warning in result.warnings)
+    assert any("godotsteam" in warning.lower() for warning in result.warnings)
+    assert any("godotsteam" in evidence.lower() for evidence in result.evidence)
+
+
+
 def test_detects_nested_rpg_maker_with_sibling_wrapper_directories(tmp_path: Path) -> None:
     root = tmp_path / "wrapped-mz"
     (root / "steam_settings").mkdir(parents=True)

@@ -8,7 +8,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from rpgmframe.elf import read_elf_architecture
-from rpgmframe.godot import find_godot_pack, is_csharp_export, materialize_pack
+from rpgmframe.godot import (
+    find_godot_pack,
+    inspect_godot_executable,
+    is_csharp_export,
+    materialize_pack,
+)
 from rpgmframe.godot_runtime import GodotRuntimeError, GodotRuntimeManager
 from rpgmframe.launchers import godot_launcher_body
 from rpgmframe.models import BuildResult, EngineVariant, GameInspection
@@ -89,6 +94,17 @@ def build_godot_game(
     pack = find_godot_pack(inspection.game_root)
     if pack is None:
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
+
+    fingerprint = inspect_godot_executable(inspection.game_root, pack)
+    if runtime is None and fingerprint is not None and fingerprint.custom_build:
+        details = "custom Godot development build"
+        if fingerprint.godotsteam:
+            details += " with built-in GodotSteam"
+        raise GodotBuildError(
+            f"Detected {details} in {fingerprint.path.name}. "
+            "The official stable-runtime resolver cannot safely substitute this "
+            "engine. Supply a matching Linux ARM64 custom runtime instead."
+        )
 
     if runtime is None:
         stage(0.15, f"Resolving Godot {inspection.engine_version} ARM64 runtime")
