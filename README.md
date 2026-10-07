@@ -105,7 +105,7 @@ There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
 
-## Optional Frame Control transfer-limit tweak
+## Frame transfer compatibility
 
 Frame Control currently caps a raw upload at 8 GiB. The GUI's **Frame Control…**
 tool can optionally raise only that local guard to 20 GiB for larger converted
@@ -133,6 +133,22 @@ multi-engine-game-conversion-framework-by-tovakai frame-control-limit restore
 
 If auto-detection misses a portable install, pass its `Frame Control.exe`,
 install directory, or `resources\ui\server.py` with `--path`.
+
+### FrameDrop and builds over 4 GiB unpacked
+
+FrameDrop 1.0.37 rejects Linux ZIPs whose **total unpacked member size** exceeds
+4 GiB in its frozen `framedrop.detect._safe_unzip` path. This is a ZIP
+inspection guard, not a Steam Frame or rsync transfer limit.
+
+The converter checks the finished ZIP's real uncompressed member total. If it
+crosses that guard, the CLI and GUI warn that the ZIP is unsuitable for
+FrameDrop and point to the converted build directory instead. FrameDrop accepts
+folders directly, and folder drops bypass its ZIP extraction path.
+
+The **Frame tools…** window shows the current package's unpacked size and offers
+**Open converted build folder** for this route. We intentionally do not
+binary-patch FrameDrop: its Windows build is a closed-source PyInstaller-frozen
+executable, so a folder bypass is substantially more stable across updates.
 
 ## Ren'Py runtime resolution
 
