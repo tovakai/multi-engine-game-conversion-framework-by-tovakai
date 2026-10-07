@@ -105,6 +105,35 @@ There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
 
+## Optional Frame Control transfer-limit tweak
+
+Frame Control currently caps a raw upload at 8 GiB. The GUI's **Frame Control…**
+tool can optionally raise only that local guard to 20 GiB for larger converted
+games. The tweak:
+
+- locates the packaged app's real `resources/ui/server.py` when possible
+- verifies the exact known `MAX_UPLOAD` line before changing anything
+- saves the original file beside it as `server.py.megcfbt-backup`
+- changes only the 8 GiB limit to 20 GiB
+- can restore the exact saved original
+- refuses unknown upstream layouts or pre-existing custom limits
+
+This is an unofficial third-party compatibility modification, not an upstream
+Frame Control feature. Close and reopen Frame Control after patching or restoring.
+Frame Control updates may replace the modified file. Large uploads also require
+enough temporary disk space and can still fail if the network connection drops.
+
+The same operations are available from the CLI:
+
+```powershell
+multi-engine-game-conversion-framework-by-tovakai frame-control-limit status
+multi-engine-game-conversion-framework-by-tovakai frame-control-limit patch
+multi-engine-game-conversion-framework-by-tovakai frame-control-limit restore
+```
+
+If auto-detection misses a portable install, pass its `Frame Control.exe`,
+install directory, or `resources\ui\server.py` with `--path`.
+
 ## Ren'Py runtime resolution
 
 Ren'Py now follows the same automatic-runtime philosophy as the other backends.
