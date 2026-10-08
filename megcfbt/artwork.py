@@ -217,13 +217,17 @@ def complete_frame_artwork(
     manual = present()
     meta = root / ".megcfbt" / "package.json"
     stored_sources = {}
+    previous_sgdb = None
     if meta.is_file():
         try:
             stored = json.loads(meta.read_text(encoding="utf-8"))
             if isinstance(stored, dict):
                 artwork_info = stored.get("artwork")
-                if isinstance(artwork_info, dict) and isinstance(artwork_info.get("slots"), dict):
-                    stored_sources = artwork_info["slots"]
+                if isinstance(artwork_info, dict):
+                    if isinstance(artwork_info.get("slots"), dict):
+                        stored_sources = artwork_info["slots"]
+                    if isinstance(artwork_info.get("steamgriddb"), dict):
+                        previous_sgdb = artwork_info["steamgriddb"]
         except (OSError, ValueError):
             pass
     sources = {
@@ -261,6 +265,8 @@ def complete_frame_artwork(
                     provenance: dict[str, object] = {"slots": sources}
                     if sgdb_assets and sgdb_match is not None:
                         provenance["steamgriddb"] = sgdb_match
+                    elif "steamgriddb" in sources.values() and previous_sgdb:
+                        provenance["steamgriddb"] = previous_sgdb
                     if appid:
                         provenance["steam_appid"] = appid
                     payload["artwork"] = provenance
