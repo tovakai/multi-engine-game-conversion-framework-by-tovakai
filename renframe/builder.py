@@ -545,9 +545,10 @@ def build_game(
     """
     Create a self-contained Linux ARM64 Ren'Py game directory.
 
-    Automatic mode preserves the distributed game tree and grafts the exact
-    official sdkarm AArch64 platform slice into it. A manually supplied runtime
-    keeps the older full-runtime replacement path as an escape hatch.
+    Normal automatic mode grafts the exact official sdkarm ARM64 platform slice
+    into the original engine. The opt-in Ren'Py 7.4 compatibility mode instead
+    uses a matched official 7.5 engine AND ARM64 runtime, retaining game assets.
+    A manually supplied runtime uses the full-runtime replacement path.
     """
     source_path = normalize_path(source)
     output_path = (
@@ -606,13 +607,25 @@ def build_game(
                         "(explicitly approved)"
                     )
             manager = runtime_manager or RuntimeManager()
-            runtime_path = manager.platform_path(release, python_tag)
-            if not dry_run:
-                runtime_path = manager.ensure_platform(
-                    release,
-                    python_tag,
-                    progress=progress,
+            if legacy_arm64_fallback:
+                runtime_path = manager.full_sdk_path(release, python_tag)
+                if not dry_run:
+                    runtime_path = manager.ensure_full_sdk(
+                        release, python_tag, progress=progress
+                    )
+                warnings.append(
+                    "Experimental compatibility mode replaces the source "
+                    "Ren'Py engine with the matching official Ren'Py 7.5.0 "
+                    "engine and Python 2 ARM64 runtime while preserving game/ assets."
                 )
+            else:
+                runtime_path = manager.platform_path(release, python_tag)
+                if not dry_run:
+                    runtime_path = manager.ensure_platform(
+                        release,
+                        python_tag,
+                        progress=progress,
+                    )
         except RuntimeDownloadError as exc:
             raise BuildError(str(exc)) from exc
 
@@ -653,7 +666,7 @@ def build_game(
     display_name, fs_name = _resolve_names(game_inspection, source_path)
     launcher_path = (
         output_path / "launch.sh"
-        if automatic_runtime
+        if automatic_runtime and not legacy_arm64_fallback
         else output_path / f"{fs_name}.sh"
     )
 
@@ -690,7 +703,7 @@ def build_game(
         shutil.rmtree(staging)
 
     try:
-        if automatic_runtime:
+        if automatic_runtime and not legacy_arm64_fallback:
             built_launcher = _copy_source_and_arm_platform(
                 source=source_path,
                 platform=runtime_path,
