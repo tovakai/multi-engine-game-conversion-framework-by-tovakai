@@ -1,0 +1,148 @@
+{
+  "comparisons": [
+    {
+      "changed_metadata_count": 1,
+      "changed_paths": [
+        "addons/fmod/fmod.gdextension"
+      ],
+      "compared_to": "SlayTheSpire2.pck",
+      "list_truncated": false,
+      "reference": "SlayTheSpire2.pck.before-fmod-patch"
+    },
+    {
+      "changed_metadata_count": 2,
+      "changed_paths": [
+        "addons/fmod/fmod.gdextension",
+        "addons/sentry/sentry.gdextension"
+      ],
+      "compared_to": "SlayTheSpire2.pck",
+      "list_truncated": false,
+      "reference": "SlayTheSpire2.pck.before-sentry-patch"
+    }
+  ],
+  "diagnostic_version": 1,
+  "errors": [],
+  "packs": [
+    {
+      "directory_offset": 104,
+      "entry_count": 13158,
+      "extension_configs": [
+        {
+          "path": ".godot/extension_list.cfg",
+          "sha256": "2492b87db1ef63c4ee08a6aba5f3e5ce4e2c56f50679864621a0b54edaedcdda",
+          "size_bytes": 118,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/fmod/fmod.gdextension",
+          "sha256": "573b57815b1c7e341b567e12480e735dfc9a37d5bfaf3a8bfe0a1dca5e0e93a9",
+          "size_bytes": 3971,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/sentry/sentry.gdextension",
+          "sha256": "afeceb8ec9095aaac5f1ed57c2d79f152844de1bd78fd57442a0687d3da726bc",
+          "size_bytes": 1860,
+          "table_md5_matches": true
+        },
+        {
+          "path": "bin/spine_godot_extension.gdextension",
+          "sha256": "c68654b593fb6fd24997463d7fe48a3e69da531417c7eb68d782a3d95e2ed31b",
+          "size_bytes": 1986,
+          "table_md5_matches": true
+        }
+      ],
+      "file_base": 1274112,
+      "format": 3,
+      "godot_version": [
+        4,
+        5,
+        1
+      ],
+      "pack_flags": 2,
+      "path": "SlayTheSpire2.pck",
+      "size_bytes": 1647627992
+    },
+    {
+      "directory_offset": 104,
+      "entry_count": 13158,
+      "extension_configs": [
+        {
+          "path": ".godot/extension_list.cfg",
+          "sha256": "2492b87db1ef63c4ee08a6aba5f3e5ce4e2c56f50679864621a0b54edaedcdda",
+          "size_bytes": 118,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/fmod/fmod.gdextension",
+          "sha256": "d00e76c4661575ac13f205bdd1fa7482a87bc36b448dde4627ad76be501871b9",
+          "size_bytes": 3767,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/sentry/sentry.gdextension",
+          "sha256": "afeceb8ec9095aaac5f1ed57c2d79f152844de1bd78fd57442a0687d3da726bc",
+          "size_bytes": 1860,
+          "table_md5_matches": true
+        },
+        {
+          "path": "bin/spine_godot_extension.gdextension",
+          "sha256": "c68654b593fb6fd24997463d7fe48a3e69da531417c7eb68d782a3d95e2ed31b",
+          "size_bytes": 1986,
+          "table_md5_matches": true
+        }
+      ],
+      "file_base": 1274112,
+      "format": 3,
+      "godot_version": [
+        4,
+        5,
+        1
+      ],
+      "pack_flags": 2,
+      "path": "SlayTheSpire2.pck.before-fmod-patch",
+      "size_bytes": 1647627768
+    },
+    {
+      "directory_offset": 1646209888,
+      "entry_count": 13158,
+      "extension_configs": [
+        {
+          "path": ".godot/extension_list.cfg",
+          "sha256": "2492b87db1ef63c4ee08a6aba5f3e5ce4e2c56f50679864621a0b54edaedcdda",
+          "size_bytes": 118,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/fmod/fmod.gdextension",
+          "sha256": "d00e76c4661575ac13f205bdd1fa7482a87bc36b448dde4627ad76be501871b9",
+          "size_bytes": 3767,
+          "table_md5_matches": true
+        },
+        {
+          "path": "addons/sentry/sentry.gdextension",
+          "sha256": "39ee709ec6706630a001e6a7f7116a01250751ebf2bb232c82465c9d8c63b3eb",
+          "size_bytes": 1675,
+          "table_md5_matches": true
+        },
+        {
+          "path": "bin/spine_godot_extension.gdextension",
+          "sha256": "c68654b593fb6fd24997463d7fe48a3e69da531417c7eb68d782a3d95e2ed31b",
+          "size_bytes": 1986,
+          "table_md5_matches": true
+        }
+      ],
+      "file_base": 112,
+      "format": 3,
+      "godot_version": [
+        4,
+        5,
+        1
+      ],
+      "pack_flags": 2,
+      "path": "SlayTheSpire2.pck.before-sentry-patch",
+      "size_bytes": 1647470256
+    }
+  ],
+  "scope": "Read-only PCK directories and small extension configs; no writes, engine execution or Steam calls. Whole-pack hashes are NOT rechecked. Comparisons use declared size/MD5/flags, not all resource bytes. Full configuration text is excluded from this distributable hash-only record."
+}

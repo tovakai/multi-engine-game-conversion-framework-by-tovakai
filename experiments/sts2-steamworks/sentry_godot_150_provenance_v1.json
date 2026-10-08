@@ -1,0 +1,52 @@
+{
+  "provenance_version": 1,
+  "scope": "Full official release-asset checksum and static selected-member inspection; no extension execution, installation or crash-reporting test.",
+  "archive": {
+    "name": "sentry-godot-1.5.0+6c4d74e.zip",
+    "url": "https://github.com/getsentry/sentry-godot/releases/download/1.5.0/sentry-godot-1.5.0%2B6c4d74e.zip",
+    "size_bytes": 405666640,
+    "sha256": "90f00a44f588c9fece083178109b5cca37dbae98186c426f4d522b96a43d4d4e",
+    "checksum_url": "https://github.com/getsentry/sentry-godot/releases/expanded_assets/1.5.0",
+    "checksum_source": "Official GitHub release asset's displayed SHA-256 digest and clipboard value; release API returned HTTP 403.",
+    "published_checksum_matched": true
+  },
+  "source": {
+    "repository": "https://github.com/getsentry/sentry-godot",
+    "tag": "1.5.0",
+    "commit": "6c4d74ece1fab5eb841fc7c7135341a4abb28497",
+    "license": "MIT",
+    "license_url": "https://raw.githubusercontent.com/getsentry/sentry-godot/6c4d74ece1fab5eb841fc7c7135341a4abb28497/LICENSE.md",
+    "notice_boundary": "Preserve plugin license and review bundled native/crashpad third-party notices before redistribution. Release zip contains README, not a standalone license file."
+  },
+  "deployed_files": [
+    {
+      "member": "addons/sentry/bin/linux/arm64/crashpad_handler",
+      "deployed_path": "addons/sentry/bin/linux/arm64/crashpad_handler",
+      "size_bytes": 850216,
+      "sha256": "3d95eb63a98859eae41ab1e55b3738e68f052f9036a7488b3cab3ba5f091d390",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "prototype_size_and_hash_matched": true
+    },
+    {
+      "member": "addons/sentry/bin/linux/arm64/libsentry.linux.release.arm64.so",
+      "deployed_path": "addons/sentry/bin/linux/arm64/libsentry.linux.release.arm64.so",
+      "size_bytes": 4386096,
+      "sha256": "c81554aa34271377cc796ecf55d942576cbe4cb230dfc1bab4c408d1493b3023",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "defined_export_verified": "sentry_gdextension_init",
+      "prototype_size_and_hash_matched": true
+    }
+  ],
+  "official_manifest": {
+    "member": "addons/sentry/sentry.gdextension",
+    "size_bytes": 3891,
+    "sha256": "56ca4fc8f7dec32c0bafdb273d69ff1af08c4addd66fc46a12924fa1a3f39773",
+    "boundary": "Not the 1860-byte adapted game manifest. Preserve the existing guarded packed-manifest recipe rather than replacing the whole addon."
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "provenance_version": 1,
+  "source_commit": "27d9dd23c83871e0619fca5dc2cddfbfd69e926a",
+  "url": "https://raw.githubusercontent.com/godotengine/godot-cpp/27d9dd23c83871e0619fca5dc2cddfbfd69e926a/gdextension/extension_api.json",
+  "sha256": "23d807e3f914f7a91b152a8a7b03638d4853f8e642b79f10ce85a43b44340bfd",
+  "size_bytes": 6581513,
+  "matches_device_observation": true,
+  "scope": "Pinned upstream HTTPS source-file download and full-byte fingerprint comparison with the user-run Frame observation; no code execution or independently reproduced native build. Raw source remains outside the checkout."
+}

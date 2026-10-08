@@ -1,0 +1,35 @@
+{
+  "diagnostic_version": 1,
+  "directories_visited": 41,
+  "errors": [],
+  "repositories": [
+    {
+      "branch": "",
+      "checkout": "/run/media/steamos/SD512/fmod-arm64-build/fmod-gdextension",
+      "commit": "fda1f89a08c0048ed313b333f90b7a7258ce2e61",
+      "errors": [],
+      "matches_expected_extension_commit": true,
+      "sconstruct_diff": "diff --git a/SConstruct b/SConstruct\nindex 16d843e..b77ee58 100644\n--- a/SConstruct\n+++ b/SConstruct\n@@ -76,7 +76,8 @@ elif env[\"platform\"] == \"linux\":\n \n     env.Append(CCFLAGS=[\"-fPIC\", \"-Wwrite-strings\"])\n     env.Append(LINKFLAGS=[\"-Wl,-R,'$$ORIGIN'\"])\n-    env.Append(LINKFLAGS=[\"-m64\", \"-fuse-ld=gold\"])\n+    if env[\"arch\"] != \"arm64\":\n+        env.Append(LINKFLAGS=[\"-m64\", \"-fuse-ld=gold\"])\n \n elif env[\"platform\"] == \"windows\":\n     libfmod = 'fmod%s_vc'% lfix\n",
+      "sconstruct_diff_sha256": "456323268fc44e645ab3e895f65235dfe6d3e6bd92c567388e77ebd29d63b76a",
+      "sconstruct_diff_truncated": false,
+      "submodules": ["e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77 godot-cpp (godot-3.3.3-stable-1237-ge83fd09)"],
+      "tracked_changes": ["M SConstruct", " M src/helpers/common.h"],
+      "untracked_build_count": 0,
+      "untracked_build_paths": [],
+      "untracked_listing_truncated": false
+    },
+    {
+      "branch": "",
+      "checkout": "/run/media/steamos/SD512/fmod-arm64-build/fmod-gdextension/godot-cpp",
+      "commit": "e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77",
+      "errors": [],
+      "submodules": [],
+      "tracked_changes": [],
+      "untracked_build_count": 0,
+      "untracked_build_paths": [],
+      "untracked_listing_truncated": false
+    }
+  ],
+  "scope": "Bounded read-only Git search within the FMOD build workspace, with SConstruct diff only at the expected extension commit. No SDK contents, logs, remote URLs, fetches, builds, Steam calls or writes. Optional locks/fsmonitor and external diff/text conversion disabled.",
+  "search_incomplete": false
+}

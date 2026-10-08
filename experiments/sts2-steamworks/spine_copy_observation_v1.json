@@ -1,0 +1,47 @@
+{
+  "diagnostic_version": 1,
+  "difference_count": 0,
+  "difference_paths": [],
+  "errors": [],
+  "files": [
+    {
+      "label": "build",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/bin/linux/libspine_godot.linux.template_release.arm64.so",
+      "present": true,
+      "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
+      "size_bytes": 4328984
+    },
+    {
+      "label": "example",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/example-v4-extension/bin/linux/libspine_godot.linux.template_release.arm64.so",
+      "present": true,
+      "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
+      "size_bytes": 4328984
+    },
+    {
+      "label": "deployed",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/sts2-arm64-proto/bin/linux/libspine_godot.linux.template_release.arm64.so",
+      "present": true,
+      "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
+      "size_bytes": 4328984
+    },
+    {"label": "custom.py", "path": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/custom.py", "present": false},
+    {"label": "godot-cpp/dev", "path": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/godot-cpp/dev", "present": false},
+    {
+      "label": "godot-cpp/gdextension/extension_api.json",
+      "path": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/godot-cpp/gdextension/extension_api.json",
+      "present": true,
+      "sha256": "23d807e3f914f7a91b152a8a7b03638d4853f8e642b79f10ce85a43b44340bfd",
+      "size_bytes": 6581513
+    }
+  ],
+  "scope": "Read-only bounded hashes of selected C/C++ files, optional build inputs and three library paths. No source contents disclosed, compilation, library loading, Steam calls or writes; matching hashes do not prove a reproducible build.",
+  "source_copy_matches": true,
+  "sources": {
+    "copied": {"file_count": 158, "tree_sha256": "d6a1bb80fb864180e5103ed462e5fd42433fbf44e8edcba9ea753d6a763598a3"},
+    "original": {"file_count": 158, "tree_sha256": "d6a1bb80fb864180e5103ed462e5fd42433fbf44e8edcba9ea753d6a763598a3"}
+  }
+}

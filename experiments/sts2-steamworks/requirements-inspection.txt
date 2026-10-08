@@ -1,0 +1,5 @@
+dnfile==0.18.0
+dncil==1.0.2
+pefile==2024.8.26
+pyelftools==0.32
+capstone==5.0.6

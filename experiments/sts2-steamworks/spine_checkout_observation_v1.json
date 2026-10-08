@@ -1,0 +1,20 @@
+{
+  "diagnostic_version": 1,
+  "checkouts": [
+    {
+      "branch": "4.2",
+      "checkout": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes",
+      "commit": "e7dc1435fa4a0083ab431f1b28e083c14a1f5c68",
+      "errors": ["tracked_changes failed: TimeoutExpired"],
+      "submodules": []
+    }
+  ],
+  "directories_visited": 4509,
+  "errors": [
+    "Directory traversal failed: errno=13",
+    "Directory traversal failed: errno=13",
+    "Directory traversal failed: errno=13"
+  ],
+  "search_incomplete": true,
+  "scope": "Bounded search for spine-runtimes folders and read-only Git metadata. No remote URLs, file contents, builds, fetches, Steam calls or writes; Git optional locks and fsmonitor disabled."
+}

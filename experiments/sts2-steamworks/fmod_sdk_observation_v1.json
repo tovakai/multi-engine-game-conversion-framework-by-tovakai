@@ -1,0 +1,158 @@
+{
+  "diagnostic_version": 1,
+  "errors": [],
+  "files": [
+    {
+      "fmod_version_definitions": [],
+      "kind": "header",
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/core/inc/fmod.h",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/core/inc/fmod.h",
+      "sha256": "6f32d439b351e321bf15b931ec93a37a9e3e9a516f19298dec7f7df52e7266aa",
+      "size_bytes": 50737
+    },
+    {
+      "fmod_version_definitions": [
+        "0x00020315"
+      ],
+      "kind": "header",
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/core/inc/fmod_common.h",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/core/inc/fmod_common.h",
+      "sha256": "18960a8bf603290d9650b2d4c2869c167b399d78b06cb91f03deed9a4a442847",
+      "size_bytes": 38634
+    },
+    {
+      "fmod_version_definitions": [],
+      "kind": "header",
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/core/inc/fmod_errors.h",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/core/inc/fmod_errors.h",
+      "sha256": "8a575bdce8881d1bd31447e23754628cb3f395394ed07e99b9e29628a811fa5f",
+      "size_bytes": 12510
+    },
+    {
+      "fmod_version_definitions": [],
+      "kind": "header",
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/studio/inc/fmod_studio.h",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/studio/inc/fmod_studio.h",
+      "sha256": "5442a79427b33fa3bcbae420914fbe1f8dd5a190f39264fd830061b49c84e88f",
+      "size_bytes": 25234
+    },
+    {
+      "fmod_version_definitions": [],
+      "kind": "header",
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/studio/inc/fmod_studio_common.h",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/studio/inc/fmod_studio_common.h",
+      "sha256": "8b06fc81879a482d10f8f8c9ecc988cb8489068250c10687bc81b78476366847",
+      "size_bytes": 13921
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "core",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/core/lib/arm64/libfmod.so",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/core/lib/arm64/libfmod.so.14.15",
+      "sha256": "3f890c918d513aa1e6c6efba330f9869ff15258d49bf3e2b52f9bee832c90de5",
+      "size_bytes": 1290880
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "core",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/core/lib/arm64/libfmod.so.14",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/core/lib/arm64/libfmod.so.14.15",
+      "sha256": "3f890c918d513aa1e6c6efba330f9869ff15258d49bf3e2b52f9bee832c90de5",
+      "size_bytes": 1290880
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "studio",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/studio/lib/arm64/libfmodstudio.so",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/studio/lib/arm64/libfmodstudio.so.14.15",
+      "sha256": "d1bc3c729d534d9f03933d24cbc84139f73a460f92334e09ccdf388c334dcd31",
+      "size_bytes": 1302256
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "studio",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/sdk-layout/linux/studio/lib/arm64/libfmodstudio.so.14",
+      "present": true,
+      "resolved_relative": "fmodstudioapi20315linux/api/studio/lib/arm64/libfmodstudio.so.14.15",
+      "sha256": "d1bc3c729d534d9f03933d24cbc84139f73a460f92334e09ccdf388c334dcd31",
+      "size_bytes": 1302256
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "extension",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/fmod-arm64-build/fmod-gdextension/demo/addons/fmod/libs/linux/libGodotFmod.linux.template_release.arm64.so",
+      "present": true,
+      "resolved_relative": "fmod-gdextension/demo/addons/fmod/libs/linux/libGodotFmod.linux.template_release.arm64.so",
+      "sha256": "0d5be1a919feb1d287e29b8115441c4e99d8795b8fcad031fc74699ca2a2cf62",
+      "size_bytes": 3281280
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "extension",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/sts2-arm64-proto/addons/fmod/libs/linux/libGodotFmod.linux.template_release.arm64.so",
+      "present": true,
+      "resolved_relative": "addons/fmod/libs/linux/libGodotFmod.linux.template_release.arm64.so",
+      "sha256": "0d5be1a919feb1d287e29b8115441c4e99d8795b8fcad031fc74699ca2a2cf62",
+      "size_bytes": 3281280
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "core",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/sts2-arm64-proto/addons/fmod/libs/linux/libfmod.so.14",
+      "present": true,
+      "resolved_relative": "addons/fmod/libs/linux/libfmod.so.14",
+      "sha256": "3f890c918d513aa1e6c6efba330f9869ff15258d49bf3e2b52f9bee832c90de5",
+      "size_bytes": 1290880
+    },
+    {
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      },
+      "kind": "studio",
+      "matches_prototype_inventory": true,
+      "path": "/run/media/steamos/SD512/sts2-arm64-proto/addons/fmod/libs/linux/libfmodstudio.so.14",
+      "present": true,
+      "resolved_relative": "addons/fmod/libs/linux/libfmodstudio.so.14",
+      "sha256": "d1bc3c729d534d9f03933d24cbc84139f73a460f92334e09ccdf388c334dcd31",
+      "size_bytes": 1302256
+    }
+  ],
+  "scope": "Read-only selected SDK header hashes/version tokens, explicit SDK aliases and build/deployed library hashes. Aliases confined to the build or prototype root; external targets refused. No SDK contents disclosed, library loading, compilation, Steam calls or writes. Not a complete SDK inventory, license grant or reproducible-build validation."
+}

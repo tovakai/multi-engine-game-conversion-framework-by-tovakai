@@ -1,0 +1,29 @@
+{
+  "checkout": "/run/media/steamos/SD512/fmod-arm64-build/fmod-gdextension",
+  "commit": "fda1f89a08c0048ed313b333f90b7a7258ce2e61",
+  "diagnostic_version": 1,
+  "errors": [],
+  "files": [
+    {
+      "base_sha256": "253761c20fc57ba68301953ba1d11a6a355e4e6dc8663e5c0f19981dc81020f8",
+      "base_size_bytes": 7652,
+      "current_sha256": "a83e6d09efebe83ef759d40e95f8071b9a04dfa0824801ee4d6a52fdf7ea1edb",
+      "current_size_bytes": 7687,
+      "diff": "diff --git a/SConstruct b/SConstruct\nindex 16d843e..b77ee58 100644\n--- a/SConstruct\n+++ b/SConstruct\n@@ -76,7 +76,8 @@ elif env[\"platform\"] == \"linux\":\n \n     env.Append(CCFLAGS=[\"-fPIC\", \"-Wwrite-strings\"])\n     env.Append(LINKFLAGS=[\"-Wl,-R,'$$ORIGIN'\"])\n-    env.Append(LINKFLAGS=[\"-m64\", \"-fuse-ld=gold\"])\n+    if env[\"arch\"] != \"arm64\":\n+        env.Append(LINKFLAGS=[\"-m64\", \"-fuse-ld=gold\"])\n \n elif env[\"platform\"] == \"windows\":\n     libfmod = 'fmod%s_vc'% lfix\n",
+      "diff_sha256": "456323268fc44e645ab3e895f65235dfe6d3e6bd92c567388e77ebd29d63b76a",
+      "diff_truncated": false,
+      "path": "SConstruct"
+    },
+    {
+      "base_sha256": "7221a332c04b6f910ea9b27d2aaa1863243b3498341b50be2fa5d648529d607b",
+      "base_size_bytes": 9074,
+      "current_sha256": "f4f70e508e2196af5e5283279fb4bf82979ae5abb6d95c55a67492b616a1a785",
+      "current_size_bytes": 9092,
+      "diff": "diff --git a/src/helpers/common.h b/src/helpers/common.h\nindex 2967bf3..5c5701b 100644\n--- a/src/helpers/common.h\n+++ b/src/helpers/common.h\n@@ -1,3 +1,4 @@\n+#include <cstdio>\n #ifndef GODOTFMOD_COMMON_H\n #define GODOTFMOD_COMMON_H\n \n",
+      "diff_sha256": "4217b68157f8bdac48f685df79c4e7f7c3b75700b8b97682286ae658e5352567",
+      "diff_truncated": false,
+      "path": "src/helpers/common.h"
+    }
+  ],
+  "scope": "Read-only base/current hashes and bounded HEAD diffs for SConstruct and src/helpers/common.h only. No SDK contents, logs, remote URLs, fetches, builds, Steam calls or writes. Optional locks/fsmonitor, external diff and text conversion disabled."
+}

@@ -1,0 +1,2211 @@
+{
+  "collector_platform": "win32",
+  "collector_python_version": "3.12.10",
+  "errors": [],
+  "excluded": [],
+  "files": [
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "SlayTheSpire2.exe",
+      "sha256": "59c3e86e43e8388cb2b03e40544cca7309c7d34519498bed91d88595e766bf82",
+      "size_bytes": 894748672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "SlayTheSpire2.pck",
+      "sha256": "42520eb8b0911c6c0f0bd102d92b33f41abd4d26b83489817d0a6dbd7dd48587",
+      "size_bytes": 1901378340,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "controller_config/game_actions_2868840.vdf",
+      "sha256": "dc1059ab6c119ab2be822a193bbc518ffb95c49a8f2f638118870aae53a28df6",
+      "size_bytes": 10635,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "crashpad_handler.exe",
+      "sha256": "5a01e04c87d624739f4c21c13843b2e5a40301911f00c4e895c6bddc8a26a0a5",
+      "size_bytes": 2486272,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "crashpad_wer.dll",
+      "sha256": "f6a6dd2b1e20216d40e9208b660526f041a811587288b70108481dc4fcc564ae",
+      "size_bytes": 669696,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/0Harmony.dll",
+      "sha256": "ef1898322c9f5c86dc1b0758b272a9c440823b4a41ca9a0b82a3aa6b3d206387",
+      "size_bytes": 2328064,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/GodotSharp.dll",
+      "sha256": "0e4897ecdfb31456a97c7d8028dfb8d7dbdc632e2f73fc9b438d7b266a139289",
+      "size_bytes": 5613568,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/JetBrains.Annotations.dll",
+      "sha256": "5f2b1475a7d80033a1ad25ea2710bd4b5fed40c28316cb0439bfb9aada2ef86b",
+      "size_bytes": 109056,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.CSharp.dll",
+      "sha256": "385e0935e3627ca95459820d0bc3eee4b1eaec014487e24ac740d061113f9dc1",
+      "size_bytes": 993560,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.DiaSymReader.Native.amd64.dll",
+      "sha256": "315a61c47c41b8d4c815f4274bb6584c1d24b4640c7eedc354ed5b03a9a1361e",
+      "size_bytes": 2195504,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.VisualBasic.Core.dll",
+      "sha256": "e6cb78967ac812054092c2a8de431e67782743e1ed7a2df4f67e56264b5e1d8b",
+      "size_bytes": 1255728,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.VisualBasic.dll",
+      "sha256": "cf5bee054c7d3d64fd3be02b80794842aeb1c9146a1e926872a55cf60e9f2a71",
+      "size_bytes": 17696,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.Win32.Primitives.dll",
+      "sha256": "d41f48e6bd1fda4646f28648191f500457a456cbb696ff2ed655fe0d4d3153c6",
+      "size_bytes": 15664,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Microsoft.Win32.Registry.dll",
+      "sha256": "879d51a6cb0d9cfccf5aa9c3e55e0179a3fa9fb82c9abc69df5559e0ddbe45e1",
+      "size_bytes": 121096,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/MonoMod.Backports.dll",
+      "sha256": "ac3f32bfd44aab83abf71abdff6dde548d57b7c0f8a1fe6d8964e348b4eeafb1",
+      "size_bytes": 27648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/MonoMod.ILHelpers.dll",
+      "sha256": "fdd0e3538340fd78b8f521e62b8cac1ebb7683ac1f27f6aaedfc1044b14bf4bb",
+      "size_bytes": 4096,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Sentry.dll",
+      "sha256": "77132b2e6e1fcbf3a568a53df6e7803e020ec7e4bdd74aa665107ee413cdfa21",
+      "size_bytes": 725504,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/SharpGen.Runtime.COM.dll",
+      "sha256": "2686187b458aba592e845d8c47f28c730efcca23eae77e3950a5178a9846d9ba",
+      "size_bytes": 168960,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/SharpGen.Runtime.dll",
+      "sha256": "0e6acd59ab2173a6467626d69cf9f5b5b7651111ffee6e30fb7818de59335b4b",
+      "size_bytes": 79872,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/SmartFormat.ZString.dll",
+      "sha256": "723e9ffdb9cec9565d9bbbdb27b4d19a9b0ba4ff006e1ab8b94022ae5c426450",
+      "size_bytes": 266752,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/SmartFormat.dll",
+      "sha256": "6220cde1dafffde5c51a4e23db4bb16e8ec620ef52bac51c0ad5f48c4769f168",
+      "size_bytes": 142848,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Steamworks.NET.dll",
+      "sha256": "e1cd0bf2436cefbb8bfcfcc1cea0587e5b9c740769e8340f7b9e9de72785fcf0",
+      "size_bytes": 387584,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.AppContext.dll",
+      "sha256": "74ee7989b4def5d08fb9227fc39587d78efc710d8d80713eb5ee2f0b7306de67",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Buffers.dll",
+      "sha256": "d0e3941f305ff64000d047ae3babfebbaebee9872e3b6c9c8eeb49c3e93eec7e",
+      "size_bytes": 15672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Collections.Concurrent.dll",
+      "sha256": "62cfde04a67163d91a9bb976ecb809dbbdee8d95812716698ebff33aea9743c7",
+      "size_bytes": 293160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Collections.Immutable.dll",
+      "sha256": "621641f94dc05c89d85cf09cd3701d6be26ee4cf9571743470a13d395c3e74d3",
+      "size_bytes": 903448,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Collections.NonGeneric.dll",
+      "sha256": "0b4f0042e7d896edf5580675c47cd7afafacbdd8525e6c7f96091ea61da11437",
+      "size_bytes": 108840,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Collections.Specialized.dll",
+      "sha256": "8f4812338155d45c77773344088756bbb3584658b62e270c640117b2823439e4",
+      "size_bytes": 104728,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Collections.dll",
+      "sha256": "9ee24cc6b215464242d0a79e4a9508798049124e42163db9f7362b496c319f02",
+      "size_bytes": 334112,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.Annotations.dll",
+      "sha256": "4e8264bc202124294de40b15df7422d9cdbd4d62b25d3eaca4b6f44893388e76",
+      "size_bytes": 198920,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.DataAnnotations.dll",
+      "sha256": "c99e85dee8e6ccf7496206952aac501359cf6da75b0f2a1c479ea6a2708b4e8c",
+      "size_bytes": 17160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.EventBasedAsync.dll",
+      "sha256": "45569a005623461f0f8cb193108561f9c9b0ecad8bd136c90474af964212e188",
+      "size_bytes": 47368,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.Primitives.dll",
+      "sha256": "5d41115f5ee0f36dff84fecbb8bc58a5d297eafd023e5e2f228f761a5d17b18c",
+      "size_bytes": 80136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.TypeConverter.dll",
+      "sha256": "cef4307954a3d565165b4f0a7c372836c764295f90e2f3eba08e6c1cf5c6d15a",
+      "size_bytes": 772360,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ComponentModel.dll",
+      "sha256": "647d3dea6fc9e5b1b5758171eae8481ddfa0658ec896235942ea40a33f179310",
+      "size_bytes": 31000,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Configuration.dll",
+      "sha256": "bd3bceb72788dc1f911f3926fa9ef4f0e97d1157a5c565831d0cb436db5f7fd4",
+      "size_bytes": 19720,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Console.dll",
+      "sha256": "9824aa3c7fbb9318fc6642ebaf1d2f5bc092aa16eadfbdf8d1e39395171282f4",
+      "size_bytes": 174344,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Core.dll",
+      "sha256": "ae08cdc4e9789d5ad9050cf1f0a3d51d793f434fbc8b812a4b58d0ffc92f4147",
+      "size_bytes": 23840,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Data.Common.dll",
+      "sha256": "4abed7b274a55299d723cd9cd3f3bbd98aeb55b49c886ead9b6a2de424c38e72",
+      "size_bytes": 2849080,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Data.DataSetExtensions.dll",
+      "sha256": "bdf255aa1500a5c2ea0508da3773e89538a574837fd2124deef6a5cbd73e83d9",
+      "size_bytes": 16152,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Data.dll",
+      "sha256": "b372aad1f120b5016c3baee9fd7ac597ea789971ce6557230d2dfc9855d8c740",
+      "size_bytes": 25384,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.Contracts.dll",
+      "sha256": "aa013b89749968ceb10d1f42f7f852c277d2d65a12c5d717fbf37abd234b07f6",
+      "size_bytes": 16648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.Debug.dll",
+      "sha256": "fa58a30b2e589e9a4d317300776457d67a7a95fb54ac7e91c2d75d7a89c06458",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.DiagnosticSource.dll",
+      "sha256": "5058729021758fa439d612fd60d9e435d1c1fd26d157f0eb8af6b87f3949723c",
+      "size_bytes": 452872,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.FileVersionInfo.dll",
+      "sha256": "a92dee94d74910b15e58e7595480568f3a25edaaafa3534e2e23d390e8f8828a",
+      "size_bytes": 47384,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.Process.dll",
+      "sha256": "7916450dde03008ec626ac80d81c66c5e57cb21dae818a4ef66161ae6c6af57e",
+      "size_bytes": 338200,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.StackTrace.dll",
+      "sha256": "a3bb69626f4e93213bf03fa4cc5eda365e06e0e4675d058303ac290db64c987a",
+      "size_bytes": 47384,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.TextWriterTraceListener.dll",
+      "sha256": "94ec5b88271591451f85e3cc27a983cbb5c05d19e35bf4314475ff60b38b1e6b",
+      "size_bytes": 67848,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.Tools.dll",
+      "sha256": "6d4d189ea7941aeda8761ad256d2443a36aa7fa975a0301ba9612b82a197fee4",
+      "size_bytes": 15656,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.TraceSource.dll",
+      "sha256": "a0af9c3215c1e4946089a8e2c513695c07ffc67ca76aa4cf56952855da04f975",
+      "size_bytes": 145720,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Diagnostics.Tracing.dll",
+      "sha256": "6d5297caabe947e694ff617915c0a0d0f6881aaa3084be15d69f06d91921e902",
+      "size_bytes": 16648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Drawing.Primitives.dll",
+      "sha256": "e599f1bbe613d900a7c68d9831208506abbd9bdfd8856d27a3280bb338096699",
+      "size_bytes": 137480,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Drawing.dll",
+      "sha256": "6bd358b87b8fba163ee2a3d8d85b98796ca7fdf68f00c4e602b25245548da45c",
+      "size_bytes": 20744,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Dynamic.Runtime.dll",
+      "sha256": "45aa925b9c8933a1c73af9d6e1f0ac4aa5593f1b68b1cf3d16715ede1975206e",
+      "size_bytes": 16664,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Formats.Asn1.dll",
+      "sha256": "03301199277d754477d7d25e87de622037ab08f39d7b4e4ce0d0331dd4e0e8fc",
+      "size_bytes": 239896,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Formats.Tar.dll",
+      "sha256": "3ef08b59b257c82e5716617b5c36d2fc52042e4a5ae62eefe45ced82f95002b3",
+      "size_bytes": 272648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Globalization.Calendars.dll",
+      "sha256": "b204bbd9c6abfe7d7e8a51bc325c35a6e64c1580a42ffda32be382cf57d7f64c",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Globalization.Extensions.dll",
+      "sha256": "816088cca324af1264a4d825ed23ae17c1cb4b57a862543bdd075795ea754513",
+      "size_bytes": 15664,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Globalization.dll",
+      "sha256": "37180edfe62c4bfa5c3df14fd81e546ceedeebb754fd721e626681b41c757192",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Compression.Brotli.dll",
+      "sha256": "f12bbce8c72c2204f99986bd328e6010e619debe0c61d3ebf8f55b52b7972587",
+      "size_bytes": 84256,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Compression.FileSystem.dll",
+      "sha256": "fc6cd87334a25a9af29368a4874e4fc78716dd43929b86e016cc26f5408177a8",
+      "size_bytes": 15672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Compression.Native.dll",
+      "sha256": "9f67c4befdd669d9aa4edbf8d288aa995b67e3cde574384632b3fb55ab07edc0",
+      "size_bytes": 927032,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Compression.ZipFile.dll",
+      "sha256": "39091d4a39d48a26870281178c720defc8688cfb2a60eb05491cc9f1facd4fa5",
+      "size_bytes": 55560,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Compression.dll",
+      "sha256": "353910691d6f608b5f535a848cee6cd2b4f250e0bce0702775f69081ffbf91dc",
+      "size_bytes": 268584,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.FileSystem.AccessControl.dll",
+      "sha256": "42e36d77d6568b43c816e8cf8c945f9bb53e73e01e6d994f07ab4963cd8ca60e",
+      "size_bytes": 104760,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.FileSystem.DriveInfo.dll",
+      "sha256": "ff39b1c0aa6b9dede2ee0c57c3f7928f07bf33209a2bbc99c2fd76ab8d8f43c2",
+      "size_bytes": 55592,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.FileSystem.Primitives.dll",
+      "sha256": "cbbff06beec0652d7c4f141a9951ea8e6817aa49031195d1b06413a5be58b626",
+      "size_bytes": 15656,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.FileSystem.Watcher.dll",
+      "sha256": "388dfa2a88b592bc3ffaf21c7f18759eaa2be07eff9fca323b69774731dcb706",
+      "size_bytes": 88328,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.FileSystem.dll",
+      "sha256": "6481472891d96d93755bcd67d746f5844e4b053c9f9fa74d105d2bc01d71e7e7",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Hashing.dll",
+      "sha256": "fbe8c2fcb4adc01da5c3c8ed0d727903b8fda1e6b84da3c447c9794615f30664",
+      "size_bytes": 56104,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.IsolatedStorage.dll",
+      "sha256": "174d6d5a70129cd2541abe02f5207f1ebb26965060e12a2ca01db68bdf186a47",
+      "size_bytes": 92464,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.MemoryMappedFiles.dll",
+      "sha256": "377ef8cf1a739768f84731e1f3d4f3e28db6ceabbbe961906810cbdb3aaffcb8",
+      "size_bytes": 84248,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Pipelines.dll",
+      "sha256": "652dbdc29735532c856437b214e9de676a39705c2ba391630c4ac207360e8286",
+      "size_bytes": 194824,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Pipes.AccessControl.dll",
+      "sha256": "c7230078dff3da665251b844f89e4985fb09b754f2def2e432d767d2c43561a4",
+      "size_bytes": 16176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.Pipes.dll",
+      "sha256": "fbe47e029a2e44a25d84fb4b54262caa18ed43c8635f494211bded73c495ea26",
+      "size_bytes": 170280,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.UnmanagedMemoryStream.dll",
+      "sha256": "f41410f034cfc1cda0a2b996b62b81bb885e701c99b92228b8e081c755a65bcb",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.IO.dll",
+      "sha256": "c0024d3ede27fb407eabd95cddd1b929aa06626013416c8a564c17abe6ef4f4d",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Linq.Expressions.dll",
+      "sha256": "5e08484e8b5f42652825789ed021c19d0e3e4bba9bf4e937e1a08e08c4702713",
+      "size_bytes": 3668232,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Linq.Parallel.dll",
+      "sha256": "b6ac584b018e456606830ecfee7e16e9ea78da66b940f63025dabe741340cc88",
+      "size_bytes": 801064,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Linq.Queryable.dll",
+      "sha256": "827f2c21ca291e194ce16f6bc10a2d79acded9fdb2dcc1a6ef6418da6fb1907c",
+      "size_bytes": 178456,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Linq.dll",
+      "sha256": "0cd2a7bf598ce884383d1dd2774f6fa98790d59da982d611f34ee546eda91d18",
+      "size_bytes": 657672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Memory.dll",
+      "sha256": "b451bacb02e958cd90750e91a7624bb30c1769f671ad0dd4320589b4961bbdb1",
+      "size_bytes": 162056,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Http.Json.dll",
+      "sha256": "abbc283332f4daf22a2a5f64c36fdcb3affb4019a76ff6a2d7d142e368845f91",
+      "size_bytes": 133384,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Http.dll",
+      "sha256": "4560457edb6b7a7fcb79e3fc0a28a3a8c6cd982a4e3a419b1f7c9ab0cab189bb",
+      "size_bytes": 1788168,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.HttpListener.dll",
+      "sha256": "dae52c2320d65e94ccabc93bac286863da196b910867b7bd6929815e55f0df34",
+      "size_bytes": 551216,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Mail.dll",
+      "sha256": "b788470ec410cc048b971931f5c0f0955318cffcd85c28e4cfa647d63d7791d6",
+      "size_bytes": 432408,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.NameResolution.dll",
+      "sha256": "6c078f33ab26718d4baec0b57b4e402afd664b5c0e65f6a764dc55b58dec1429",
+      "size_bytes": 125192,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.NetworkInformation.dll",
+      "sha256": "b143ee549a0fa60ea18adf420f4d3cbd2a11d8a9cda56e870e59dcf1ce9d0a14",
+      "size_bytes": 157968,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Ping.dll",
+      "sha256": "8099f8f439126020ce5cd42395ff58f7a86a692f49896bb0d391c5e27e773d1d",
+      "size_bytes": 96560,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Primitives.dll",
+      "sha256": "49762bc53e48e1bcc70d240c2e1eea6282eaae907b605253ffac2dd6679ff43a",
+      "size_bytes": 227632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Quic.dll",
+      "sha256": "8cb0bc4e86bf7cb70f0c5f26bd695ab9aea5e1b554931b181476c084f9defa24",
+      "size_bytes": 370984,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Requests.dll",
+      "sha256": "2f2e8404f6700d170018adc7a4448a29b3d346889bd46bf73d1b03f5b68a328d",
+      "size_bytes": 383240,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Security.dll",
+      "sha256": "76496a3dea3c2be5e05b16645e23a704f709bcd60988e091dc31a109ce9f091d",
+      "size_bytes": 678176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.ServicePoint.dll",
+      "sha256": "777c919fed0affdc26ec71664211007afc38e40f39bcde5b141c378e313b2422",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.Sockets.dll",
+      "sha256": "6d9b526f59f409a7ff242662b4821315ef30fefd61296f54cfb55521af34aca4",
+      "size_bytes": 547080,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.WebClient.dll",
+      "sha256": "914a7da0a2d3b55c8c478ad161be086e6e0200d141dcd080c4548a614c8b9566",
+      "size_bytes": 170248,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.WebHeaderCollection.dll",
+      "sha256": "104887b603dd438da1ba36f0255f7f5af99e7a2ed7bc156f86b0dba0301a3d4c",
+      "size_bytes": 63752,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.WebProxy.dll",
+      "sha256": "3470e4d0eb8a6594e5c4907e196aa3e8dd20aa08d221e8ebf0e41cca5b2443c6",
+      "size_bytes": 43288,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.WebSockets.Client.dll",
+      "sha256": "531854e254d7352ff44502ac4f0f6f5975eeba0fa2af6002ab47a3d084360169",
+      "size_bytes": 104728,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.WebSockets.dll",
+      "sha256": "46ed88a85477fff6baef01e6c763ca28ef3c11cb28dcefba53da383df2c5eed5",
+      "size_bytes": 235832,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Net.dll",
+      "sha256": "d5fc9508adcf199381b3dad4257a5f45efc7888fede547c1c7666764e3442f7f",
+      "size_bytes": 17672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Numerics.Vectors.dll",
+      "sha256": "2492aa58db008e312ce3f18b9507eebe87c946da22492a269bc94f282ace6b26",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Numerics.dll",
+      "sha256": "4a5fcebf7c39eb1254b1b797791c2983fd85734b10a7ca8c34ec22167aa6e6d7",
+      "size_bytes": 15640,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ObjectModel.dll",
+      "sha256": "17213cb6297560415bb6f9c7f70b13a7ad1ee71c43159c42546797138708781e",
+      "size_bytes": 84232,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Private.CoreLib.dll",
+      "sha256": "f17a8b87613387e1cbf8e36f06c58192580898e635c6620fb1a0280927135e3b",
+      "size_bytes": 15264040,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Private.DataContractSerialization.dll",
+      "sha256": "42ac43eec7fd2100780331f91bd799c50c0d5e558c0c1b63c0780b43f2a8d6c4",
+      "size_bytes": 2070840,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Private.Uri.dll",
+      "sha256": "0f317be1d8ec1c88d2d5a078fb4ee0f85ae25baf45c76bda603b23c6cdea1fdb",
+      "size_bytes": 260408,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Private.Xml.Linq.dll",
+      "sha256": "c1263f082be675b630096fe35d1f9ea66992746a8abb61f0da21064ff7cf51a1",
+      "size_bytes": 399624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Private.Xml.dll",
+      "sha256": "89c8bb39555c675ea6f39fb9563aa39918698e3e064f2785a3262fcebf7cff05",
+      "size_bytes": 7919912,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.DispatchProxy.dll",
+      "sha256": "7dec16e369e41087680b42aa304b332c866a8b707a1410a96543afc06a53894a",
+      "size_bytes": 76056,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Emit.ILGeneration.dll",
+      "sha256": "f70e31bf9b31fd2804dd493896a32834e7e14ea2f9f83c7e5bbb2599e3b04e85",
+      "size_bytes": 16184,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Emit.Lightweight.dll",
+      "sha256": "a09f89a070ae9b572a0c5c1aed41a0996fe40c3bc70e7c5c762ad9d3b19c81f0",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Emit.dll",
+      "sha256": "afb908be1a310d90821b6b4f7dd463410f5e43e05f058e128184b999dc93ddca",
+      "size_bytes": 301320,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Extensions.dll",
+      "sha256": "75a3418def9db9a8810b997a9fe5a76ff88437d24c807832adceed618a094c66",
+      "size_bytes": 15640,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Metadata.dll",
+      "sha256": "be8f197124b2a9835acf93797eca1f093e051d66feea39f1739320b0d5f90109",
+      "size_bytes": 1173816,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.Primitives.dll",
+      "sha256": "f95d7974db259b58e81f92db609d1b586418382fae44481a6649c55561312d78",
+      "size_bytes": 16176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.TypeExtensions.dll",
+      "sha256": "9bf0a6f8078f2b0af0ba4480454303c351c00e638eef292ae1c38cf9cba7413e",
+      "size_bytes": 43272,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Reflection.dll",
+      "sha256": "efb19e3b4ff27709eab68d95758e93a9f0dd9b23521e061870f65b7272cb7423",
+      "size_bytes": 16664,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Resources.Reader.dll",
+      "sha256": "97c68f3be8429ccbd6716636e38c2fffb88409689f7091bd5eda00621f63de2e",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Resources.ResourceManager.dll",
+      "sha256": "04b113c6a3c5d667b19ddffe47b8a2af35685917eb0f00f120385a234939df6d",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Resources.Writer.dll",
+      "sha256": "a8b2922b1b402cf178c52322a2d85139c15226b42ebdaaa5746ecee775cc88e7",
+      "size_bytes": 51496,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.CompilerServices.Unsafe.dll",
+      "sha256": "9ae5850e1899e862299cf774c6af59e60253dfad3944504a3cb3c51424cbd071",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.CompilerServices.VisualC.dll",
+      "sha256": "0df64fc0ac0f03ed1fd94663f24182cb5523c7963663f11824eed7fef918812d",
+      "size_bytes": 30984,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Extensions.dll",
+      "sha256": "93798b0f1f2ce5eaed939bbddb6c22f7af5b3c46ea45af53dd740fc31c211532",
+      "size_bytes": 18208,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Handles.dll",
+      "sha256": "768e839cf2b5b78423c3f84bd3c2242e0bcbc40109a250ab4e95e02d8afd014b",
+      "size_bytes": 15656,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.InteropServices.JavaScript.dll",
+      "sha256": "7de9558d7f8fe404f47130a88e0a71719b5970adb4c25440529322ed2efe1d2b",
+      "size_bytes": 51496,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.InteropServices.RuntimeInformation.dll",
+      "sha256": "abc6d2dd1fa5f1b0d25b0aaa46246050f7c4fccb91f0a20a0047ab4021dcf995",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.InteropServices.dll",
+      "sha256": "aab92b11a0932dfcd4fd87cef101856be2c2a6e309f4a80ef52410e21ec187ac",
+      "size_bytes": 112952,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Intrinsics.dll",
+      "sha256": "e0970e198dd095371765dac723c422cd130d4d9464e596a201c677da09601926",
+      "size_bytes": 17688,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Loader.dll",
+      "sha256": "88a82b9b3c466f7ba70caac9fd7c49037de1fedbbd2fb9beca2cde6ad5ecfeed",
+      "size_bytes": 16168,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Numerics.dll",
+      "sha256": "2b099919eaa4bb45a5eac84b1aa86787062d80bdad0b7b8ca250e573a0c515ee",
+      "size_bytes": 354616,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Serialization.Formatters.dll",
+      "sha256": "705818a47dfc0755a516c5d95dbf1816ba738f9a8a7ed66d0c9d5419720156e7",
+      "size_bytes": 125200,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Serialization.Json.dll",
+      "sha256": "b34779c67024a85c8c9849b85eab67ee05b3cb6609d67986322456ddaa76f30b",
+      "size_bytes": 16168,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Serialization.Primitives.dll",
+      "sha256": "33c71674783e7c78b37ff8f359805b3a45f3c4ee80e9d0eee8a8e1ad164ba18b",
+      "size_bytes": 39192,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Serialization.Xml.dll",
+      "sha256": "67b18d428f27393433d6b00f3ee4b3623e8f519d3553c1b13dfd579e563e869d",
+      "size_bytes": 17176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.Serialization.dll",
+      "sha256": "17796ff10a08dae8a3952c8b52459b307a647889b8bcd516bf0ab8c578572d93",
+      "size_bytes": 17176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Runtime.dll",
+      "sha256": "bf8677590c8440c643c633acb1a6a99c5750201ce1208345a56d3b7fc86da40d",
+      "size_bytes": 44824,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.AccessControl.dll",
+      "sha256": "1434b0c5b74124b5e85211d63c18c19958adfa11cb0d83d7674634b5fe0cd850",
+      "size_bytes": 231720,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Claims.dll",
+      "sha256": "613d0f86c6ae84fe0f61a0caee758866537df25e7c830d2c8b944b6fdfbef684",
+      "size_bytes": 100632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.Algorithms.dll",
+      "sha256": "a884e7743f7c779d116f17b6c46290ed9d885a4aa7038d5e5e70c1e6488ff865",
+      "size_bytes": 17672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.Cng.dll",
+      "sha256": "222c0e46738c43d2fa14c81a00ee170aeb49f433b1140cf102c2a7b2c375bc35",
+      "size_bytes": 16648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.Csp.dll",
+      "sha256": "9784abe278d1a8c6d4876a926627aaed8a17e4d606f039f3effe5fc5983c00ce",
+      "size_bytes": 16152,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.Encoding.dll",
+      "sha256": "fe24866905f8b4d9b55b94d9d482cc3c253a9915ef7cde9702c1d92de3c859ea",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.OpenSsl.dll",
+      "sha256": "eda6aadbfddffa6359add2e5e0cf4d31eb0969aa8991e0dc7a14d508b6125a3e",
+      "size_bytes": 15632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.Primitives.dll",
+      "sha256": "dcf51bfedea81f8a0bba62f11fc097a41a7c21fb6ff774408d314ffb5c9d5a7d",
+      "size_bytes": 16184,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.X509Certificates.dll",
+      "sha256": "96d6afb7babf7fc230a50171de4231f8cdc970ad82073c9fc5f393e7b23c44fc",
+      "size_bytes": 17160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Cryptography.dll",
+      "sha256": "2117c408a4643cc8e8ed3efaaa0086ef9f8975e8e9e1ad0903cc382970845b49",
+      "size_bytes": 2128136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Principal.Windows.dll",
+      "sha256": "12a6c012b52bf95b7d8be14ef73932672bbeca6f9b9031f68f6342b025caa84e",
+      "size_bytes": 186632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.Principal.dll",
+      "sha256": "773b9fc073f64d066a580df5f21c6ed3bbf7aa9de6247da8b9ca17f5d6bf96c4",
+      "size_bytes": 15632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.SecureString.dll",
+      "sha256": "d6d26c58402ea2e4612b3e2d516f9958af79f3b20f9749b69c11ead6ba4d87d5",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Security.dll",
+      "sha256": "0cc89bb5fe577505be5334b0983c074763eea5741ecbc52f17e3b34ef117d025",
+      "size_bytes": 18744,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ServiceModel.Web.dll",
+      "sha256": "e588a10405317e98acac202275d7e0511eda477fb67d7110a536242443ee16eb",
+      "size_bytes": 17200,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ServiceProcess.dll",
+      "sha256": "f2ae3502ca7354560e89024062080d2a801660ba9779117f203297165a622ffa",
+      "size_bytes": 16160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.Encoding.CodePages.dll",
+      "sha256": "95415d4a6a3604b0f750da3c10fe64ddcf02eec432da57db1722924e975d7288",
+      "size_bytes": 862520,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.Encoding.Extensions.dll",
+      "sha256": "6c42a736df6f2f95a79939591fd0094db9f825dc5c16ce91254f77f1d79b92d0",
+      "size_bytes": 16184,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.Encoding.dll",
+      "sha256": "a166ffa7a39e788bf25e335559d1ae2f3186b0ead5ce45db9bbf3918e68fc956",
+      "size_bytes": 16152,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.Encodings.Web.dll",
+      "sha256": "12a115f258f36c5b7e3db460e3a37d6506249a3bd70115461010b644f9ee281c",
+      "size_bytes": 133400,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.Json.dll",
+      "sha256": "af5a2af5bb1fd488d3a8d768fbcb0e6af7a6045374897af45563d04788c2a768",
+      "size_bytes": 1796400,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Text.RegularExpressions.dll",
+      "sha256": "5b3941b75f0f8fbacca22900c6d95534a3564a5eab4e86c05d34acafc7e891ef",
+      "size_bytes": 1022216,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Channels.dll",
+      "sha256": "5c99b704ebfdc57a3a571da39861e8ead3fdb4d7b315df68b018142167e64825",
+      "size_bytes": 141592,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Overlapped.dll",
+      "sha256": "268173b2892b0c3a2e0b75fc5ba718038eff5b28774480a7fef04854760ecda5",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Tasks.Dataflow.dll",
+      "sha256": "8986e0b39cbe5d3c8ca2ccbe01ecb9ddb201600e7d2866b91dc2294ea2b6b8a8",
+      "size_bytes": 493864,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Tasks.Extensions.dll",
+      "sha256": "f3b3dd02dae38c02b0ef0afb1b803204fd5ebd8d81c636baed47823a54d615a7",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Tasks.Parallel.dll",
+      "sha256": "c2243b36f23bf4b610ce325dad8c1cd60cb3cbcfdaba3e5326c8b7d0b9268a64",
+      "size_bytes": 133384,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Tasks.dll",
+      "sha256": "ebedb07649b8b98295189f56133fc0f28aa92cef36ec2f8d2548194ccf552229",
+      "size_bytes": 17160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Thread.dll",
+      "sha256": "706f673d060da31b2171371ed3c51004108c056cfac7b1e5545d6cb2fd2a3540",
+      "size_bytes": 16184,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.ThreadPool.dll",
+      "sha256": "9070c10f22a042458d3eda4d8480a0bfdebcf9c68a6e2e35f75dd719accdeb8c",
+      "size_bytes": 16168,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.Timer.dll",
+      "sha256": "a713e68f33db100fbfb2ac0b8e66c9276fba4b44ef3060f31f4eec71f1d6e72a",
+      "size_bytes": 15624,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Threading.dll",
+      "sha256": "3bedf7b4cb87fca7041381bab51bace494d1dd88c5bcd55b455916e2dc2ce01a",
+      "size_bytes": 84248,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Transactions.Local.dll",
+      "sha256": "c5d6c9909a5349e479118abac48e91b98243fde156dff64ca032060829a74ec0",
+      "size_bytes": 653608,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Transactions.dll",
+      "sha256": "a9ac7bc496dfbd7cca309e2468aa6b210d27ce131ebf83c28fcb88fc58b8d866",
+      "size_bytes": 16680,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.ValueTuple.dll",
+      "sha256": "5a3b357a37de00f3f93b1dacf3ca24a07e241be03a87599b5d0cfdf20de39b8b",
+      "size_bytes": 15656,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Web.HttpUtility.dll",
+      "sha256": "a6416eeee57fe132d9c92da2050442aa78f52d3878c1689284017f813b8a14b2",
+      "size_bytes": 63768,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Web.dll",
+      "sha256": "a0b63a385d8f4a2ea13496a060cacea1de2314662f6d830f87d604560998d3d5",
+      "size_bytes": 15664,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Windows.dll",
+      "sha256": "8728bff3b7c87c2a202f79888147460e84f9c86b5bd636921b1164b7df3536dd",
+      "size_bytes": 16136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.Linq.dll",
+      "sha256": "18c188666f3b6dad19add394e4b0ee36526326fef35b0525f86dbfedaa2d6040",
+      "size_bytes": 16152,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.ReaderWriter.dll",
+      "sha256": "3acf05389871b4d3c71077409991da45bdcdb4eca240c98fbff771d4c1c5b3e7",
+      "size_bytes": 22280,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.Serialization.dll",
+      "sha256": "06bbddd10d7b75844e3d58c898b637c382cacea11d03e0a9ded709f86afed1be",
+      "size_bytes": 16648,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.XDocument.dll",
+      "sha256": "32dc504f4710b7beab7882e40f8bfaa65ba516eeefd074b8ce8328b608918bfa",
+      "size_bytes": 16176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.XPath.XDocument.dll",
+      "sha256": "8e811586b1aa0478bcf64f2bfa143ff56d87b31e2f0bbf8c71ab9789c055bcdd",
+      "size_bytes": 31016,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.XPath.dll",
+      "sha256": "6b128f0cf4daee3e4b61f5c846c7350df42bf8d23600534b3c47aec2ffb386c7",
+      "size_bytes": 16176,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.XmlDocument.dll",
+      "sha256": "4f453c97d582800112ff843477326962551e096049afe2d6c4a060fdd43243f4",
+      "size_bytes": 16168,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.XmlSerializer.dll",
+      "sha256": "4fc92e12616b7bc520d9aab469e241b3edbd3ca808c6fff6df1015fdd5bbf61e",
+      "size_bytes": 18192,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.Xml.dll",
+      "sha256": "b65621854b9d9a0c5b81ab485cad6534d23fa5bf1a2f99bd5e9cbb35cb9a219e",
+      "size_bytes": 23816,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/System.dll",
+      "sha256": "a2049d41cc75d9f4b24e717a5c5bfa70aacd88641b7f5e303933f1647afc8604",
+      "size_bytes": 50984,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Vortice.DXGI.dll",
+      "sha256": "616983bed0d84c6ad499d1963edf12bb5bfe701e60a3ba860d1768516bf56d20",
+      "size_bytes": 91136,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Vortice.DirectX.dll",
+      "sha256": "5e1da8c22e0a33cc24078965c80ca4093a2c806aa580076441eb0f27ef38b56f",
+      "size_bytes": 274944,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/Vortice.Mathematics.dll",
+      "sha256": "bf8aa203d01c565a26811e5b32afba5030c7c6e05298487c6d24608e4fb43fad",
+      "size_bytes": 125440,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/WindowsBase.dll",
+      "sha256": "c9ee10fa33355b3dd11db9f73dd4014da89e1372a396ddc007fcb5a88795b2d8",
+      "size_bytes": 16672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/clretwrc.dll",
+      "sha256": "2e13100d0c298e35094ee9f52ed5275cc474cb94587500d7a8c817b83041550e",
+      "size_bytes": 312632,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/clrgc.dll",
+      "sha256": "dec008241ece8c483b1467ae6ccd3fa7fb3238eb9880fd92f9294becad044535",
+      "size_bytes": 674080,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/clrgcexp.dll",
+      "sha256": "083bca50499d74b1385bb82db400542e5fdbc8898fb2ace05d11053b3f91c69a",
+      "size_bytes": 711944,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/clrjit.dll",
+      "sha256": "b037532eda4133b5d55716015fb5d42462940a8637367b3a896361b261939d21",
+      "size_bytes": 1943832,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/coreclr.dll",
+      "sha256": "8b6b0017786e78a8e65b2b3fc8da74d1a4911adf674294625d613b99aaa1a17d",
+      "size_bytes": 4815656,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/createdump.exe",
+      "sha256": "53a6e3e649416d1eda4bac0c106c6ec7b9dbb67d5377a4de82b4dd6a2b175c44",
+      "size_bytes": 71992,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/hostfxr.dll",
+      "sha256": "162bd3ef00d73851ab2cb3d80a40e031ec16c82ec8e6806d65f81cf50167b1c1",
+      "size_bytes": 370992,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/hostpolicy.dll",
+      "sha256": "4cfc7c1d7f86617eb38dd19b8496df9968f799d4e23b0d76d4011571a6450381",
+      "size_bytes": 386824,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/mscordaccore.dll",
+      "sha256": "125c927e375c1038220cdfdf667aab4b5db3c76b9384d4161125314a0f98fd38",
+      "size_bytes": 1359224,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/mscordaccore_amd64_amd64_9.0.725.31616.dll",
+      "sha256": "125c927e375c1038220cdfdf667aab4b5db3c76b9384d4161125314a0f98fd38",
+      "size_bytes": 1359224,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/mscordbi.dll",
+      "sha256": "a4a7502944ae08def0f9e6dc1bdbb383769e487f63a9e81f4c5d06c80b1c4e59",
+      "size_bytes": 1237880,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/mscorlib.dll",
+      "sha256": "d6adf8b264fb7b385ab53ec16d012f72654c0ee50cae14ec13fe4343027bfbf5",
+      "size_bytes": 60216,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/mscorrc.dll",
+      "sha256": "29b5bc47559cd89cc2f9d84b6cf202f965060afb8354de628d8527533e7b6403",
+      "size_bytes": 135944,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/msquic.dll",
+      "sha256": "b2b7fd2dc05b0009acd3f0de7ba443c660c87b1308774a5811fdb8873a76de78",
+      "size_bytes": 529480,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/netstandard.dll",
+      "sha256": "5823d92f7b31c52a9ddfb9a3e31934a400ebb22f12989d96d8918ceacbf12e57",
+      "size_bytes": 101160,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/steam_api64.dll",
+      "sha256": "1add7f151fa644870a735ae86e68d1f019f296130d8e7c0a7ed3ecc7482dccbc",
+      "size_bytes": 300392,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/sts2.deps.json",
+      "sha256": "0620976a2fde3e57ebd1f1621efcd2da4809572cd093a61bb76f0f8ba9338837",
+      "size_bytes": 35171,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/sts2.dll",
+      "sha256": "a1f9e653f1e28e4076558fee1e60d218619cb7e057b887c6417f62c62c6d7a52",
+      "size_bytes": 9364480,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "dotnet": {
+        "frameworks": [],
+        "tfm": "net9.0"
+      },
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/sts2.runtimeconfig.json",
+      "sha256": "bd81a252bc3f0e8bcb649b404c1da945913c5377b9d3a2c416c52730be8714c0",
+      "size_bytes": 357,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "data_sts2_windows_x86_64/sts2.xml",
+      "sha256": "940ccc0cd6c2be3d75ae831a1b91a3375de571d94fdf896f45b26761148eccce",
+      "size_bytes": 5325651,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "fmod.dll",
+      "sha256": "7c5948d83d11406fc1a95ace03943a9b0429bf2eaa3b1ad949f51de02fbdd9c6",
+      "size_bytes": 1875968,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "fmodstudio.dll",
+      "sha256": "85364e241fc04bd4c4eea93b9365ba56f37af2f1721e9413f9a36a6cffa6d44b",
+      "size_bytes": 1577984,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "launch_d3d12.bat",
+      "sha256": "8956fab87dd709fbd4f850b839bc1eb310be2e46c388b68304529c4d1a807f75",
+      "size_bytes": 63,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "launch_opengl.bat",
+      "sha256": "f6eb553562f9ea226015bcc4468542b73ff1dddf1d4ff969694d478f3fd13157",
+      "size_bytes": 65,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "launch_vulkan.bat",
+      "sha256": "106bac582434a6610456f3cb433b4ab1c4dfd22a2e1911296cc0369ee297cf68",
+      "size_bytes": 64,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "libGodotFmod.windows.template_release.x86_64.dll",
+      "sha256": "890695d3440de5e90067f334b1e409a55543a81e56b4b1ed0ca7072a58e50517",
+      "size_bytes": 926208,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "libsentry.windows.release.x86_64.dll",
+      "sha256": "80a672e6d56ed3d5fdd20bb8af7cd036fce9119577c8634dbc38b59b23f377c5",
+      "size_bytes": 1300480,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "libspine_godot.windows.template_release.x86_64.dll",
+      "sha256": "854d827b8926b00ba6459093033bf0c0898efa2b6e1c85eb0abc78ca153ea58c",
+      "size_bytes": 1436672,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    },
+    {
+      "kind": "file",
+      "mode": "0o666",
+      "path": "release_info.json",
+      "sha256": "9dd9831b65f94478115d674c44315b096b98dc37e091d52ea84d243187e6c6cc",
+      "size_bytes": 151,
+      "stat_api_difference_fields": [
+        "st_ctime_ns"
+      ]
+    }
+  ],
+  "files_hashed": 218,
+  "inventory_complete": true,
+  "inventory_version": 2,
+  "prototype_patch_checks": {
+    "data_sts2_linuxbsd_arm64/Steamworks.NET.dll": false,
+    "data_sts2_linuxbsd_arm64/libsteam_api64.so": false,
+    "data_sts2_linuxbsd_arm64/sts2.dll": false
+  },
+  "scope": "Static hashes and ELF headers only; no execution, Steam calls, IL conclusions, or writes. Symlinks are not followed; configuration contents and personal data are not dumped.",
+  "stat_validation": "Descriptor and path before/after checks, byte-count checks; cross-API identity additionally checked on POSIX.",
+  "tree_sha256": "b31fed61cd629adf7621e9613ce3bc07cb6a1b405fc2e00d65a7471901536c36",
+  "unresolved": [
+    "Clean-source comparison",
+    "Engine/runtime build provenance",
+    "Native dependency provenance and licensing",
+    "Launcher contents and environment",
+    "External runtime or symlink dependencies",
+    "Clean-conversion hardware acceptance"
+  ]
+}

@@ -1,0 +1,26 @@
+# Local full-text game/configuration captures are not distributable fixtures.
+prototype_deployment_v1.json
+prototype_packed_extensions_v1.json
+
+# Keep private fixtures, generated game outputs and local build artifacts out of Git.
+*.dll
+*.so
+*.so.*
+*.exe
+*.pck
+*.zip
+*.tar
+*.tar.gz
+*.tpz
+*.nupkg
+*.pdb
+*.key
+*.pem
+clr-stats-tests/bin/
+clr-stats-tests/obj/
+local-fixtures/
+diagnostics/
+steam_settings/
+steam_appid.txt
+sts2-acceptance-*/
+.sts2-conversion-*/

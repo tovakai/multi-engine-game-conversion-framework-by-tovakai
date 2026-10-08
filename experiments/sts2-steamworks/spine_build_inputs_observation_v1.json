@@ -1,0 +1,31 @@
+{
+  "diagnostic_version": 1,
+  "errors": [],
+  "repositories": [
+    {
+      "branch": "4.2",
+      "checkout": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes",
+      "commit": "e7dc1435fa4a0083ab431f1b28e083c14a1f5c68",
+      "errors": [],
+      "path_scope": ["spine-godot", "spine-cpp/spine-cpp"],
+      "submodules": [],
+      "tracked_changes": [],
+      "untracked_count": 0,
+      "untracked_listing_truncated": false,
+      "untracked_paths": []
+    },
+    {
+      "branch": "4.5",
+      "checkout": "/run/media/steamos/SD512/spine-arm64-build/spine-runtimes/spine-godot/godot-cpp",
+      "commit": "27d9dd23c83871e0619fca5dc2cddfbfd69e926a",
+      "errors": [],
+      "path_scope": [],
+      "submodules": [],
+      "tracked_changes": [],
+      "untracked_count": 0,
+      "untracked_listing_truncated": false,
+      "untracked_paths": []
+    }
+  ],
+  "scope": "Targeted read-only Git diagnostic; no builds, fetches, remote URLs, source contents disclosed or writes. Optional locks, fsmonitor and external diff disabled. This does not attest copied source contents or binary provenance."
+}

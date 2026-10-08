@@ -1,0 +1,12 @@
+{
+  "diagnostic_version": 1,
+  "errors": [],
+  "release_info": {
+    "branch": "v0.107.1",
+    "commit": "59260271",
+    "date": "2026-06-18T15:43:56-07:00",
+    "version": "v0.107.1"
+  },
+  "scope": "Read-only release metadata; no execution, Steam calls, or writes.",
+  "sha256": "9dd9831b65f94478115d674c44315b096b98dc37e091d52ea84d243187e6c6cc"
+}

@@ -1,0 +1,1221 @@
+{
+  "provenance_version": 1,
+  "scope": "Official NuGet package checksums and member hashes compared with user-supplied prototype inventory; no binary execution, installation or device test.",
+  "package": {
+    "id": "Microsoft.NETCore.App.Runtime.linux-arm64",
+    "version": "9.0.7",
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.netcore.app.runtime.linux-arm64/9.0.7/microsoft.netcore.app.runtime.linux-arm64.9.0.7.nupkg",
+    "size_bytes": 37093402,
+    "sha256": "0b4f51690d4bb304c1a598848e025454c6689dfb19d9833291b9bb7255bfbd87",
+    "sha512": "6adc2cf094ee9877a9c0b0369b774a95d6bf9b6e6cfa4616d513990fe025a6343be8c5b16b561844d570f160ba79a6b7540a97390751f6f7b68ec04c9e32aec0",
+    "official_header_sha512_base64": "atws8JTumHepwLA2m3dKlda/m25s+kYW1ROZD+AlpjQ76MWxa1YYRNVw8WC6eaa3VAqXOQdR9ve2jsBMnjKuwA==",
+    "official_header_checksum_matched": true,
+    "license": "MIT",
+    "source_repository": {
+      "type": "git",
+      "url": "https://github.com/dotnet/runtime",
+      "commit": "3c298d9f00936d651cc47d221762474e25277672"
+    }
+  },
+  "signature_verification": {
+    "tool": "dotnet nuget verify --all (SDK 8.0.425)",
+    "exit_code": 0,
+    "signers": [
+      "Microsoft Corporation (author)",
+      "NuGet.org Repository by Microsoft (repository)"
+    ],
+    "warning_codes": [
+      "NU3018",
+      "NU3028"
+    ],
+    "revocation_status": "Unknown: revocation servers could not be reached; not full online chain validation. No verification options were disabled."
+  },
+  "linux_arm64_fallbacks": [
+    "linux",
+    "unix-arm64",
+    "unix",
+    "any",
+    "base"
+  ],
+  "deployed_files": [
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.CSharp.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.CSharp.dll",
+      "size_bytes": 904488,
+      "sha256": "fde393035c003eb2373cef06c3470cdbb5bcf5e24d2f8ef0b9b91407974bbe12"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.NETCore.App.deps.json",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.NETCore.App.deps.json",
+      "size_bytes": 51823,
+      "sha256": "fdeb49420909f712ab9a6e6f64780b307e2f9b6a6d21c0d73f584900ae07bbd4"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.NETCore.App.runtimeconfig.json",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.NETCore.App.runtimeconfig.json",
+      "size_bytes": 49,
+      "sha256": "ca4b32d5e1a9fe69521ed95c23914097b822fb1d593ff59b1ea236a3a48c786e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.VisualBasic.Core.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.VisualBasic.Core.dll",
+      "size_bytes": 1398024,
+      "sha256": "a00ba2b6679202b77608951a7d51eab4f78d8cfeba799c647c557861bd01a7e2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.VisualBasic.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.VisualBasic.dll",
+      "size_bytes": 17672,
+      "sha256": "ceab1332198ad217f9d39369beb15ffc560063eb50464649002329429be40f7c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.Win32.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.Win32.Primitives.dll",
+      "size_bytes": 15624,
+      "sha256": "e0d03811e3e63296542e203b25ce71ab1278ed1c8255a23232f42949a2fb5e0f"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/Microsoft.Win32.Registry.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/Microsoft.Win32.Registry.dll",
+      "size_bytes": 35112,
+      "sha256": "4fe12e55f58289a0591148e640b418a412b09a8405e00c5189ffc163e1d56c5e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.AppContext.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.AppContext.dll",
+      "size_bytes": 15640,
+      "sha256": "b9d7a1a36be809d862d503fcf0ddd6b8d8e51fabcdff5f4a68652c1ff6351fe3"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Buffers.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Buffers.dll",
+      "size_bytes": 15664,
+      "sha256": "0644fdd97c5be62230b4dc5a2f18b1e5e05e7752aaec98b86567cf4224e240b2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Collections.Concurrent.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Collections.Concurrent.dll",
+      "size_bytes": 329520,
+      "sha256": "061aebece5d3cc400d95133b00eb82d56847fbbe20489886b32048a60be02d00"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Collections.Immutable.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Collections.Immutable.dll",
+      "size_bytes": 1023752,
+      "sha256": "3624d08c4540b46fab450ff20a1d752c12fa2eeb10e41d6b720a0315ba8f9e82"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Collections.NonGeneric.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Collections.NonGeneric.dll",
+      "size_bytes": 106792,
+      "sha256": "0c84b9283c931ae5c490b89f9de60d6f762200c1c46ddc120b23ffe77f6e9246"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Collections.Specialized.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Collections.Specialized.dll",
+      "size_bytes": 107272,
+      "sha256": "82cb31ad058c350b5605b5258b4810b632e15b0f9a09659fb401090d133234df"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Collections.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Collections.dll",
+      "size_bytes": 369464,
+      "sha256": "a6a6f70c9770a1ea35328d669c61ab79b61a810a953af1a116e4f9fd9ddc7340"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.Annotations.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.Annotations.dll",
+      "size_bytes": 216856,
+      "sha256": "9b0d1dbaeb236e632daa97383c464b8cc2a2890d0de5bfb5e5dab27d4a4ee3e2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.DataAnnotations.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.DataAnnotations.dll",
+      "size_bytes": 17176,
+      "sha256": "2c6fcb377bb74af2de2ef148f8c8a7cf28a1ce37d637a23f54258e27250983ab"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.EventBasedAsync.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.EventBasedAsync.dll",
+      "size_bytes": 39736,
+      "sha256": "34667db614e0b0a701243377ab896346635188a134820ce6ea8b9b9c6238b40d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.Primitives.dll",
+      "size_bytes": 80664,
+      "sha256": "39218b09c1bdd88df4e4352d3eceee74878f0cff865cd54e59a6e4c7e2fe96f6"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.TypeConverter.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.TypeConverter.dll",
+      "size_bytes": 882960,
+      "sha256": "34e60e827fd61d084caa1d0e7470a0a28a2cd3d202367ee87a8edf713c4db2a6"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ComponentModel.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ComponentModel.dll",
+      "size_bytes": 17672,
+      "sha256": "046ade4692434a7ebc6961e70551d527a9178c4cd51866a33eca8af774abfa16"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Configuration.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Configuration.dll",
+      "size_bytes": 19752,
+      "sha256": "7de988671248f57205d015446f5f95838aae54dbf519cb7e98ce716bbe406918"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Console.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Console.dll",
+      "size_bytes": 229640,
+      "sha256": "dff01a009ddd89b9f51292044d3b3b6176c1c29812b7473916f2b51394978739"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Core.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Core.dll",
+      "size_bytes": 23816,
+      "sha256": "9df1ab4650b774f76701c50f14f74edddf5419e2696e8e4e17bb8044c9dd51ec"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Data.Common.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Data.Common.dll",
+      "size_bytes": 3314440,
+      "sha256": "5af465d3d503106d5d4bb08b364a159365fac72985ac3116fa8b55f981ab28b1"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Data.DataSetExtensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Data.DataSetExtensions.dll",
+      "size_bytes": 16136,
+      "sha256": "88dcb2cc10ad6c22cf8b9a28f9dd92c6763aa7b258d06b0d6f3382fd1993a1d7"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Data.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Data.dll",
+      "size_bytes": 25384,
+      "sha256": "533e831f966bb53901e7d1232e55d530a1de50158dedc905def328fcdc60cf8c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.Contracts.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.Contracts.dll",
+      "size_bytes": 16648,
+      "sha256": "19d2ffbabcb3aa66fa6f5b77ac5ffab568315d3c7fac4adf727de0ae0ed6c0ef"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.Debug.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.Debug.dll",
+      "size_bytes": 16136,
+      "sha256": "5e8852cb414650ba8edc466fedb7021b6c88c4106ef068bd03dfa0482c846121"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.DiagnosticSource.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.DiagnosticSource.dll",
+      "size_bytes": 497936,
+      "sha256": "4c61a8e6394752bf098127892f273f685cadaa462873e28d34ee0c0f68b90604"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.FileVersionInfo.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.FileVersionInfo.dll",
+      "size_bytes": 46872,
+      "sha256": "ee2e28f6d2c790e87219cb3178224abe3788059cc31b90500fa851114e82dbb3"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.Process.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.Process.dll",
+      "size_bytes": 317736,
+      "sha256": "5a5273879919750c981ec4061d0d29fb61b7446786464721482777b7ce04bc51"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.StackTrace.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.StackTrace.dll",
+      "size_bytes": 30984,
+      "sha256": "3dce1b16eeb3659024ab6febd0de5e11a65e4b667ebbef4905e451cc74fad292"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.TextWriterTraceListener.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.TextWriterTraceListener.dll",
+      "size_bytes": 66856,
+      "sha256": "e6b3d73527add8e41e71a450cdfd2483e56a2e50d10e700b3c5813b26d6c7039"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.Tools.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.Tools.dll",
+      "size_bytes": 15640,
+      "sha256": "3a9a730c011f07cea1a9493f8be4f231526d2cf3185c84bbb754da257e89e1c6"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.TraceSource.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.TraceSource.dll",
+      "size_bytes": 156456,
+      "sha256": "4189c4201b6da7bf366c4ee2d91927d0f4cb9cd7bad601359eb2d34b9c00e5e2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Diagnostics.Tracing.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Diagnostics.Tracing.dll",
+      "size_bytes": 16664,
+      "sha256": "be1eb871c7fe1f4238f6e6164caab89fb77e5ae0081e50794381748ec813cc82"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Drawing.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Drawing.Primitives.dll",
+      "size_bytes": 135456,
+      "sha256": "2f8a47fb5e2c6d856f11382fecb8ef2344da5ac192e0fed5c770c5e41d7ade2c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Drawing.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Drawing.dll",
+      "size_bytes": 20744,
+      "sha256": "06ab4015c780e11ac424516d47cae0d1f47422ed2ef9618cdedc626bf57fe0a5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Dynamic.Runtime.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Dynamic.Runtime.dll",
+      "size_bytes": 16664,
+      "sha256": "fd2e6923e86fe87b378ccdb6df616942b8ec16c35fb0c1dc2fe84fc1b5e9441a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Formats.Asn1.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Formats.Asn1.dll",
+      "size_bytes": 252184,
+      "sha256": "eb920eb33fcba0ce5d3797457fabd9019482e04713977a20473951afb85b2497"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Formats.Tar.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Formats.Tar.dll",
+      "size_bytes": 315144,
+      "sha256": "897cf64168814929ffa38f31cf4be3c8d9e5f493610b093509dd01d75281a3a5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Globalization.Calendars.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Globalization.Calendars.dll",
+      "size_bytes": 16136,
+      "sha256": "86ebbbd827f5cfeb3fc8b2f56b58824439c364bbb8b35fdd2dcd5a3a10d68540"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Globalization.Extensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Globalization.Extensions.dll",
+      "size_bytes": 15640,
+      "sha256": "cf47c678f5ea1f97ccd5cd64ab2a6e4528ac44444ecc88d3fb370b2c5db400e2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Globalization.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Globalization.dll",
+      "size_bytes": 16136,
+      "sha256": "029f247b9814c063ab5bea62877dd7bc1cedd6618a2a96e2a64c4cd9a24546ed"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Compression.Brotli.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Compression.Brotli.dll",
+      "size_bytes": 83224,
+      "sha256": "00445c336f806c282f5738a4e8b3c22fa3356f03f5776fe7e750c1bf4112c222"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Compression.FileSystem.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Compression.FileSystem.dll",
+      "size_bytes": 15656,
+      "sha256": "367787dc249cfd22421b028a87d10f5c13ec174b10ba6e4a97d87f2a9274ba80"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Compression.ZipFile.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Compression.ZipFile.dll",
+      "size_bytes": 60728,
+      "sha256": "f000a64c1354ad3fb05299a7e3b89deb8197e89baa09606c885c970fdb182fbb"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Compression.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Compression.dll",
+      "size_bytes": 296720,
+      "sha256": "46f7cc5ae2c7763515ec7ee0d84409add79651ac217386873d22dc22cfe33c69"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.FileSystem.AccessControl.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.FileSystem.AccessControl.dll",
+      "size_bytes": 34056,
+      "sha256": "14d72cb9e72128ed082ba20b40650a17e11807ba6f6017d358753545878c2b8d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.FileSystem.DriveInfo.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.FileSystem.DriveInfo.dll",
+      "size_bytes": 88840,
+      "sha256": "298a23654d32c6774b7314dc70337bce6d4f630633275898c8dca53f99df96f8"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.FileSystem.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.FileSystem.Primitives.dll",
+      "size_bytes": 15624,
+      "sha256": "79220f46160c5c9ef86bea78f3b570563c366ebe818f82f3558669e49a9ef0f5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.FileSystem.Watcher.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.FileSystem.Watcher.dll",
+      "size_bytes": 116008,
+      "sha256": "6db2ab64dc7fbd7c1c84afb21e6e403c65f4d88420f8bc9db5b48c466e360a6e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.FileSystem.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.FileSystem.dll",
+      "size_bytes": 16152,
+      "sha256": "3e4427df486e89d75c471e2ea15aabb2a3a80812a76a849787a12c79988e125d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.IsolatedStorage.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.IsolatedStorage.dll",
+      "size_bytes": 85304,
+      "sha256": "dbe8fa4a5501dfebc2ca69fffbfcdd9842ef2f5f61e00b88d7e4cd4c846891cc"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.MemoryMappedFiles.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.MemoryMappedFiles.dll",
+      "size_bytes": 92960,
+      "sha256": "aa47cfdfce00b9fcba91743ceaabde62ea81e665abe6382569386d4baf7185ca"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Pipelines.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Pipelines.dll",
+      "size_bytes": 204552,
+      "sha256": "c9b905b29884a21327546ec5fbc2ce3c28d9527b4fa32b52dbe2753f7f012051"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Pipes.AccessControl.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Pipes.AccessControl.dll",
+      "size_bytes": 25360,
+      "sha256": "3d52796ff82e9f614f03232326d94b56520469167c9736b2d8ce2e8f4ca4c4f0"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.Pipes.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.Pipes.dll",
+      "size_bytes": 148232,
+      "sha256": "9cb56e99d7829476eee6aab69b4bf63e242a62ca4431800724fcadec0e54edfb"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.UnmanagedMemoryStream.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.UnmanagedMemoryStream.dll",
+      "size_bytes": 15624,
+      "sha256": "3f9361664fa43885c1341d36b10000e8645232a00ee7a3cb07045f5182422df5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.IO.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.IO.dll",
+      "size_bytes": 16136,
+      "sha256": "9169565c046d3362c7fbd8cb07d01bdb09eb07cad412a36bb9b8019046e8fa57"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Linq.Expressions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Linq.Expressions.dll",
+      "size_bytes": 4679944,
+      "sha256": "5a10b0462cd1fc9f9a409fa07d2e697237c884d98f99155042ad7000376b57b7"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Linq.Parallel.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Linq.Parallel.dll",
+      "size_bytes": 912136,
+      "sha256": "5b3b8921d07365fd559d7105eff9cce55fd01d7a08dc21b5be88c72a1b81cc75"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Linq.Queryable.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Linq.Queryable.dll",
+      "size_bytes": 206616,
+      "sha256": "e6706c30fc532c019a9d66a264c1f34ec0fd61d785ce7788eb7dc6f44fca5e35"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Linq.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Linq.dll",
+      "size_bytes": 744712,
+      "sha256": "0e01d442842d69f2200beb827a70d223f39a0d3b0b31c9e289067ba71d541098"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Memory.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Memory.dll",
+      "size_bytes": 168208,
+      "sha256": "9645c9d68823b869e71f8fab990b6163b8619afa7fc806e88fd38cfe9649bf21"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Http.Json.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Http.Json.dll",
+      "size_bytes": 132872,
+      "sha256": "58d57bce125b5d6760f23fad1f64e54830064a3a8edba47351a2428f0ca7138b"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Http.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Http.dll",
+      "size_bytes": 1967912,
+      "sha256": "eb4384c18fe59c9cf839c56988a0c3f9c86d16c43e8453978eda0695efb8b3d0"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.HttpListener.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.HttpListener.dll",
+      "size_bytes": 332040,
+      "sha256": "8490521cc27009d88932d32d68c0aa181ac44b3153e299a36aecff9ee67c0a3f"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Mail.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Mail.dll",
+      "size_bytes": 486184,
+      "sha256": "6d70442590e483fcdc1f5cd17fb04ee4e8df0d4e7f1e5dd4fed1e571cec6df77"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.NameResolution.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.NameResolution.dll",
+      "size_bytes": 109864,
+      "sha256": "14434175020407aea251e784016a2ec4dceec9e9eee44590138becdd49f9c68c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.NetworkInformation.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.NetworkInformation.dll",
+      "size_bytes": 189720,
+      "sha256": "e74bbb5211ff66e6a81d1255461723b4a0c57d08c1256359faf36c0d1631f00c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Ping.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Ping.dll",
+      "size_bytes": 119048,
+      "sha256": "a2772dfb177b6c8f7b12120834ef3ccbd5102f234be637adaed091d2b1828817"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Primitives.dll",
+      "size_bytes": 259336,
+      "sha256": "66a80010bc6f538bd9b959b19809dd4c3f3f7bf6d74671f63cd96712f203c1b0"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Quic.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Quic.dll",
+      "size_bytes": 410408,
+      "sha256": "818a3142fc789e58bf67e735ab5d6deb3005c11d372cdd103046a0a582ef7b06"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Requests.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Requests.dll",
+      "size_bytes": 429864,
+      "sha256": "209b0e49c1d3e90967bee86c182293685d3accc53c00ae422214e0e442cd1723"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Security.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Security.dll",
+      "size_bytes": 955688,
+      "sha256": "a984b598547d41c398b4879c18a296f09f54b60bbbe1ce14df1b5899a12fc0b2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.ServicePoint.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.ServicePoint.dll",
+      "size_bytes": 15664,
+      "sha256": "73cebd6690abc0941742c52fd84885170a7455f8ea7c8d3b60a1e574e060d219"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.Sockets.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.Sockets.dll",
+      "size_bytes": 706840,
+      "sha256": "661fbfdf2a47628d738549b3177f1adc8d44ce4bc051659cd2a262df181844b1"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.WebClient.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.WebClient.dll",
+      "size_bytes": 181016,
+      "sha256": "865edad05117a5e687326a333cfc050ed8ca0d337d746333cb6641e4c6fbccd3"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.WebHeaderCollection.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.WebHeaderCollection.dll",
+      "size_bytes": 63240,
+      "sha256": "f4b44883ec9f1d426922f00055d4522d8302ae38711a301538dd7c80035bdb92"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.WebProxy.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.WebProxy.dll",
+      "size_bytes": 36136,
+      "sha256": "da975fbc270583b7c6fe5d771a438904f9d89182ee5c62791a3a7b18cdd5362a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.WebSockets.Client.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.WebSockets.Client.dll",
+      "size_bytes": 102184,
+      "sha256": "df6bf792e064c5d01ef45e28f30d148248f893702cf3f0e1c01ea43add57e30c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.WebSockets.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.WebSockets.dll",
+      "size_bytes": 252184,
+      "sha256": "e5b72fb7b6d98544b20151e853e4320b38502cdfdc33c3cf9ecfc7964f1d91cb"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Net.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Net.dll",
+      "size_bytes": 17672,
+      "sha256": "2f51c94f2ab6e3ad5fe3ed78b5e65da81c542d2da86191508076e58b48d5c03c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Numerics.Vectors.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Numerics.Vectors.dll",
+      "size_bytes": 16136,
+      "sha256": "2ef71541cf1bfd4a61e21b14f22030c964cd3e0e8930f587feaa09c7a35c4f31"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Numerics.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Numerics.dll",
+      "size_bytes": 15656,
+      "sha256": "d92ede02d472f0ef57966c2236d84c860812b0322fd3305165acc1573bd71208"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ObjectModel.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ObjectModel.dll",
+      "size_bytes": 78088,
+      "sha256": "9b3acced1ea725c3f191dc14823e94be4acb0bb5c6505e92c9b85c2e4ce5ab66"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Private.CoreLib.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Private.CoreLib.dll",
+      "size_bytes": 16294696,
+      "sha256": "3a1400d1f70b1766ce420574f7d8f6a9efd924305338779c6b1c176a0a096e97"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Private.DataContractSerialization.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Private.DataContractSerialization.dll",
+      "size_bytes": 2415912,
+      "sha256": "b81ad3dea9d6b751be182e7899a83f19614c7f11ff50313bc7117deec9cbf2e0"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Private.Uri.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Private.Uri.dll",
+      "size_bytes": 273672,
+      "sha256": "a6173efe02cc2f3f1596be280237c5933e8b1e65abdb6b34c828587dd2673350"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Private.Xml.Linq.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Private.Xml.Linq.dll",
+      "size_bytes": 450864,
+      "sha256": "1a4dc6ef4f654ed4b373aa06888dc8f0a7083b7f5c630eb7672f6587d3c3942f"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Private.Xml.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Private.Xml.dll",
+      "size_bytes": 9191200,
+      "sha256": "5d2b80efc4947605fd43069540ac1dba5e09e2958cdeee75018fa0b71f5c7be3"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.DispatchProxy.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.DispatchProxy.dll",
+      "size_bytes": 74512,
+      "sha256": "f27e22893d72c1eea1dc312c62574c2e0b8139c65806c358d916b82d88b45a5e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Emit.ILGeneration.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Emit.ILGeneration.dll",
+      "size_bytes": 16176,
+      "sha256": "87f97af5f762e5b32e56c01738e1c73570fdda22a401dd02018668c73043a85c"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Emit.Lightweight.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Emit.Lightweight.dll",
+      "size_bytes": 16168,
+      "sha256": "c8b2b8a7b2f064e62af6e4af5d2a548cea27119035e211bede4f7237b125939e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Emit.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Emit.dll",
+      "size_bytes": 334608,
+      "sha256": "d1c28d35d2e1bb96d4c41d2e82f94f998879f38e781506915b5b2cb3ebf8598e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Extensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Extensions.dll",
+      "size_bytes": 15656,
+      "sha256": "ce300317b27a252927b0589794c6d1d7120407420d3c3ba13a8f003e40c333bc"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Metadata.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Metadata.dll",
+      "size_bytes": 1292072,
+      "sha256": "0b45612177903d227649900c6e30a97ee29d1380639788e82a8b6eb9ab9729f5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.Primitives.dll",
+      "size_bytes": 16152,
+      "sha256": "21cdb041b701da20f8c0b2a2d896e6f6b1d2d0853924250208ade17074e29a97"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.TypeExtensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.TypeExtensions.dll",
+      "size_bytes": 34568,
+      "sha256": "8b277e3f35c3b47b9d0581a0bd87abb4b6b77e9dd04c85198d708c7a913d9c71"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Reflection.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Reflection.dll",
+      "size_bytes": 16648,
+      "sha256": "080ce8289a607ede5a4dbbdc54c79db50e4398864917a26dfce3ec8af36d59d1"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Resources.Reader.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Resources.Reader.dll",
+      "size_bytes": 15624,
+      "sha256": "7c1a90bc42297b8e0fbb60f47bc0763f0e4319d764dcf8c0b212d92fdb8c967b"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Resources.ResourceManager.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Resources.ResourceManager.dll",
+      "size_bytes": 16168,
+      "sha256": "2ebfb1efa2a72cbb7aa926d2bbfbc78d1430f1555e2a30fd4ea5ce7c874bae17"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Resources.Writer.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Resources.Writer.dll",
+      "size_bytes": 47368,
+      "sha256": "10d00cee1d517428ab088ff24c9abe819c9408b13bb1488111c1f987d6a39d2d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.CompilerServices.Unsafe.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.CompilerServices.Unsafe.dll",
+      "size_bytes": 15624,
+      "sha256": "f35dc7ec35b6eb60dae224bbbeb23b579718b8636b6e8337561dfd714a49e724"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.CompilerServices.VisualC.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.CompilerServices.VisualC.dll",
+      "size_bytes": 19728,
+      "sha256": "cebca5dfc86fabf6aa824012ca2b897c9ab2460a2db06db52dc5a89cffb905eb"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Extensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Extensions.dll",
+      "size_bytes": 18216,
+      "sha256": "ed0a309afda89a24a2f1cb8775f89076d726157129d9a5b27733f41bd2374631"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Handles.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Handles.dll",
+      "size_bytes": 15640,
+      "sha256": "92b0865b38efddca8c64831a49283246e181b00a8df0bc7dd8a7de6096174324"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.InteropServices.JavaScript.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.InteropServices.JavaScript.dll",
+      "size_bytes": 40728,
+      "sha256": "97e9b6e6363bcd555ad3ade8667cb7afa4d6000cf7c459200a5b49a5b9731013"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.InteropServices.RuntimeInformation.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.InteropServices.RuntimeInformation.dll",
+      "size_bytes": 15640,
+      "sha256": "42cb09831e5b93c38be99b258f567c97751fdae6b774abdf6866ad3028aabf25"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.InteropServices.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.InteropServices.dll",
+      "size_bytes": 111880,
+      "sha256": "0cf30a9e2b502adbd27f5b4a306ff7aa146ef01dff81b2a16e552c459944193a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Intrinsics.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Intrinsics.dll",
+      "size_bytes": 17672,
+      "sha256": "2d1d34cdbdee5ce958c3f26ab880925f89f883046985e7419cae292a8c46ef07"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Loader.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Loader.dll",
+      "size_bytes": 16144,
+      "sha256": "df54dde72098cd288b60353d2ab99e21a31a613bc031782bc76b641eb7e71f06"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Numerics.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Numerics.dll",
+      "size_bytes": 363288,
+      "sha256": "9878d2d31c743e7d4c413080abf881cbd3649a0f963fb85f20fe7fcd64847309"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Serialization.Formatters.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Serialization.Formatters.dll",
+      "size_bytes": 130344,
+      "sha256": "1414fb0f1fd6ce67016521e114bb8cdae00f0e08a79359faf024326342a3fac9"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Serialization.Json.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Serialization.Json.dll",
+      "size_bytes": 16136,
+      "sha256": "cb7a139f4f99c82d12be1ae7160226868be73b3a67bbdf682fe335f681bf12f7"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Serialization.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Serialization.Primitives.dll",
+      "size_bytes": 31016,
+      "sha256": "f927ee03946889c9f399cb30b1399f9bd42b385983e0c0a5ae42dc154df4deed"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Serialization.Xml.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Serialization.Xml.dll",
+      "size_bytes": 17192,
+      "sha256": "459340fe8fc875251dd7b005aaccc70a349090d68fa4b779bb7522bb956a3915"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.Serialization.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.Serialization.dll",
+      "size_bytes": 17160,
+      "sha256": "0efee24a4eb7b2ba92da5280c267c2f2e04406ec8621fb6f24795b8e7a6187db"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Runtime.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Runtime.dll",
+      "size_bytes": 44840,
+      "sha256": "08df8cbc02d0230f47961b1aedba6d9d49ab17ebc759879287c466a6504fdaa5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.AccessControl.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.AccessControl.dll",
+      "size_bytes": 60200,
+      "sha256": "c09d09c8c42c3bdff6a5bc760998e7fcda3a516bdb4235d19ad8abd922dc01ac"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Claims.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Claims.dll",
+      "size_bytes": 99592,
+      "sha256": "b6a04f98d615aed9b21647193460fedd1b9cba8664407201a2be9dd2032f36cb"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.Algorithms.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.Algorithms.dll",
+      "size_bytes": 17704,
+      "sha256": "0a2153c4c9f3faed921bcb84e91d721b83cd40686e806bc23cf651861228a365"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.Cng.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.Cng.dll",
+      "size_bytes": 16648,
+      "sha256": "d48db0e8b70e0ad144cf69a68fd4f2157224bb8066cb65f1a6a367da0e678cc2"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.Csp.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.Csp.dll",
+      "size_bytes": 16168,
+      "sha256": "866a49c4aeb31ec86b0f381fb189faf6250ac85a878df0e54efabef05629758a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.Encoding.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.Encoding.dll",
+      "size_bytes": 16168,
+      "sha256": "3fa142791fd9eb42e98555b5391f12b945114af12a6ef62b143c335e237f9dc9"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.OpenSsl.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.OpenSsl.dll",
+      "size_bytes": 15656,
+      "sha256": "33b151e775c0e8f94da3b6fc8d739101e63d180c2613c2d6bdea211dbaaeb9ad"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.Primitives.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.Primitives.dll",
+      "size_bytes": 16168,
+      "sha256": "4c155ae9a32189e3ce5cc483bf5896a18e635c829e63f92aeddba80d02c2814e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.X509Certificates.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.X509Certificates.dll",
+      "size_bytes": 17160,
+      "sha256": "69ac73015ef2422b62a5f0cbdb82ed7d4e04a95f61aed495e10de67b253f1403"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Cryptography.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Cryptography.dll",
+      "size_bytes": 2655544,
+      "sha256": "e799a1101ad6c7234039a859a113c2fad277eac2a21814f88f150834a9e2611e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Principal.Windows.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Principal.Windows.dll",
+      "size_bytes": 39688,
+      "sha256": "d1a2611080acd2166c679067a02666dba8bb5dcd015196712aaf19efc5b91fa5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.Principal.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.Principal.dll",
+      "size_bytes": 15624,
+      "sha256": "f6809668ef86b1af599e39a0d4ae0d4634f9b2d764175f979a61d72120f32601"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.SecureString.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.SecureString.dll",
+      "size_bytes": 15656,
+      "sha256": "95a542ea47fc0dfc276edb9dc2e2700a65fba9a34d0ba9f6640350f4987cd6fe"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Security.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Security.dll",
+      "size_bytes": 18712,
+      "sha256": "d8465150606c098b9f6a921c967e39e6d9286bbee725379764fd4b05e0e6effd"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ServiceModel.Web.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ServiceModel.Web.dll",
+      "size_bytes": 17184,
+      "sha256": "c5a5c474239aaf2f8d4e977c9549ede8690fdc5f4a8790aab754017316dbb877"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ServiceProcess.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ServiceProcess.dll",
+      "size_bytes": 16168,
+      "sha256": "dc0d2e3c9cd701a35ca7d8501b4240b6b764381d876b5dde98e1bfe5ca04725a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.Encoding.CodePages.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.Encoding.CodePages.dll",
+      "size_bytes": 871176,
+      "sha256": "7c2bba0a5440a99f300a114106bc8b16cb6ce0f9b8ce660cb4711bf739a1bfcc"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.Encoding.Extensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.Encoding.Extensions.dll",
+      "size_bytes": 16168,
+      "sha256": "9801eb0e16f775ba5d8ed87b43438337c7184fbe662450db159ed37e1460b458"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.Encoding.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.Encoding.dll",
+      "size_bytes": 16168,
+      "sha256": "92cf0b62c289aa095ebbedf0b557dd59adafd072245c168af838389594281645"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.Encodings.Web.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.Encodings.Web.dll",
+      "size_bytes": 129816,
+      "sha256": "b8bde73be6dcd8dacc01156c0409d6e2e2630e1fdf17f166ff71fdb514c7faab"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.Json.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.Json.dll",
+      "size_bytes": 2004264,
+      "sha256": "26b97ec8875683f8e397468bcd56d0585cca19f5f771267d20cddba3cabd40a5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Text.RegularExpressions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Text.RegularExpressions.dll",
+      "size_bytes": 1139976,
+      "sha256": "04d51febb62fe0a94e15267a5cb47dca8a10f9fcf16c40a9d253f3bd9749d9d9"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Channels.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Channels.dll",
+      "size_bytes": 149808,
+      "sha256": "1f38d9030a16c02bdee093f99e3fe7942829779bded9e93684bd433aad982b75"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Overlapped.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Overlapped.dll",
+      "size_bytes": 16136,
+      "sha256": "83a9c45c9c8328465d33a3be7f1823a681cb03c7413f5769f45a12cf8333ec99"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Tasks.Dataflow.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Tasks.Dataflow.dll",
+      "size_bytes": 550184,
+      "sha256": "b048efd6e40ff8bfd6bad6ea3173afa2a3d7a942e9f322570d8fda329b01cf7a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Tasks.Extensions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Tasks.Extensions.dll",
+      "size_bytes": 16168,
+      "sha256": "1b1b5f4c7bfc81aeb8a58149cd69744173171143440152d217e9a3ab1283ed4a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Tasks.Parallel.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Tasks.Parallel.dll",
+      "size_bytes": 135976,
+      "sha256": "bf1eb7e1b431eda2506f8f9b909ac857131c97f2e851d49fd7672f7a1dfd4c6e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Tasks.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Tasks.dll",
+      "size_bytes": 16672,
+      "sha256": "51468cfe4fb4574cdbe88ee44f20086454a52f93a99f108f2d894bcce623f850"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Thread.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Thread.dll",
+      "size_bytes": 16136,
+      "sha256": "e4a7a43c997ebf51029bf1b7c7d6586e19b781c47b34e602dedbd92d039f393a"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.ThreadPool.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.ThreadPool.dll",
+      "size_bytes": 16168,
+      "sha256": "5fa1c2a08d18dda41dbaf2ce3c9544165a7f036129374046244c5e68edbf1609"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.Timer.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.Timer.dll",
+      "size_bytes": 15656,
+      "sha256": "996c7a4a0e430895e8ec56797af1323b66dfc598e292db0bd571232fb98afe2e"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Threading.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Threading.dll",
+      "size_bytes": 82696,
+      "sha256": "e52e2eb759161dadbffe5c954d71d4de84cd49caae5a98e622df312efed1aea9"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Transactions.Local.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Transactions.Local.dll",
+      "size_bytes": 407336,
+      "sha256": "f0419afada3816d3f4b4bbd7b7ae4ac20028e16f1cbfc1dd3d74fc62b5b707d4"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Transactions.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Transactions.dll",
+      "size_bytes": 16648,
+      "sha256": "b8785a6ef2bd84cadb12d0c322c59d3c474ba94aec4971d0464edab0471ab53f"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.ValueTuple.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.ValueTuple.dll",
+      "size_bytes": 15648,
+      "sha256": "4156bf0ff03eea811e549e1a2662f8972e30c93ee43c504f616d67cf1b0cdb1d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Web.HttpUtility.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Web.HttpUtility.dll",
+      "size_bytes": 60168,
+      "sha256": "64fa3bcf1c09d9ef9def69db47fb7e0fda2d24c02975ba3ef2466d4121ff7d77"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Web.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Web.dll",
+      "size_bytes": 15624,
+      "sha256": "0e53572812b2fed8c56eeecfcae33adbdb336b595ddc52096a99e914f5c05f90"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Windows.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Windows.dll",
+      "size_bytes": 16152,
+      "sha256": "819f6e7030a76996a73f03757426b7624089df5f2c0b65763748f3f496163b71"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.Linq.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.Linq.dll",
+      "size_bytes": 16176,
+      "sha256": "1d8a2cd81f030af58c4f044ce6a89425b28286227172564e1a5991eaefd486ae"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.ReaderWriter.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.ReaderWriter.dll",
+      "size_bytes": 22312,
+      "sha256": "97166bc73637950ecca86875c06ab14b95549faddccba2cc2e837ff8ccf03d54"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.Serialization.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.Serialization.dll",
+      "size_bytes": 16696,
+      "sha256": "e731f913222b6d83857686e20dbc92d66a5314f406b08ffcf255b290758508fc"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.XDocument.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.XDocument.dll",
+      "size_bytes": 16168,
+      "sha256": "3cb42261290774b1c64f63ef37ca0a26172e27105c6438bdd918c56f21f6fac5"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.XPath.XDocument.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.XPath.XDocument.dll",
+      "size_bytes": 17672,
+      "sha256": "b10be0622916fa7c52ef66a1a8a106fec7d2a069e3f06ce48361db72aec56fcf"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.XPath.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.XPath.dll",
+      "size_bytes": 16136,
+      "sha256": "525835c61940b4da558ec7209023ae2dee8e6346f646f1f50eaae3e74d9d3d41"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.XmlDocument.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.XmlDocument.dll",
+      "size_bytes": 16168,
+      "sha256": "71f9f9f13b8e3ec250c4ce4cf415211acd7b6084ed9ee1faf06f4d3f49e8b768"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.XmlSerializer.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.XmlSerializer.dll",
+      "size_bytes": 18200,
+      "sha256": "7697d3992f4f3eb0bed7834e0e7df5aff49e2373f9710a143caab9dbd1ed015b"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.Xml.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.Xml.dll",
+      "size_bytes": 23864,
+      "sha256": "06a355ac5e9f2264d8dfaeec1cd5e9839caef9beb8d42f03710a213992b83a46"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/System.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/System.dll",
+      "size_bytes": 50952,
+      "sha256": "ae92f59ea890a753b04acb26cf6e8e46d94a99b19052f306a23fa2d02a50f002"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/WindowsBase.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/WindowsBase.dll",
+      "size_bytes": 16664,
+      "sha256": "9f1fa661d45580498e6c543336c0b162c8c59fa7718b645f4fa8fe0c5f4bb07d"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/mscorlib.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/mscorlib.dll",
+      "size_bytes": 60184,
+      "sha256": "4f2ab18e3b50b78738be6ad3ef7eadbb694e99f378b6547ee7fb2c607316b7b8"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/lib/net9.0/netstandard.dll",
+      "deployed_path": "data_sts2_linuxbsd_arm64/netstandard.dll",
+      "size_bytes": 101128,
+      "sha256": "690f04de8b81e7e74b9464c26fd1ad7304ef3caeb3174506a6dd96b1932d1ce7"
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/createdump",
+      "deployed_path": "data_sts2_linuxbsd_arm64/createdump",
+      "size_bytes": 106960,
+      "sha256": "6817dd99f13f00873c01cd51b314118f691cc937cff3048834545efb9ce03a7e",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libSystem.Globalization.Native.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libSystem.Globalization.Native.so",
+      "size_bytes": 65008,
+      "sha256": "5561522f48c0bf41b2f4c0d5c47fbb9bd5731a565546b98772d8a55b05dfa7a8",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libSystem.IO.Compression.Native.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libSystem.IO.Compression.Native.so",
+      "size_bytes": 915848,
+      "sha256": "cfc2b99229043e7b721d262b59180c838d723376830d2b6da3dda5ee98c3673d",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libSystem.Native.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libSystem.Native.so",
+      "size_bytes": 95936,
+      "sha256": "c818d699467438665f7bd604aee99ce1d8e8957d274e426f499a2714fd4438d4",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libSystem.Net.Security.Native.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libSystem.Net.Security.Native.so",
+      "size_bytes": 14256,
+      "sha256": "10e3e580ef3496464193b1cb7261dd133291013f3d18627d748ea7d8ff24b88f",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libSystem.Security.Cryptography.Native.OpenSsl.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libSystem.Security.Cryptography.Native.OpenSsl.so",
+      "size_bytes": 195592,
+      "sha256": "aab8e1d21f3d0cc752a6d75b0c2752dbdda9361be2fe5d36fa24af40dc19cebe",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libclrgc.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libclrgc.so",
+      "size_bytes": 778296,
+      "sha256": "e27b73eb679d342653d66b693c9b87a8dcf3a5d3b9c21888857bf03427cb7e6a",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libclrgcexp.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libclrgcexp.so",
+      "size_bytes": 843712,
+      "sha256": "d2a3e4cb7f91100fc604e8dc6f34a0a22e9b5675f1ae49c011fdd030f4291500",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libclrjit.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libclrjit.so",
+      "size_bytes": 3279888,
+      "sha256": "5df2b539ed2a5967f6d896befee27502cf545b8075e768e18a7e896cccb8fa3f",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libcoreclr.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libcoreclr.so",
+      "size_bytes": 7081688,
+      "sha256": "1e42dfe81fb74347a3294395a33caecbc729d7f57bda66ca36930632374588b2",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libcoreclrtraceptprovider.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libcoreclrtraceptprovider.so",
+      "size_bytes": 774376,
+      "sha256": "a9c9a8810b61dde377922fcf0b4b2a9c302cda704668894464f97848ae6461bc",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libhostfxr.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libhostfxr.so",
+      "size_bytes": 278704,
+      "sha256": "0dc4d93d857b126d5a44e4475f136144a97a25613272700eae807d81008e8f4f",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libhostpolicy.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libhostpolicy.so",
+      "size_bytes": 291600,
+      "sha256": "d88339d5035ab3533abbf63791d78ab53a160d617e727303baa098f40b79368e",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libmscordaccore.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libmscordaccore.so",
+      "size_bytes": 2497712,
+      "sha256": "71e161d36588dd4abc26d7ee50fe58eac52c2c74849607b756392d2b91a6d2c2",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    },
+    {
+      "package_path": "runtimes/linux-arm64/native/libmscordbi.so",
+      "deployed_path": "data_sts2_linuxbsd_arm64/libmscordbi.so",
+      "size_bytes": 1717392,
+      "sha256": "0666eb3bdca769ba8a7245424b3559222b6a6e16eebbbd28aa2e0cc112e6404b",
+      "elf": {
+        "class_bits": 64,
+        "machine": 183
+      }
+    }
+  ],
+  "deployed_file_count": 186,
+  "native_file_count": 15,
+  "managed_runtime_asset_count": 169
+}

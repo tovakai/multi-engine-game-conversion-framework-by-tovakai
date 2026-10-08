@@ -1,0 +1,300 @@
+{
+  "diagnostic_version": 1,
+  "errors": [],
+  "library_metadata": [
+    {
+      "name": "0Harmony/2.4.2.0",
+      "record_sha256": "7de74bcc2378bcf693c34701e59b2485011ae9a2dcd3d63c23823f0b3b8a109e"
+    },
+    {
+      "name": "Godot.SourceGenerators/4.5.1",
+      "record_sha256": "bb4b4330ebe4797aca22822aa913fa5a9b80c486abf8fc707fbcf74751e64fbf"
+    },
+    {
+      "name": "GodotSharp/4.5.1",
+      "record_sha256": "373ff2e2914eb1e7f38a64ce6f099d8ab3bfcb3c519051969e0efdbd043c5586"
+    },
+    {
+      "name": "JetBrains.Annotations/2023.3.0",
+      "record_sha256": "ea4fc127b1f6da6bccff52f00176f4155358aae822c59e2d71da93beca5d6975"
+    },
+    {
+      "name": "MonoMod.Backports/1.1.2",
+      "record_sha256": "d7a1b995c15c976108731cd2a9dfd8b4b96e7004683aec9529af55fa4186b5ba"
+    },
+    {
+      "name": "MonoMod.ILHelpers/1.1.0",
+      "record_sha256": "c0ba099539803f5675352d58964aae51a510cb2299c5117c6ae697c13bc067be"
+    },
+    {
+      "name": "Sentry/5.0.0",
+      "record_sha256": "e935e6cbf33b9d4e65f634914e78890cfa3c374263a56c2eed897cb4438fa532"
+    },
+    {
+      "name": "SharpGen.Runtime.COM/2.2.0-beta",
+      "record_sha256": "f0373f50520fb2cbe7326f21c7b3ce4c66af4ea4c38edef61343acca302b7e6d"
+    },
+    {
+      "name": "SharpGen.Runtime/2.2.0-beta",
+      "record_sha256": "9bd6a28e1f3f5e201fee4402ad7896ec584af084f6f77076a7aee9e2db100fbf"
+    },
+    {
+      "name": "SmartFormat/3.3.0",
+      "record_sha256": "0cb86176fe8c9ee1ffefa5a7b95b5cf5cad1f252e97073b93f14e2f4430b24e3"
+    },
+    {
+      "name": "Steamworks.NET/1.0.0.0",
+      "record_sha256": "7de74bcc2378bcf693c34701e59b2485011ae9a2dcd3d63c23823f0b3b8a109e"
+    },
+    {
+      "name": "System.IO.Hashing/9.0.0",
+      "record_sha256": "41220abf572b61524d07a91d490e84f1fd3ae21d249ae46a0b454d20c5ba10b6"
+    },
+    {
+      "name": "System.Memory/4.5.5",
+      "record_sha256": "6db3780aa940067a931fac41473788fe3c4e2358669169869312df084d6bda17"
+    },
+    {
+      "name": "System.ValueTuple/4.5.0",
+      "record_sha256": "e664d0cc4e63347aafa800bc4245b8b1f716e76bf57ba096c2520c8d4c64a572"
+    },
+    {
+      "name": "Vortice.DXGI/3.6.2",
+      "record_sha256": "43a002f8812d878e1837d028a82a6763e558130a0ec67ed120f0bca6f0b03085"
+    },
+    {
+      "name": "Vortice.DirectX/3.6.2",
+      "record_sha256": "88f8ceef2dea4bed8b1f1946d89f15959fb79cd7b55aa15a02afc1f2549f3dad"
+    },
+    {
+      "name": "Vortice.Mathematics/1.9.2",
+      "record_sha256": "6b83643646bc7f250b482647ebbac4615ce8899332eb58ede841d4f556e71000"
+    },
+    {
+      "name": "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/9.0.7",
+      "record_sha256": "e9554d01e02c18c73b507e366aebbe7631d201ca0eb2701d556b0a2059db855e"
+    },
+    {
+      "name": "sts2/0.1.0",
+      "record_sha256": "56925fe209b9aa2b5e18f0bb7cb6eb662a63db4c98eeb7de7e4140e2a8fb701e"
+    }
+  ],
+  "root_record_hashes": {
+    "compilationOptions": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "libraries": "116828f7340eeda40747eef5ad8de1e3dbc729600cecd8e13f0773f80ea43445",
+    "runtimeTarget": "93f19b01e755f263ff0ee58a03ce13428775faa98a2529b84863c713d43b288f",
+    "runtimes": "5e5f02e2fe47785b1bf43a30aaae137833e3d88ec991ce5d5ccf1f67a46bf363",
+    "targets": "d285170c7aacbeaf3eae740ddb729afb5830ca1e7376d4db981a5f0fec0d4904"
+  },
+  "runtime_target_name": ".NETCoreApp,Version=v9.0/win-x64",
+  "scope": "Structured dependency metadata and canonical record hashes only; no execution, library loading, Steam calls, writes or conversion claims.",
+  "sha256": "0620976a2fde3e57ebd1f1621efcd2da4809572cd093a61bb76f0f8ba9338837",
+  "size_bytes": 35171,
+  "targets": [
+    {
+      "libraries": [],
+      "library_count": 0,
+      "name": ".NETCoreApp,Version=v9.0"
+    },
+    {
+      "libraries": [
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "0Harmony/2.4.2.0",
+          "native_asset_names": [],
+          "record_sha256": "e6395c41c44845f5d5f7c1821655457b07d241504799f0e9afc3e175ea6428c7",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 0,
+          "name": "Godot.SourceGenerators/4.5.1",
+          "native_asset_names": [],
+          "record_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "GodotSharp/4.5.1",
+          "native_asset_names": [],
+          "record_sha256": "dee1f57dc1e02e132dc4fce617c4a185b3e06d9cf4928aef3679d90545dc1854",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "JetBrains.Annotations/2023.3.0",
+          "native_asset_names": [],
+          "record_sha256": "19d5fbf10cc39cfa2763e2d3f0e4c89a584de1dc5223f290766ceb0bde1374bd",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "MonoMod.ILHelpers"
+          ],
+          "managed_asset_count": 1,
+          "name": "MonoMod.Backports/1.1.2",
+          "native_asset_names": [],
+          "record_sha256": "21eb31323040a26ed4c179a3e66dd6efcdaac4682161d4209e7718ccde64964d",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "MonoMod.ILHelpers/1.1.0",
+          "native_asset_names": [],
+          "record_sha256": "0ee5f052afe88c232648409b108abc9baa73418b2567fc2fe3f5806a5b788611",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "Sentry/5.0.0",
+          "native_asset_names": [],
+          "record_sha256": "91fd9f95d41a2f38fe6725e2ddc487cc11a5892ae2449f9c6459de13dfc57aa9",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "SharpGen.Runtime"
+          ],
+          "managed_asset_count": 1,
+          "name": "SharpGen.Runtime.COM/2.2.0-beta",
+          "native_asset_names": [],
+          "record_sha256": "6468efc3ed84482eb983f3c5d8e958afa2831ac45457b9c6c2e2c575bb19bab7",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "SharpGen.Runtime/2.2.0-beta",
+          "native_asset_names": [],
+          "record_sha256": "a8a1c4152a76808d7a11be8d91de5fa2b673fdc6aef802d63395e60a9db1b99e",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "System.Memory",
+            "System.ValueTuple"
+          ],
+          "managed_asset_count": 2,
+          "name": "SmartFormat/3.3.0",
+          "native_asset_names": [],
+          "record_sha256": "8425911af187e2e90532675f710c53649b452cace2bd44d5216ef2b945b068e3",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "Steamworks.NET/1.0.0.0",
+          "native_asset_names": [],
+          "record_sha256": "a0b67bef12428e46dfa66a39efddc0509df653a87d15a0d57ac51fdecb2feaad",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "System.IO.Hashing/9.0.0",
+          "native_asset_names": [],
+          "record_sha256": "56240fc0f4a6e420e1397705bcfb3b5e78cd2f3bdc3892e7dc6a3ce05f837a7b",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 0,
+          "name": "System.Memory/4.5.5",
+          "native_asset_names": [],
+          "record_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 0,
+          "name": "System.ValueTuple/4.5.0",
+          "native_asset_names": [],
+          "record_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "SharpGen.Runtime",
+            "Vortice.DirectX"
+          ],
+          "managed_asset_count": 1,
+          "name": "Vortice.DXGI/3.6.2",
+          "native_asset_names": [],
+          "record_sha256": "55791d650e5d97191f3bca4d201e428d1f2e7e8404801e9ec68eaf5f5115f8a5",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "SharpGen.Runtime",
+            "SharpGen.Runtime.COM",
+            "Vortice.Mathematics"
+          ],
+          "managed_asset_count": 1,
+          "name": "Vortice.DirectX/3.6.2",
+          "native_asset_names": [],
+          "record_sha256": "58ada029181e17c04feb7db5e8a1430cf5ca31b6bc8deb4ed8208c9e469f5d25",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 1,
+          "name": "Vortice.Mathematics/1.9.2",
+          "native_asset_names": [],
+          "record_sha256": "afde72889178e5f81bbc4ddf867b6ba5fc391d263d36ad34abaa07300f44415b",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [],
+          "managed_asset_count": 169,
+          "name": "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/9.0.7",
+          "native_asset_names": [
+            "Microsoft.DiaSymReader.Native.amd64.dll",
+            "System.IO.Compression.Native.dll",
+            "clretwrc.dll",
+            "clrgc.dll",
+            "clrgcexp.dll",
+            "clrjit.dll",
+            "coreclr.dll",
+            "createdump.exe",
+            "hostfxr.dll",
+            "hostpolicy.dll",
+            "mscordaccore.dll",
+            "mscordaccore_amd64_amd64_9.0.725.31616.dll",
+            "mscordbi.dll",
+            "mscorrc.dll",
+            "msquic.dll"
+          ],
+          "record_sha256": "7c8416324126fd4af77ffbfdab0eeb4b12552a0752dfc0501e5a97e7b05b1ce2",
+          "runtime_target_asset_count": 0
+        },
+        {
+          "dependency_names": [
+            "0Harmony",
+            "Godot.SourceGenerators",
+            "GodotSharp",
+            "JetBrains.Annotations",
+            "MonoMod.Backports",
+            "Sentry",
+            "SmartFormat",
+            "Steamworks.NET",
+            "System.IO.Hashing",
+            "Vortice.DXGI",
+            "runtimepack.Microsoft.NETCore.App.Runtime.win-x64"
+          ],
+          "managed_asset_count": 1,
+          "name": "sts2/0.1.0",
+          "native_asset_names": [],
+          "record_sha256": "017504948c94f825ce5dbb8839255c12f529482e7da8f306e94d1b79e1151d7a",
+          "runtime_target_asset_count": 0
+        }
+      ],
+      "library_count": 19,
+      "name": ".NETCoreApp,Version=v9.0/win-x64"
+    }
+  ]
+}

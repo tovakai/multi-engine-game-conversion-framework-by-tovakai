@@ -1,0 +1,32 @@
+{
+  "provenance_version": 1,
+  "scope": "Full official export-template archive checksum and static selected-member hash comparison; no engine execution, installation or device test.",
+  "archive": {
+    "name": "Godot_v4.5.1-stable_mono_export_templates.tpz",
+    "url": "https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_mono_export_templates.tpz",
+    "size_bytes": 1276830924,
+    "sha256": "c425633061bb49f4390bdcece2b9ce68b3b0be3c71095b40644d8f6f17b1146e",
+    "sha512": "5f4379634ca1cfc176a30da1ca5cee4407cdce0da18e1f60de12a3e7bf497f91b7e525479d90a8c13feaa4bee6a592b4ea332c81ac31501bf76f01804afe76ba",
+    "checksum_url": "https://github.com/godotengine/godot/releases/download/4.5.1-stable/SHA512-SUMS.txt",
+    "published_checksum_matched": true,
+    "version_member": "templates/version.txt",
+    "version": "4.5.1.stable.mono"
+  },
+  "engine": {
+    "member": "templates/linux_release.arm64",
+    "deployed_path": "SlayTheSpire2",
+    "size_bytes": 63405320,
+    "sha256": "857b8242180c01648090998a53bbd6ac857ac2bfcbbced144ad847218b8275f1",
+    "mode": "0o100755",
+    "elf": {
+      "class_bits": 64,
+      "machine": 183
+    },
+    "prototype_size_and_hash_matched": true
+  },
+  "source": {
+    "tag": "4.5.1-stable",
+    "commit": "f62fdbde15035c5576dad93e586201f4d41ef0cb",
+    "repository": "https://github.com/godotengine/godot"
+  }
+}

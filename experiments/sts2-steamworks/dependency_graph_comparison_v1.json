@@ -1,0 +1,47 @@
+{
+  "comparison_version": 1,
+  "source_sha256": "0620976a2fde3e57ebd1f1621efcd2da4809572cd093a61bb76f0f8ba9338837",
+  "prototype_sha256": "ae899ff7301d1506b22d3a229ea3b4cd240f4e9585b8b9268506a7154ff65870",
+  "unchanged_non_runtime_target_record_count": 17,
+  "unchanged_managed_runtime_record_count": 169,
+  "unchanged_library_metadata_record_count_after_pack_rename": 19,
+  "source_runtime_target": ".NETCoreApp,Version=v9.0/win-x64",
+  "prototype_runtime_target": ".NETCoreApp,Version=v9.0/linux-arm64",
+  "source_runtime_pack": "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/9.0.7",
+  "prototype_runtime_pack": "runtimepack.Microsoft.NETCore.App.Runtime.linux-arm64/9.0.7",
+  "prototype_rid_fallbacks": [
+    "win",
+    "any",
+    "base"
+  ],
+  "official_linux_rid_fallbacks": [
+    "linux",
+    "unix-arm64",
+    "unix",
+    "any",
+    "base"
+  ],
+  "stable_outputs": {
+    "observed": {
+      "fallbacks": [
+        "win",
+        "any",
+        "base"
+      ],
+      "sha256": "3dcc793b34e41a6a10d9a03e2f3045172abfa161a3d30ed0781d4c0a82372ffe",
+      "semantic_sha256": "185ce682da780ddff6646169ce871f1ab740e53c7a41202113d7e67207f8599d"
+    },
+    "official-linux": {
+      "fallbacks": [
+        "linux",
+        "unix-arm64",
+        "unix",
+        "any",
+        "base"
+      ],
+      "sha256": "cbe2588f9deda53dd55c6b4788901c57483f672f3a0fec5c6ef1663ba322dcdb",
+      "semantic_sha256": "b899c563cd0141f1efd8e9020419d691319920a45c7e7f72ffeaf109822df943"
+    }
+  },
+  "scope": "Observed graph replay is semantically exact but serialized differently. Official-Linux candidate changes only the RID fallback list from the observed graph; neither candidate is installed or hardware-validated."
+}
