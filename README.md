@@ -175,6 +175,20 @@ Xwayland display and authentication file; **do not hardcode its Xauthority
 filename**, and do not disable X11 authentication. A successful main-menu
 event loop doesn't necessarily mean its window is visible on your headset.
 
+## Optional Steam shortcut
+
+Ren'Py conversions include `add-to-steam.sh` alongside `launch.sh`. On a
+Linux device with Steam running, run `bash add-to-steam.sh` from the extracted
+game directory to request a normal non-Steam shortcut through Steam's
+`steam://addnonsteamgame/` handler. The helper writes a desktop entry
+under the current user's applications directory and asks Steam to import it.
+Steam may ask for confirmation; verify the shortcut appears in the library.
+It does **not** edit Steam's binary shortcut database directly.
+
+Steam integration is optional. Game launching and conversion do not depend
+on Steam, and the helper cannot guarantee that every Steam client supports
+the shortcut-import protocol.
+
 ## Tested game compatibility
 
 This table tracks **real game tests on Linux ARM64 hardware**, not games that

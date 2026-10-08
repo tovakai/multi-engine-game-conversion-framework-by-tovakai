@@ -428,7 +428,7 @@ def _write_grafted_launcher(
     source_launcher: Path | None,
     platform_name: str,
 ) -> Path:
-    launcher = root / "launch.sh"
+    launcher = root / sys.argv[3]
     if source_launcher is not None and _patch_source_launcher_for_arm(source_launcher):
         relative = source_launcher.relative_to(root).as_posix()
         command = f'exec bash "$ROOT/{relative}" "$ROOT" "$@"'
@@ -470,6 +470,69 @@ def _write_grafted_launcher(
     except OSError:
         pass
     return launcher
+
+
+
+def _write_add_to_steam_script(root: Path, display_name: str, launcher_name: str) -> Path:
+    """Optional Steam integration. Uses Steam's live add-non-Steam URL."""
+    import shlex
+
+    path = root / "add-to-steam.sh"
+    script = r"""#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Python 3 is required to create a Steam desktop entry." >&2
+    exit 1
+fi
+python3 - "$ROOT" "$1" "$2" <<'PY_STEAM'
+import hashlib
+import pathlib
+import shutil
+import subprocess
+import sys
+import urllib.parse
+
+root = pathlib.Path(sys.argv[1]).resolve()
+name = sys.argv[2]
+launcher = root / sys.argv[3]
+if not launcher.is_file():
+    raise SystemExit(f"Missing game launcher: {launcher}")
+if not shutil.which("steam"):
+    raise SystemExit("Steam is not installed or not available on PATH.")
+
+def desktop_quote(value):
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$').replace('`', '\\`') + '"'
+
+entry_dir = pathlib.Path.home() / ".local/share/applications"
+entry_dir.mkdir(parents=True, exist_ok=True)
+key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:12]
+entry = entry_dir / f"tovakai-{key}.desktop"
+entry.write_text(
+    "[Desktop Entry]\n"
+    "Type=Application\n"
+    "Name=" + name.replace("\n", " ").replace("\r", " ") + "\n"
+    "Exec=/usr/bin/env bash " + desktop_quote(str(launcher)) + "\n"
+    "Path=" + str(root).replace("\n", " ") + "\n"
+    "Terminal=false\n"
+    "Categories=Game;\n",
+    encoding="utf-8",
+)
+entry.chmod(0o755)
+url = "steam://addnonsteamgame/" + urllib.parse.quote(str(entry), safe="")
+print(f"Requesting Steam shortcut for {name}.")
+print("If Steam presents a confirmation dialog, complete it there.")
+subprocess.Popen(["steam", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+PY_STEAM
+"""
+    # The script takes no user arguments; embed a safely quoted display name.
+    script = script.replace('"$1" "$2" <<', shlex.quote(display_name) + " " + shlex.quote(launcher_name) + " <<")
+    path.write_text(script, encoding="utf-8", newline="\n")
+    try:
+        path.chmod(path.stat().st_mode | 0o755)
+    except OSError:
+        pass
+    return path
 
 
 def _copy_source_and_arm_platform(
@@ -676,6 +739,7 @@ def build_game(
                 staging=staging,
                 launcher_fs_name=fs_name,
             )
+        _write_add_to_steam_script(staging, display_name, built_launcher.name)
         _replace_output(staging, output_path, force=force)
         result.launcher_path = output_path / built_launcher.name
     except BuildError:
