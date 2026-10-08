@@ -257,3 +257,15 @@ def test_invalid_explicit_id_does_not_crash_conversion(tmp_path, monkeypatch):
     )
     assert result == {}
     assert any("positive integer" in line for line in messages)
+
+
+def test_second_refresh_keeps_original_provider_provenance(tmp_path, monkeypatch):
+    monkeypatch.setenv("STEAMGRIDDB_API_KEY", "test-key-not-for-public")
+    root = setup_build(tmp_path)
+    mock_service(monkeypatch)
+    complete_frame_artwork(root, game_name="My Pig Princess")
+    before = json.loads((root / ".megcfbt/package.json").read_text())
+    assert before["artwork"]["slots"]["grid"] == "steamgriddb"
+    complete_frame_artwork(root, game_name="My Pig Princess")
+    after = json.loads((root / ".megcfbt/package.json").read_text())
+    assert after["artwork"]["slots"]["grid"] == "steamgriddb"
