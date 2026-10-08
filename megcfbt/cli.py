@@ -47,6 +47,11 @@ def _parser() -> argparse.ArgumentParser:
         help="optional PNG/JPEG portrait artwork to bundle for Steam",
     )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
+    build_cmd.add_argument(
+        "--steamgriddb-id",
+        type=int,
+        help="optional exact SteamGridDB game ID when title lookup is ambiguous",
+    )
 
     frame_control_cmd = sub.add_parser(
         "frame-control-limit",
@@ -154,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
             force=args.force,
             archive=not args.no_archive,
             steam_cover=args.steam_cover,
+            steamgriddb_game_id=args.steamgriddb_id,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             **kwargs,
