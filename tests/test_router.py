@@ -11,6 +11,7 @@ from megcfbt.router import (
     ConversionError,
     build_source,
     inspect_source,
+    output_path_for_inspection,
     output_path_for_source,
 )
 
@@ -141,6 +142,10 @@ def test_custom_godot_build_requires_runtime_override(
         "megcfbt.router.host_can_build_automatic_runtime",
         lambda: False,
     )
+    monkeypatch.setattr(
+        "megcfbt.router.downloadable",
+        lambda recipe: False,
+    )
 
     with pytest.raises(ConversionError, match="custom ARM64 runtime"):
         build_source(root, output=tmp_path / "out", archive=False)
@@ -163,6 +168,8 @@ def test_custom_godot_automatic_runtime_reaches_backend_without_override(
     def fake_build(path, **kwargs):
         seen["path"] = path
         seen["runtime"] = kwargs.get("runtime")
+        output.mkdir(parents=True, exist_ok=True)
+        _write(output / "launch.sh", "#!/bin/sh\n")
         return SimpleNamespace(
             launcher_path=output / "launch.sh",
             warnings=[],
@@ -197,6 +204,8 @@ def test_custom_godot_runtime_override_reaches_backend(
     def fake_build(path, **kwargs):
         seen["path"] = path
         seen["runtime"] = kwargs.get("runtime")
+        output.mkdir(parents=True, exist_ok=True)
+        _write(output / "launch.sh", "#!/bin/sh\n")
         return SimpleNamespace(
             launcher_path=output / "launch.sh",
             warnings=[],
@@ -272,3 +281,29 @@ def test_output_name_keeps_the_stupidly_simple_frame_suffix(tmp_path: Path) -> N
     source = tmp_path / "game.zip"
     expected = tmp_path / "out/game-frame"
     assert output_path_for_source(source, tmp_path / "out") == expected
+
+
+def test_output_path_for_inspection_prefers_detected_game_name(tmp_path: Path) -> None:
+    source = tmp_path / "game"
+    inspection = SimpleNamespace(
+        game_name="Brotato",
+        source_path=source,
+    )
+    assert output_path_for_inspection(
+        inspection,
+        tmp_path / "out",
+        source,
+    ) == tmp_path / "out/Brotato-frame"
+
+
+def test_output_path_for_inspection_sanitizes_windows_filename_chars(tmp_path: Path) -> None:
+    source = tmp_path / "game"
+    inspection = SimpleNamespace(
+        game_name='Game: Deluxe / Edition?',
+        source_path=source,
+    )
+    assert output_path_for_inspection(
+        inspection,
+        tmp_path / "out",
+        source,
+    ) == tmp_path / "out/Game- Deluxe - Edition-frame"
