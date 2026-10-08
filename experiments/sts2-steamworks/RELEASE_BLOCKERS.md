@@ -26,7 +26,8 @@ The supported profile is only v0.98.2 / f4eeecc6. The matching testgames fixture
 was authorized for comparison, and its selected inputs match the preserved
 profile, but publisher-pristine provenance is unverified. Replacement Windows
 Steam DLLs and settings are excluded from conversion. The observed retail Steam
-installation is v0.107.1 / 59260271 and remains rejected.
+installations on Windows and the Frame are v0.107.1 / 59260271 and remain
+unsupported by this recipe.
 
 Next step: verify a legitimate untouched retail/depot copy of the supported
 build, or derive and independently validate a separate recipe for a retail build.

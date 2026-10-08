@@ -1,0 +1,69 @@
+{
+  "committed_files_verified_on_device": 160,
+  "compiled_extensions_match_reference": {
+    "libGodotFmod.linux.template_release.arm64.so": true,
+    "libspine_godot.linux.template_release.arm64.so": true
+  },
+  "entrypoint": "python3 -m megcfbt build --fmod-sdk <authorized vendor archive> --acknowledge-licenses --no-archive",
+  "errors": [],
+  "fresh_extension_compilation": true,
+  "headless_checks": {
+    "exit_code": 0,
+    "fmod_initialized": true,
+    "godot_plugins_initialized": true,
+    "hostfxr_initialized": true,
+    "sentry_dotnet_initialized": true,
+    "sentry_native_initialized": true,
+    "steam_client_loaded": true,
+    "steam_context_missing": true,
+    "steam_initialization_succeeded": false,
+    "user_data_isolated": true
+  },
+  "native_output_hashes": {
+    "libGodotFmod.linux.template_release.arm64.so": {
+      "elf_machine": 183,
+      "sha256": "0d5be1a919feb1d287e29b8115441c4e99d8795b8fcad031fc74699ca2a2cf62",
+      "size_bytes": 3281280
+    },
+    "libfmod.so.14": {
+      "elf_machine": 183,
+      "sha256": "3f890c918d513aa1e6c6efba330f9869ff15258d49bf3e2b52f9bee832c90de5",
+      "size_bytes": 1290880
+    },
+    "libfmodstudio.so.14": {
+      "elf_machine": 183,
+      "sha256": "d1bc3c729d534d9f03933d24cbc84139f73a460f92334e09ccdf388c334dcd31",
+      "size_bytes": 1302256
+    },
+    "libspine_godot.linux.template_release.arm64.so": {
+      "elf_machine": 183,
+      "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
+      "size_bytes": 4328984
+    },
+    "libsteam_api64.so": {
+      "elf_machine": 183,
+      "sha256": "9d354c631f01f7318bc00e8fa29842b83678f4293b52d0d5c11806edd76a7f4b",
+      "size_bytes": 381904
+    }
+  },
+  "original_source_files_verified_after_conversion": 21,
+  "output_directory": "/run/media/steamos/SD512/sts2-regression-validation-01/native-output",
+  "owned_steam_gameplay_acceptance": "pending",
+  "pack_sha256": "25e58dc52e8f5571f54b929ce5359e9057d6d7c4e6213db920f60d7ad8a2a19a",
+  "source_archive_sha256": "993b92fa766431a6d14dd9265cc65e60fcefc283e5dcbb7d98a2a35ae979ea29",
+  "source_provenance": "Existing hash-pinned comparison fixture; pristine retail verification remains open.",
+  "static_checks": {
+    "errors_after_startup": [],
+    "errors_before_startup": [],
+    "files_verified": 227,
+    "host_architecture": "aarch64",
+    "manifest_sha256": "cf99981e2c9892f94c6e4dd2d20a790217c08c255119b7dddaf30dff38c16893",
+    "native_objects_inspected": 23
+  },
+  "tested_source_commit": "49d5a88a0fb33cb20ad19a4a2550d32448fad3f0",
+  "validation_timestamp_utc": "2026-10-08T22:14:16.843226+00:00",
+  "working_baseline_preserved": {
+    "errors": [],
+    "manifest_sha256": "cf99981e2c9892f94c6e4dd2d20a790217c08c255119b7dddaf30dff38c16893"
+  }
+}

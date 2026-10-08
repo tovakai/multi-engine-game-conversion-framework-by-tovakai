@@ -6,6 +6,9 @@ backend and framework integration on `feat/sts2-reproducible-pipeline`. See
 [hardware_validation_20261008.json](hardware_validation_20261008.json) for the
 actual fresh-build, complete-conversion and Frame startup evidence, and the
 remaining vendor/pristine-source/owned-Steam acceptance limitations.
+The SDK-loop regression fix was freshly tested through the framework CLI from
+commit `49d5a88`; see [VALIDATION_49d5a88.md](VALIDATION_49d5a88.md). Its evidence
+is separate from the earlier deployed bundle.
 
 ## Preservation Boundary
 

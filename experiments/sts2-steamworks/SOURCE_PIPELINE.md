@@ -2,11 +2,15 @@
 
 The four remaining release gates are tracked separately in
 [RELEASE_BLOCKERS.md](RELEASE_BLOCKERS.md).
+Fresh validation of the committed SDK-loop fix is documented separately in
+[VALIDATION_49d5a88.md](VALIDATION_49d5a88.md).
 
 Continuation: `feat/sts2-reproducible-pipeline`, based on handoff `3747037`.
 The original dirty checkout was left intact; development uses
-`/tmp/sts2-converter-continuation`. Hardware experiments are confined to
-`/run/media/steamos/SD512/sts2-pipeline-dev-20261008`.
+`/tmp/sts2-converter-continuation`. Earlier hardware experiments use
+`/run/media/steamos/SD512/sts2-pipeline-dev-20261008`; fresh regression validation
+uses `/run/media/steamos/SD512/sts2-regression-validation-01` and a new private
+build workspace under the user's `.cache/megcfbt/sts2`.
 
 This removes previously compiled game-specific extension inputs. It does **not**
 claim unrestricted one-click conversion from a game installation alone: the
@@ -111,7 +115,8 @@ full-pipeline validation of commit `be471a9`. That commit's later SDK header-cop
 loop introduced variable shadowing; the regression and its committed fix are
 covered by a test that executes the complete native builder with synthetic
 checkouts/compiler outputs and real verified SDK-layout writes. Fresh hardware
-results for the fix will be recorded separately with the exact tested commit.
+results for the fix are recorded in [VALIDATION_49d5a88.md](VALIDATION_49d5a88.md)
+with the exact tested commit.
 
 - Two independent fresh builds on the Frame reproduce both original extension
   SHA-256 hashes exactly, using GCC 15.1.1, SCons 4.11.1, Python 3.12.3 and

@@ -16,3 +16,5 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: python -m compileall -q megcfbt renframe rpgmframe
       - run: pytest -q
+      - name: STS2 standalone and native-build regression tests
+        run: python -m unittest discover -s experiments/sts2-steamworks -p 'test_*.py'
