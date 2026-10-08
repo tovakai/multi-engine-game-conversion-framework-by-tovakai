@@ -185,11 +185,10 @@ To get art when the **converted game is not on this computer**, fetch it
 standalone by title. No game files, launcher, or conversion output are needed:
 
 ~~~powershell
-.\\.venv-win\\Scripts\\python.exe -m megcfbt.cli artwork \`
-    --name "My Pig Princess" \`
-    --output "$env:USERPROFILE\\Downloads\\MyPigPrincess-artwork"
+.\.venv-win\Scripts\python.exe -m megcfbt.cli artwork `
+    --name "My Pig Princess" `
+    --output "$env:USERPROFILE\Downloads\MyPigPrincess-artwork"
 ~~~
-
 Images are saved under `.megcfbt/artwork/` inside that destination.
 Copy those small image files to the existing Frame installation and use its
 Steam installer if available. Standalone mode intentionally does **not**
