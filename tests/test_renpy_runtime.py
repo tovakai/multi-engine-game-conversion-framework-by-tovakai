@@ -482,4 +482,7 @@ def test_legacy_full_engine_generated_launcher_executes_sdk_script(tmp_path: Pat
     )
     assert completed.returncode == 0, completed.stderr
     assert "full_sdk=7.5.0" in completed.stdout
-    assert str(out) in completed.stdout
+    expected_path = out.as_posix()
+    if out.drive:
+        expected_path = "/" + out.drive[0].lower() + expected_path[2:]
+    assert expected_path in completed.stdout

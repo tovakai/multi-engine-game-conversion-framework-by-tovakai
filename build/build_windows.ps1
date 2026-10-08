@@ -11,9 +11,18 @@ if (-not (Test-Path $py)) {
 }
 
 & $py -m pip install -e ".[gui,build]"
+if ($LASTEXITCODE -ne 0) { throw "Build dependency installation failed ($LASTEXITCODE)" }
 
 $appName = "Multi-Engine Game Conversion Framework by tovakai"
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
+$buildWorkspace = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\') + '\'
+function Assert-BuildTarget([string]$target) {
+  $resolvedTarget = [IO.Path]::GetFullPath((Join-Path $buildWorkspace $target))
+  if (-not $resolvedTarget.StartsWith($buildWorkspace, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Build target escapes workspace: $resolvedTarget"
+  }
+  return $resolvedTarget
+}
 $commit = (& git rev-parse --short HEAD 2>$null)
 if (-not $commit) { $commit = "unknown" }
 
@@ -27,7 +36,8 @@ foreach ($path in @(
   "build\$appName",
   "build\$legacyAppName"
 )) {
-  if (Test-Path $path) { Remove-Item -Recurse -Force $path }
+  $safeBuildTarget = Assert-BuildTarget $path
+  if (Test-Path -LiteralPath $safeBuildTarget) { Remove-Item -LiteralPath $safeBuildTarget -Recurse -Force }
 }
 & $py -m PyInstaller `
   --noconfirm `
@@ -40,6 +50,7 @@ foreach ($path in @(
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
   "app\main.py"
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 
 $release = "dist\windows\$appName"
 New-Item -ItemType Directory -Force -Path $release | Out-Null
@@ -55,10 +66,13 @@ Multi-Engine Game Conversion Framework by tovakai
 2. Drop a Ren'Py, RPG Maker, or Godot game folder / ZIP.
 3. Let the framework detect the engine.
 4. Convert.
-5. Copy the generated *-linux-aarch64.tar.gz to the target Linux ARM64 device.
+5. Copy the generated *-linux-aarch64.zip to the target Linux ARM64 device.
+6. Extract the ZIP and run ./install-to-steam.sh in the graphical desktop session.
 
 RPG Maker and Godot runtimes are resolved automatically.
-Ren'Py currently requires a matching ARM64 Ren'Py runtime folder.
+Ren'Py 7/8 runtimes resolve automatically, with a manual ARM64 override.
+Original DDLC 1.1.1 / Ren'Py 6.99.12 has an opt-in experimental 7.5.3
+full-engine migration. DDLC hardware/story compatibility is unverified.
 "@
 Set-Content -Path (Join-Path $release "README.txt") -Value $readme -Encoding UTF8
 
@@ -70,7 +84,8 @@ Set-Content -Path (Join-Path $release "BUILD.txt") -Value $buildInfo -Encoding U
 
 
 $zip = "dist\multi-engine-game-conversion-framework-by-tovakai-windows-x64.zip"
-if (Test-Path $zip) { Remove-Item $zip -Force }
+$safeZipTarget = Assert-BuildTarget $zip
+if (Test-Path -LiteralPath $safeZipTarget) { Remove-Item -LiteralPath $safeZipTarget -Force }
 Compress-Archive -Path $release -DestinationPath $zip -CompressionLevel Optimal
 
 Write-Host "Built commit: $commit"

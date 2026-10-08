@@ -21,6 +21,7 @@ class UnifiedInspection:
     warnings: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
     renpy_generation: int | None = None
+    renpy_ddlc_753_candidate: bool = False
 
 
 @dataclass(frozen=True)
