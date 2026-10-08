@@ -32,16 +32,49 @@ def _parser() -> argparse.ArgumentParser:
     build_cmd.add_argument(
         "--runtime",
         type=Path,
-        help=(
-            "manual backend runtime override for RPG Maker/Godot; eligible "
-            "Godot 3.7 custom + GodotSteam exports can build a compatibility "
-            "runtime automatically on Linux ARM64"
-        ),
+        help="optional manually supplied ARM64 runtime for RPG Maker/Godot",
     )
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
-    build_cmd.add_argument("--no-archive", action="store_true")
+    build_cmd.add_argument("--archive", action="store_true", help="create Frame-ready ZIP (default)")
+    build_cmd.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="do not create the FrameDrop/Frame Control compatible ZIP package",
+    )
+    build_cmd.add_argument(
+        "--steam-cover",
+        type=Path,
+        help="optional PNG/JPEG portrait artwork to bundle for Steam",
+    )
+    build_cmd.add_argument(
+        "--add-to-steam",
+        action="store_true",
+        help="after conversion, add the build directly to local Steam (Linux ARM64 only)",
+    )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
+
+    steam_cmd = sub.add_parser(
+        "steam-install",
+        help="add an existing converted build to local Steam on Linux ARM64",
+    )
+    steam_cmd.add_argument("build", type=Path)
+
+    frame_control_cmd = sub.add_parser(
+        "frame-control-limit",
+        help="inspect, patch, or restore Frame Control's local upload-size guard",
+    )
+    frame_control_cmd.add_argument(
+        "action",
+        choices=("status", "patch", "restore"),
+        nargs="?",
+        default="status",
+    )
+    frame_control_cmd.add_argument(
+        "--path",
+        type=Path,
+        help="Frame Control server.py, Frame Control.exe, or install directory",
+    )
 
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
@@ -56,6 +89,49 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "frame-control-limit":
+            from megcfbt.frame_control_patch import (
+                FrameControlPatchError,
+                inspect_frame_control,
+                patch_upload_limit,
+                restore_upload_limit,
+            )
+
+            try:
+                if args.action == "patch":
+                    status = patch_upload_limit(args.path)
+                elif args.action == "restore":
+                    status = restore_upload_limit(args.path)
+                else:
+                    status = inspect_frame_control(args.path)
+            except FrameControlPatchError as exc:
+                print(f"ERROR: {exc}")
+                return 1
+
+            state = (
+                "patched"
+                if status.is_patched
+                else "stock"
+                if status.is_stock
+                else "custom"
+            )
+            print(f"Frame Control: {status.server_path}")
+            print(f"Upload limit:  {status.limit_gib} GiB ({state})")
+            print(f"Backup:        {status.backup_path if status.has_backup else 'none'}")
+            if args.action in ("patch", "restore"):
+                print("Restart Frame Control before using the changed limit.")
+            return 0
+
+        if args.command == "steam-install":
+            from megcfbt.steam_install import install_build
+
+            installed = install_build(args.build, progress=print)
+            print(f"Steam:   {installed['name']} ({installed['id']})")
+            print(f"Path:    {installed['directory']}")
+            for warning in installed["warnings"]:
+                print(f"Warning: {warning}")
+            return 0
+
         if args.command == "inspect":
             result = inspect_source(args.source)
             payload = {
@@ -99,17 +175,25 @@ def main(argv: list[str] | None = None) -> int:
             backend_runtime=args.runtime,
             force=args.force,
             archive=not args.no_archive,
+            steam_cover=args.steam_cover,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             **kwargs,
         )
         print(f"Built:   {result.output_path}")
         if result.archive_path:
-            print(f"Archive: {result.archive_path}")
+            print(f"Package: {result.archive_path}")
         for warning in result.warnings:
             print(f"Warning: {warning}")
+        if args.add_to_steam:
+            from megcfbt.steam_install import install_build
+
+            installed = install_build(result.output_path, progress=print)
+            print(f"Steam:   {installed['name']} ({installed['id']})")
+            for warning in installed["warnings"]:
+                print(f"Warning: {warning}")
         return 0
-    except ConversionError as exc:
+    except (ConversionError, RuntimeError) as exc:
         print(f"ERROR: {exc}")
         return 1
 
