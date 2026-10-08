@@ -99,7 +99,12 @@ export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
     )
     return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
 # may ship shared libraries beside the engine runtime.
-export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+steam_arm64_dir="/opt/steamvr/bin/linuxarm64"
+if [[ -d "$steam_arm64_dir" ]]; then
+    export LD_LIBRARY_PATH="$ROOT:$steam_arm64_dir${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+else
+    export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+fi
 
 {zink}cd "$ROOT/game"
 exec "$ROOT/godot.arm64" --main-pack "$ROOT"/{pack} "$@"
