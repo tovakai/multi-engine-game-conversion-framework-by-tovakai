@@ -401,7 +401,7 @@ def test_opted_in_legacy_build_uses_matched_engine_and_preserves_original_game(
     assert not (out / "lib/py2-linux-x86_64").exists()
     assert not (source / "lib/py2-linux-aarch64").exists()
     assert (source / "renpy/versions.py").read_text() == 'version = "7.4.11"\n'
-    assert result.launcher_path == out / "Legacy.sh"
+    assert result.launcher_path == out / "Game.sh"
     assert 'exec "$ROOT/renpy.sh"' in result.launcher_path.read_text()
     assert "sdk-compat" not in result.launcher_path.read_text()
 
