@@ -35,6 +35,11 @@ jobs:
           python -m pip install --upgrade pip
           bash build/build_linux_aarch64.sh
 
+      - name: Run native ARM64 regression tests
+        run: |
+          python -m pip install -e ".[dev]"
+          pytest -q
+
       - name: Smoke-check binary architecture
         run: |
           APP="dist/linux-aarch64/Multi-Engine Game Conversion Framework by Tovakai/Multi-Engine Game Conversion Framework by Tovakai"

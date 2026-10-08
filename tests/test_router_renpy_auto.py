@@ -145,6 +145,7 @@ def test_renpy_router_forwards_experimental_fallback_approval(
             display_name="Legacy",
             game_name="Legacy",
             source_version="7.4.11",
+            runtime_version="7.5.0",
         )
 
     monkeypatch.setattr(router, "build_renpy_game", fake_build)

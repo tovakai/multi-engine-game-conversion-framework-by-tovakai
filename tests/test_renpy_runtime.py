@@ -351,6 +351,9 @@ def _fake_legacy_sdk(root: Path) -> Path:
     (root / "renpy/__init__.py").write_text("# Ren'Py 7.5 engine\n")
     (root / "renpy/versions.py").write_text('version = "7.5.0"\n')
     (root / "renpy.py").write_text("# Ren'Py entrypoint\n")
+    (root / "LICENSE.txt").write_text("Synthetic license notice\n")
+    (root / "lib/python2.7").mkdir(parents=True)
+    (root / "lib/python2.7/site.py").write_text("# synthetic stdlib\n")
     launcher = root / "renpy.sh"
     launcher.write_text(
         '#!/bin/sh\n'
@@ -406,7 +409,7 @@ def test_opted_in_legacy_build_uses_matched_engine_and_preserves_original_game(
     assert "sdk-compat" not in result.launcher_path.read_text()
 
 def test_legacy_fallback_rejects_renpy8_and_wrong_7x_even_if_approved(tmp_path: Path):
-    for version in ("8.5.3", "7.3.5", "7.5.0"):
+    for version in ("8.5.3", "7.3.4", "7.3.6", "7.5.0"):
         source = _renpy_game(tmp_path / ("Game-" + version), version=version)
         if version.startswith("7."):
             (source / "lib/py3-linux-x86_64").rename(source / "lib/py2-linux-x86_64")
@@ -441,7 +444,7 @@ def test_unified_inspection_preserves_legacy_python_generation_and_fallback_hint
     assert "experimental Ren'Py 7.5.0 Python 2 ARM64" in detected.runtime_kind
     assert "requires user approval" in detected.runtime_kind
 
-    old = _legacy_renpy_game(tmp_path / "Older", version="7.3.5")
+    old = _legacy_renpy_game(tmp_path / "Older", version="7.3.4")
     detected_old = inspect_source(old)
     assert detected_old.renpy_generation == 7
     assert "manual compatible ARM64" in detected_old.runtime_kind

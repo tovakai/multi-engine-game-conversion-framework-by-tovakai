@@ -57,7 +57,7 @@ it pretend it has one?**
 
 | Engine family | Backend | Conversion strategy | Hardware status |
 | --- | --- | --- | --- |
-| Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12 and legacy 7.4.x | Ren'Py 8, legacy 7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; deeper compatibility varies |
+| Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12, exact 7.3.5, and legacy 7.4.x | Ren'Py 8, legacy 7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; 7.3.5 hardware testing pending; deeper compatibility varies |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
@@ -243,26 +243,31 @@ When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
 The original game's `renpy/` engine tree and other payload files are preserved.
 This is intentionally more surgical than replacing the game with a complete SDK.
 
-**Ren'Py 7.4.x** predates official ARM64 sdkarm releases. In the GUI, when
-inspection confidently identifies Ren'Py 7.4.x with **Python 2**, the runtime
+**Ren'Py 7.3.5 and 7.4.x** predate official ARM64 sdkarm releases. In the GUI, when
+inspection identifies Ren'Py 7.4.x with **Python 2**, or exact **7.3.5** with
+high-confidence, consistent engine version evidence and a Python 2 layout, the runtime
 selector says **experimental Ren'Py 7.5.0** instead of incorrectly promising
 automatic 7.4.x support. Clicking **CONVERT** asks for explicit consent:
 
 - **Yes:** download and checksum-verify the official Ren'Py 7.5.0 sdkarm,
   use its **matching Ren'Py 7.5 Python engine and Python 2 ARM64 binaries**
   together, and copy the original game's `game/` assets and scripts into
-  the new runtime. We do **not** combine the 7.4 Python engine with 7.5
+  the new runtime. We do **not** combine the older Python engine with 7.5
   compiled graphics libraries;
 - **No:** browse for a manually supplied compatible ARM64 Ren'Py runtime;
 - **Cancel:** do nothing.
 
 The experimental cross-minor fallback is intentionally limited to detected
-7.4.x / Python 2 games, never automatic and never a Python 2-to-3 upgrade.
+7.4.x and authoritative exact 7.3.5 / Python 2 games, never automatic and never a Python 2-to-3 upgrade.
 The original installation is left unchanged; the converted copy runs on
-7.5.0 engine code rather than the source game's 7.4 engine code.
+7.5.0 engine code rather than the source game's older engine code.
 The output clearly warns that gameplay compatibility is **not established**.
 Other pre-7.5 Ren'Py games still require an explicitly selected runtime.
 The converter does **not silently** substitute a nearby Ren'Py version.
+The same opt-in is available in both CLIs as `--experimental-legacy-arm64-fallback`;
+`--dry-run` validates it without downloading or writing a build.
+Pesterquest's local 7.3.5 conversion remains hardware-unverified. See
+[the inspection notes and Steam Frame test procedure](docs/renpy-735-arm64-migration.md).
 A manual runtime remains available as an escape hatch:
 
 ```bash
