@@ -13,6 +13,10 @@ from pathlib import Path
 
 _MAX_IMAGE_BYTES = 8 * 1024 * 1024
 _APPID = re.compile(r"^[1-9][0-9]{0,9}$")
+_STEAM_ASSET_HOSTS = (
+    "shared.akamai.steamstatic.com",
+    "shared.fastly.steamstatic.com",
+)
 
 
 def detected_steam_appid(build: Path) -> str | None:
@@ -52,25 +56,34 @@ def fetch_official_steam_portrait(
     target = root / ".megcfbt" / "artwork" / "grid.jpg"
     if target.is_file():
         return target
-    url = (
-        "https://shared.fastly.steamstatic.com/store_item_assets/"
-        f"steam/apps/{appid}/library_600x900.jpg"
-    )
-    try:
-        request = urllib.request.Request(url, headers={"User-Agent": "tovakai-frame-converter/1.0"})
-        with urllib.request.urlopen(request, timeout=12) as response:
-            mime = response.headers.get("Content-Type", "").split(";")[0].lower()
-            if mime not in {"image/jpeg", "image/jpg"}:
-                return None
-            data = response.read(_MAX_IMAGE_BYTES + 1)
-        if not data.startswith(b"\\xff\\xd8\\xff") or len(data) > _MAX_IMAGE_BYTES:
-            return None
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        if progress:
-            progress(f"Matched Steam library portrait using AppID {appid}")
-        return target
-    except (OSError, urllib.error.URLError, ValueError) as exc:
-        if progress:
-            progress(f"Steam artwork unavailable for AppID {appid}: {exc}")
-        return None
+    last_error: Exception | None = None
+    for host in _STEAM_ASSET_HOSTS:
+        url = (
+            f"https://{host}/store_item_assets/"
+            f"steam/apps/{appid}/library_600x900.jpg"
+        )
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={"User-Agent": "tovakai-frame-converter/1.0"},
+            )
+            with urllib.request.urlopen(request, timeout=12) as response:
+                mime = response.headers.get("Content-Type", "").split(";")[0].lower()
+                if mime not in {"image/jpeg", "image/jpg"}:
+                    raise ValueError(f"unexpected content type {mime or 'unknown'}")
+                data = response.read(_MAX_IMAGE_BYTES + 1)
+            if not data.startswith(b"\xff\xd8\xff"):
+                raise ValueError("download was not a JPEG")
+            if len(data) > _MAX_IMAGE_BYTES:
+                raise ValueError("Steam portrait exceeded 8 MiB limit")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            if progress:
+                progress(f"Matched Steam library portrait using AppID {appid}")
+            return target
+        except (OSError, urllib.error.URLError, ValueError) as exc:
+            last_error = exc
+
+    if progress:
+        progress(f"Steam artwork unavailable for AppID {appid}: {last_error}")
+    return None
