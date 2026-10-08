@@ -183,7 +183,7 @@ not a promise that every game using an engine will work.
 
 | Game | Engine | Tested device | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Brotato | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
+| Brotato 1.1.14.6 | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
 | My Pig Princess 0.10.1 | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
