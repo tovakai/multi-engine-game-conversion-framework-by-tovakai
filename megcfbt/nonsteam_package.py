@@ -23,20 +23,30 @@ exec python3 "$PY"
 INSTALLER_PYTHON = r'''#!/usr/bin/env python3
 """Add an extracted tovakai Steam Frame package as a normal non-Steam game.
 
-The shortcut-ID and binary shortcuts.vdf approach is adapted from Deckport
-(https://github.com/wesellis/deckport), Copyright (c) 2026 Wesley Ellis,
-used under the MIT License. See THIRD_PARTY_NOTICES.md in the source repository.
+The deterministic shortcut-ID and artwork naming approach is adapted from
+Deckport (https://github.com/wesellis/deckport), Copyright (c) 2026 Wesley
+Ellis, used under the MIT License. See THIRD_PARTY_NOTICES.md in the source
+repository.
+
+Unlike Deckport, this installer does not write shortcuts.vdf directly. Steam
+Frame's desktop session is part of the SteamVR environment, so fully exiting
+Steam tears down the session. Instead we use SteamOS's live
+steam://addnonsteamgame/ path, then read back the shortcut Steam created.
 """
 
 from __future__ import annotations
 
 import glob
+import hashlib
 import json
+import re
 import shutil
 import struct
+import subprocess
 import sys
+import time
+import urllib.parse
 import zlib
-from datetime import datetime
 from pathlib import Path
 
 
@@ -114,44 +124,9 @@ def load_shortcuts(path: Path) -> dict:
     return root
 
 
-def _write_map(node: dict) -> bytes:
-    output = bytearray()
-    for key, value in node.items():
-        encoded_key = str(key).encode("utf-8")
-        if isinstance(value, dict):
-            output += b"\x00" + encoded_key + b"\x00" + _write_map(value) + b"\x08"
-        elif isinstance(value, bool):
-            output += b"\x02" + encoded_key + b"\x00" + struct.pack("<i", int(value))
-        elif isinstance(value, int):
-            if -(1 << 31) <= value < (1 << 31):
-                output += b"\x02" + encoded_key + b"\x00" + struct.pack("<i", value)
-            elif 0 <= value < (1 << 64):
-                output += b"\x07" + encoded_key + b"\x00" + struct.pack("<Q", value)
-            else:
-                raise ValueError(f"integer out of KeyValues range for {key!r}: {value}")
-        else:
-            output += (
-                b"\x01"
-                + encoded_key
-                + b"\x00"
-                + str(value).encode("utf-8")
-                + b"\x00"
-            )
-    return bytes(output)
-
-
-def save_shortcuts(path: Path, shortcuts: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(b"\x00shortcuts\x00" + _write_map(shortcuts) + b"\x08\x08")
-
-
 def shortcut_appid(exe: str, app_name: str) -> int:
     """Return Steam's deterministic unsigned non-Steam shortcut AppID."""
     return (zlib.crc32((exe + app_name).encode("utf-8")) & 0xFFFFFFFF) | 0x80000000
-
-
-def to_signed32(value: int) -> int:
-    return struct.unpack("<i", struct.pack("<I", value & 0xFFFFFFFF))[0]
 
 
 def to_unsigned32(value: int) -> int:
@@ -168,78 +143,120 @@ def steam_running() -> bool:
     return False
 
 
-def shortcuts_path() -> Path:
+def steam_users() -> list[Path]:
     roots = (
         Path.home() / ".steam/steam",
         Path.home() / ".local/share/Steam",
         Path.home() / ".var/app/com.valvesoftware.Steam/.local/share/Steam",
     )
-    candidates: list[Path] = []
-    seen: set[Path] = set()
+    found: dict[Path, Path] = {}
     for root in roots:
         userdata = root / "userdata"
         if not userdata.is_dir():
             continue
         for user in userdata.iterdir():
-            if not user.is_dir() or not user.name.isdigit() or user.name == "0":
-                continue
-            resolved = user.resolve()
-            if resolved not in seen:
-                seen.add(resolved)
-                candidates.append(user)
+            if user.name.isdigit() and user.name != "0" and user.is_dir():
+                found.setdefault(user.resolve(), user)
+    return list(found.values())
 
-    if not candidates:
-        raise RuntimeError("could not locate a Steam userdata account")
 
-    def activity(user: Path) -> float:
+def desktop_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+
+
+def desktop_entry(name: str, launcher: Path) -> Path:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip("-").lower() or "game"
+    digest = hashlib.sha256(str(launcher).encode("utf-8")).hexdigest()[:10]
+    path = Path.home() / ".local/share/applications" / f"tovakai-{slug[:40]}-{digest}.desktop"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "[Desktop Entry]",
+        "Type=Application",
+        f"Name={desktop_escape(name)}",
+        f'Exec="{desktop_escape(str(launcher))}"',
+        f'Path={desktop_escape(str(ROOT))}',
+        "Terminal=false",
+        "Categories=Game;",
+    ]
+    icon = next(
+        (ART / f"icon{suffix}" for suffix in IMAGE_SUFFIXES if (ART / f"icon{suffix}").is_file()),
+        None,
+    )
+    if icon:
+        lines.insert(5, f"Icon={desktop_escape(str(icon))}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.chmod(path.stat().st_mode | 0o755)
+    return path
+
+
+def request_add(entry: Path) -> None:
+    Path("/tmp/addnonsteamgamefile").touch()
+    url = "steam://addnonsteamgame/" + urllib.parse.quote(str(entry), safe="")
+    command = shutil.which("steam")
+    if command:
+        try:
+            subprocess.run(
+                [command, url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=30,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            pass
+        return
+
+    opener = shutil.which("xdg-open")
+    if opener:
+        subprocess.Popen(
+            [opener, url],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return
+    raise RuntimeError("could not find the Steam command or xdg-open")
+
+
+def _entry_appid(entry: dict) -> int | None:
+    value = entry.get("appid")
+    return to_unsigned32(value) if isinstance(value, int) else None
+
+
+def find_shortcuts(
+    launcher: Path,
+    *,
+    name: str | None = None,
+    desktop: Path | None = None,
+) -> dict[Path, int]:
+    target = str(launcher)
+    desktop_target = str(desktop) if desktop is not None else None
+    found: dict[Path, int] = {}
+
+    for user in steam_users():
         vdf = user / "config" / "shortcuts.vdf"
         try:
-            return vdf.stat().st_mtime
-        except OSError:
-            try:
-                return user.stat().st_mtime
-            except OSError:
-                return 0.0
-
-    user = max(candidates, key=activity)
-    return user / "config" / "shortcuts.vdf"
-
-
-def build_shortcut(name: str, launcher: Path) -> tuple[dict, int]:
-    exe = f'"{launcher}"'
-    start_dir = f'"{ROOT}/"'
-    appid = shortcut_appid(exe, name)
-    entry = {
-        "appid": to_signed32(appid),
-        "AppName": name,
-        "Exe": exe,
-        "StartDir": start_dir,
-        "icon": "",
-        "ShortcutPath": "",
-        "LaunchOptions": "",
-        "IsHidden": 0,
-        "AllowDesktopConfig": 1,
-        "AllowOverlay": 1,
-        "openvr": 0,
-        "Devkit": 0,
-        "DevkitGameID": "",
-        "DevkitOverrideAppID": 0,
-        "LastPlayTime": 0,
-        "FlatpakAppID": "",
-        "tags": {"0": "Tovakai ARM64"},
-    }
-    return entry, appid
-
-
-def existing_shortcut(shortcuts: dict, launcher: Path) -> tuple[str, dict] | None:
-    target = str(launcher)
-    for key, entry in shortcuts.items():
-        if not isinstance(entry, dict):
+            shortcuts = load_shortcuts(vdf)
+        except (OSError, ValueError, IndexError, struct.error):
             continue
-        exe = str(entry.get("Exe") or entry.get("exe") or "").strip('"')
-        if exe == target:
-            return str(key), entry
-    return None
+
+        for entry in shortcuts.values():
+            if not isinstance(entry, dict):
+                continue
+            exe = str(entry.get("Exe") or entry.get("exe") or "").strip('"')
+            app_name = str(entry.get("AppName") or entry.get("appname") or "")
+            start_dir = str(entry.get("StartDir") or entry.get("startdir") or "").strip('"').rstrip("/")
+            appid = _entry_appid(entry)
+            if appid is None:
+                continue
+            if (
+                exe == target
+                or (desktop_target is not None and exe == desktop_target)
+                or (name is not None and app_name == name and start_dir == str(ROOT).rstrip("/"))
+            ):
+                found[user] = appid
+                break
+
+    return found
 
 
 def artwork_source(slot: str) -> Path | None:
@@ -250,26 +267,26 @@ def artwork_source(slot: str) -> Path | None:
     return None
 
 
-def apply_artwork(vdf: Path, appid: int) -> int:
-    grid = vdf.parent / "grid"
-    grid.mkdir(parents=True, exist_ok=True)
-    appid = to_unsigned32(appid)
+def apply_artwork(found: dict[Path, int]) -> int:
     copied = 0
-    for slot, suffix_tag in ARTWORK.items():
-        source = artwork_source(slot)
-        if source is None:
-            continue
+    for user, appid in found.items():
+        grid = user / "config" / "grid"
+        grid.mkdir(parents=True, exist_ok=True)
+        for slot, suffix_tag in ARTWORK.items():
+            source = artwork_source(slot)
+            if source is None:
+                continue
 
-        destination_stem = f"{appid}{suffix_tag}"
-        for stale in grid.glob(destination_stem + ".*"):
-            try:
-                stale.unlink()
-            except OSError:
-                pass
+            destination_stem = f"{appid}{suffix_tag}"
+            for stale in grid.glob(destination_stem + ".*"):
+                try:
+                    stale.unlink()
+                except OSError:
+                    pass
 
-        suffix = ".jpg" if source.suffix.lower() == ".jpeg" else source.suffix.lower()
-        shutil.copy2(source, grid / f"{destination_stem}{suffix}")
-        copied += 1
+            suffix = ".jpg" if source.suffix.lower() == ".jpeg" else source.suffix.lower()
+            shutil.copy2(source, grid / f"{destination_stem}{suffix}")
+            copied += 1
     return copied
 
 
@@ -279,7 +296,6 @@ def main() -> int:
 
     try:
         name, launcher = load_metadata()
-        vdf = shortcuts_path()
     except RuntimeError as exc:
         return fail(str(exc))
 
@@ -288,58 +304,64 @@ def main() -> int:
     except OSError:
         pass
 
-    if steam_running():
+    found = find_shortcuts(launcher, name=name)
+    if found:
+        try:
+            copied = apply_artwork(found)
+        except OSError as exc:
+            return fail(f"shortcut exists, but artwork could not be copied: {exc}")
+        appids = sorted(set(found.values()))
+        print(f'Already in Steam as a non-Steam game: "{name}".')
+        print("Non-Steam AppID: " + ", ".join(str(value) for value in appids))
+        print(f"Artwork files refreshed: {copied}.")
+        return 0
+
+    if not steam_running():
         return fail(
-            "Steam is running. Fully exit Steam first, then run "
-            "./install-to-steam.sh again. Steam keeps shortcuts.vdf in memory "
-            "and can overwrite external changes."
+            "Steam is not running. On Steam Frame, leave Steam/SteamVR running "
+            "and run ./install-to-steam.sh from the desktop session."
+        )
+
+    entry = desktop_entry(name, launcher)
+    expected = shortcut_appid(f'"{launcher}"', name)
+    print(f'Adding "{name}" to the running Steam client as a normal non-Steam game...')
+    print(f"Expected deterministic AppID: {expected}")
+
+    try:
+        request_add(entry)
+    except RuntimeError as exc:
+        return fail(str(exc))
+
+    deadline = time.monotonic() + 30
+    found = {}
+    while time.monotonic() < deadline:
+        time.sleep(0.5)
+        found = find_shortcuts(launcher, name=name, desktop=entry)
+        if found:
+            break
+
+    if not found:
+        return fail(
+            "Steam did not confirm the new shortcut within 30 seconds. "
+            "If Steam opened an Add Non-Steam Game prompt, complete it and run "
+            "./install-to-steam.sh again."
         )
 
     try:
-        shortcuts = load_shortcuts(vdf)
-    except (OSError, ValueError, IndexError, struct.error) as exc:
-        return fail(f"could not read {vdf}: {exc}")
-
-    existing = existing_shortcut(shortcuts, launcher)
-    wrote_shortcut = False
-    if existing is None:
-        entry, appid = build_shortcut(name, launcher)
-        shortcuts[str(len(shortcuts))] = entry
-
-        if vdf.exists():
-            backup = vdf.with_name(
-                vdf.name + ".bak." + datetime.now().strftime("%Y%m%d-%H%M%S")
-            )
-            try:
-                shutil.copy2(vdf, backup)
-            except OSError as exc:
-                return fail(f"could not back up {vdf}: {exc}")
-            print(f"Backup: {backup}")
-
-        try:
-            save_shortcuts(vdf, shortcuts)
-        except (OSError, ValueError, struct.error) as exc:
-            return fail(f"could not write {vdf}: {exc}")
-        wrote_shortcut = True
-    else:
-        _key, entry = existing
-        stored = entry.get("appid")
-        if not isinstance(stored, int):
-            return fail("existing Steam shortcut has no usable AppID")
-        appid = to_unsigned32(stored)
-
-    try:
-        copied = apply_artwork(vdf, appid)
+        copied = apply_artwork(found)
     except OSError as exc:
         return fail(f"shortcut was installed, but artwork could not be copied: {exc}")
 
-    if wrote_shortcut:
-        print(f'Added to Steam as a non-Steam game: "{name}".')
-    else:
-        print(f'Already in Steam as a non-Steam game: "{name}".')
-    print(f"Non-Steam AppID: {appid}")
+    actual = sorted(set(found.values()))
+    print(f'Added to Steam: "{name}".')
+    print("Actual non-Steam AppID: " + ", ".join(str(value) for value in actual))
+    if expected not in actual:
+        print(
+            "NOTE: Steam's imported shortcut AppID differs from the direct "
+            "launcher hash; using Steam's actual AppID for artwork."
+        )
     print(f"Artwork files applied: {copied}.")
-    print("Reopen Steam. The game should appear in your library.")
+    print("The game should now be available in the Steam library.")
     return 0
 
 
@@ -350,20 +372,19 @@ if __name__ == "__main__":
 INSTALL_GUIDE = """Steam Frame package
 
 1. Copy this extracted folder to your Steam Frame.
-2. Fully exit Steam.
+2. Leave Steam / SteamVR running.
 3. Open a terminal in this folder.
 4. Run:
 
    ./install-to-steam.sh
 
-The installer writes launch.sh as a normal non-Steam shortcut, computes the same
-deterministic AppID Steam uses for that shortcut, and copies any bundled artwork
-into the matching Steam grid filenames.
+The installer asks the running Steam client to import launch.sh as a normal
+non-Steam game. It then reads back the shortcut Steam created and installs any
+bundled artwork using that shortcut's non-Steam AppID.
 
-5. Reopen Steam.
-
-The installer backs up shortcuts.vdf before changing it. Do not run it while
-Steam is open because Steam keeps that file in memory and can overwrite changes.
+The deterministic AppID calculation and artwork naming convention are adapted
+from Deckport. The installer does not use Steam Devkit Game registration and
+does not require shutting down the Steam Frame desktop session.
 """
 
 
