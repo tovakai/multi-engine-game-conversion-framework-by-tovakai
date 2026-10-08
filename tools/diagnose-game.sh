@@ -14,8 +14,8 @@ fi
 game_dir=$(dirname -- "$target")
 launcher=$(basename -- "$target")
 stamp=$(date +%Y%m%d-%H%M%S)
-log_root="\${TOVAKAI_DIAGNOSTICS_DIR:-$HOME/tovakai-diagnostics}"
-dir="$log_root/$stamp-\${launcher%.*}-$$"
+log_root="${TOVAKAI_DIAGNOSTICS_DIR:-$HOME/tovakai-diagnostics}"
+dir="$log_root/$stamp-${launcher%.*}-$$"
 mkdir -p -- "$dir" || exit 2
 echo "Diagnostics: $dir"
 {
@@ -27,9 +27,9 @@ echo "Diagnostics: $dir"
   if [[ -r /etc/os-release ]]; then
     grep -E '^(NAME|VERSION|ID|PRETTY_NAME)=' /etc/os-release
   fi
-  printf 'Session: %s\n' "\${XDG_SESSION_TYPE:-unknown}"
-  printf 'Display: %s\n' "\${DISPLAY:-unset}"
-  printf 'Wayland: %s\n' "\${WAYLAND_DISPLAY:-unset}"
+  printf 'Session: %s\n' "${XDG_SESSION_TYPE:-unknown}"
+  printf 'Display: %s\n' "${DISPLAY:-unset}"
+  printf 'Wayland: %s\n' "${WAYLAND_DISPLAY:-unset}"
   if command -v file >/dev/null; then file -- "$target"; fi
   if command -v glxinfo >/dev/null; then timeout 8s glxinfo -B 2>&1 | head -35; fi
   if command -v vulkaninfo >/dev/null; then timeout 8s vulkaninfo --summary 2>&1 | head -50; fi
