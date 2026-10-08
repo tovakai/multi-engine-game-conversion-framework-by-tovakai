@@ -462,11 +462,20 @@ class ConverterApp:
             self._ui_queue.put(callback)
 
     def _drain_ui_queue(self) -> None:
-        try:
-            while True:
-                self._ui_queue.get_nowait()()
-        except queue.Empty:
-            pass
+        while True:
+            try:
+                callback = self._ui_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                callback()
+            except Exception as exc:
+                # One bad queued callback must not permanently stop GUI updates.
+                try:
+                    self.log_box.insert("end", f"UI callback error: {exc}\n")
+                    self.log_box.see("end")
+                except Exception:
+                    pass
         try:
             self.root.after(25, self._drain_ui_queue)
         except Exception:
@@ -582,7 +591,14 @@ class ConverterApp:
                 result = inspect_source(source)
                 self._dispatch(lambda: self._show_inspection(result) if generation == self._generation else None)
             except Exception as exc:
-                self._dispatch(lambda: self._inspection_failed(str(exc)) if generation == self._generation else None)
+                message = str(exc)
+                self._dispatch(
+                    lambda message=message: (
+                        self._inspection_failed(message)
+                        if generation == self._generation
+                        else None
+                    )
+                )
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -783,9 +799,11 @@ class ConverterApp:
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
-                self._dispatch(lambda: self._fail(str(exc)))
+                message = str(exc)
+                self._dispatch(lambda message=message: self._fail(message))
             except Exception as exc:
-                self._dispatch(lambda: self._fail(f"Unexpected error: {exc}"))
+                message = f"Unexpected error: {exc}"
+                self._dispatch(lambda message=message: self._fail(message))
 
         threading.Thread(target=worker, daemon=True).start()
 
