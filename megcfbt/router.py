@@ -19,12 +19,9 @@ from rpgmframe.godot_custom_runtime import (
 )
 from megcfbt.artwork import fetch_official_steam_portrait
 from megcfbt.frame_package import (
-    FRAMEDROP_ZIP_UNPACK_LIMIT,
     FramePackageError,
     create_frame_zip,
     embed_steam_cover,
-    framedrop_zip_compatible,
-    zip_unpacked_size,
     write_frame_metadata,
 )
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
@@ -329,13 +326,6 @@ def build_source(
                 launcher_path=launcher_path,
                 force=force,
             )
-            if not framedrop_zip_compatible(archive_path) and progress:
-                unpacked_gib = zip_unpacked_size(archive_path) / (1024 ** 3)
-                progress(
-                    f"Warning: FrameDrop's ZIP limit is 4 GiB unpacked; "
-                    f"this package unpacks to {unpacked_gib:.2f} GiB. "
-                    f"Transfer the converted folder instead: {output_path}"
-                )
         else:
             archive_path = None
         stage(1.0, "Complete")
