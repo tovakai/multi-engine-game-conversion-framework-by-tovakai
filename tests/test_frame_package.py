@@ -61,6 +61,7 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
         assert stat.S_IMODE(data_mode) == 0o644
 
         installer = zf.read("Example-frame/.megcfbt/install-to-steam.py").decode("utf-8")
+        compile(installer, "install-to-steam.py", "exec")
         assert "steam://addnonsteamgame/" in installer
         assert "shortcuts.vdf" in installer
         assert '"config" / "grid"' in installer
