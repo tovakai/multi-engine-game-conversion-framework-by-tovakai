@@ -20,6 +20,18 @@ from rpgmframe.elf import read_elf_architecture
 from rpgmframe.godot_custom_runtime import RECIPE_ID
 
 INDEX_PATH = Path(__file__).resolve().parent / "godot_runtime_index.json"
+BUILTIN_RECIPES = {
+    RECIPE_ID: {
+        "url": (
+            "https://github.com/tovakai/"
+            "multi-engine-game-conversion-framework-by-tovakai/releases/download/"
+            "runtime-godot-3.7-dev1-godotsteam-3.30-arm64-v1/"
+            "godot-3.7-dev1-godotsteam-3.30-frame-arm64-v1.tar.gz"
+        ),
+        "sha256": "f87130aa44fae591a098eb03df8a419f84b47d25100756f04bb645e44102e34a",
+        "status": "validated",
+    }
+}
 DownloadProgress = Callable[[int, int | None], None]
 
 
@@ -32,8 +44,11 @@ def recipe_entry(recipe_id: str) -> dict | None:
         return None
     try:
         index = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        index = {"recipes": BUILTIN_RECIPES}
+    try:
         entry = index["recipes"][recipe_id]
-    except (OSError, ValueError, KeyError, TypeError):
+    except (KeyError, TypeError):
         return None
     if not isinstance(entry, dict):
         return None
