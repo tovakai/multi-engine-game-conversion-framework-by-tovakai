@@ -16,6 +16,7 @@ fi
 "$PY" -m pip install -e ".[gui,build]"
 
 APP_NAME="Multi-Engine Game Conversion Framework by Tovakai"
+STS2_TOOLS="$("$PY" scripts/stage-sts2-tools.py)"
 
 "$PY" -m PyInstaller \
   --noconfirm \
@@ -23,6 +24,7 @@ APP_NAME="Multi-Engine Game Conversion Framework by Tovakai"
   --windowed \
   --name "$APP_NAME" \
   --paths . \
+  --add-data "$STS2_TOOLS:sts2-tools" \
   --hidden-import customtkinter \
   --hidden-import tkinterdnd2 \
   --collect-all customtkinter \

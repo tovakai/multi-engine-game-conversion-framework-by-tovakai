@@ -21,6 +21,7 @@ from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from megcfbt import sts2
 
 
 class ConversionError(RuntimeError):
@@ -134,6 +135,11 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
     candidates = list(_candidate_roots(root))
 
     for candidate in candidates:
+        summary = sts2.summary(candidate)
+        if summary is not None:
+            return summary
+
+    for candidate in candidates:
         summary = _renpy_summary(candidate)
         if summary is not None:
             return summary
@@ -214,6 +220,8 @@ def build_source(
     allow_renpy_version_mismatch: bool = False,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
+    sts2_sdk: Path | str | None = None,
+    acknowledge_licenses: bool = False,
 ) -> UnifiedBuildResult:
     def stage(value: float, message: str) -> None:
         if stage_progress:
@@ -230,10 +238,14 @@ def build_source(
         and backend_runtime is not None
     )
     custom_godot_auto = automatic_custom_godot_runtime_available(inspection)
+    sts2_ready = bool(inspection.backend == "sts2"
+                      and inspection.compatibility == "needs_testing"
+                      and sts2.available(sts2_sdk or backend_runtime))
     if (
         not inspection.buildable
         and not custom_godot_override
         and not custom_godot_auto
+        and not sts2_ready
     ) or inspection.backend is None:
         extra = (
             " Supply a matching custom ARM64 runtime to continue. "
@@ -245,6 +257,7 @@ def build_source(
         raise ConversionError(
             f"Detected {inspection.engine_label}, but compatibility is "
             f"{inspection.compatibility}; refusing automatic conversion.{extra}"
+            + (" " + " ".join(inspection.warnings) if inspection.backend == "sts2" else "")
         )
 
     output_path = (
@@ -255,7 +268,22 @@ def build_source(
 
     try:
         stage(0.20, "Building ARM64 package")
-        if inspection.backend == "renframe":
+        if inspection.backend == "sts2":
+            with prepare_source(path) as prepared:
+                selected = _inspect_prepared(prepared.root)
+                if selected.backend != "sts2":
+                    raise ConversionError("STS2 source disappeared after extraction")
+                try:
+                    report = sts2.build(selected.source_path, output_path,
+                                        sdk=sts2_sdk or backend_runtime,
+                                        authorized=acknowledge_licenses, progress=progress)
+                except (OSError, RuntimeError) as exc:
+                    raise ConversionError(str(exc)) from exc
+            launcher_path = output_path / "launch.sh"
+            warnings = tuple(report.get("limitations", []))
+            game_name = inspection.game_name
+            engine_version = inspection.engine_version
+        elif inspection.backend == "renframe":
             with prepare_source(path) as prepared:
                 prepared_inspection = _inspect_prepared(prepared.root)
                 if prepared_inspection.backend != "renframe":

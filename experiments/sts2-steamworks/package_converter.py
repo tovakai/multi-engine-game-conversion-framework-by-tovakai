@@ -17,6 +17,8 @@ FILES = (
     "verify_output.py", "prepare_managed.py", "patch_accessors.py", "patch_stats.py", "patch_pack.py",
     "adapt_packed_manifests.py", "adapt_deployment_graph.py", "inspect_dependency_graph.py",
     "inventory_package.py", "STANDALONE.md", "HANDOFF.md",
+    "pipeline.py", "preflight.py", "build_native.py", "adapt_fmod_build_sources.py",
+    "fmod_sdk_observation_v1.json", "sdk_archive.py", "SOURCE_PIPELINE.md",
     "licenses/GODOT-LICENSE.txt", "licenses/GODOT-COPYRIGHT.txt",
     "licenses/SENTRY-LICENSE.md", "licenses/SPINE-LICENSE.txt",
 )

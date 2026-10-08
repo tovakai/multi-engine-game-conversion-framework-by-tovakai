@@ -16,6 +16,8 @@ $appName = "Multi-Engine Game Conversion Framework by tovakai"
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
 $commit = (& git rev-parse --short HEAD 2>$null)
 if (-not $commit) { $commit = "unknown" }
+$sts2Tools = (& $py scripts/stage-sts2-tools.py)
+if ($LASTEXITCODE -ne 0) { throw "Failed to stage STS2 backend tools" }
 
 # Remove both current and legacy-named outputs so an old binary cannot survive
 # a successful rebuild and masquerade as the fresh application.
@@ -35,6 +37,7 @@ foreach ($path in @(
   --windowed `
   --name "$appName" `
   --paths "." `
+  --add-data "$sts2Tools;sts2-tools" `
   --hidden-import customtkinter `
   --hidden-import tkinterdnd2 `
   --collect-all customtkinter `

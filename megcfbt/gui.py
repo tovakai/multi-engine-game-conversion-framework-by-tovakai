@@ -12,6 +12,7 @@ from typing import Any
 
 from megcfbt import APP_NAME
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from megcfbt import sts2
 from megcfbt.router import (
     ConversionError,
     automatic_custom_godot_runtime_available,
@@ -464,6 +465,8 @@ class ConverterApp:
             return False
         if self.inspection.buildable:
             return True
+        if self.inspection.backend == "sts2":
+            return self.inspection.compatibility == "needs_testing" and sts2.available(self.backend_runtime)
         if automatic_custom_godot_runtime_available(self.inspection):
             return True
         return bool(
@@ -548,6 +551,8 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
+        elif result.backend == "sts2":
+            self.runtime_button.configure(state="normal", text="FMOD SDK // SELECT AUTHORIZED 2.03.15 SDK…")
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
@@ -615,6 +620,14 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
+        if self.inspection is not None and self.inspection.backend == "sts2":
+            sdk = filedialog.askopenfilename(title="Select authorized fmodstudioapi20315linux.tar.gz",
+                                            filetypes=[("FMOD Linux SDK archive", "*.tar.gz")])
+            if sdk:
+                self.backend_runtime = Path(sdk)
+                self.runtime_button.configure(text=f"FMOD SDK // {self.backend_runtime.name}")
+                self.convert_btn.configure(state="normal" if self._conversion_allowed() else "disabled")
+            return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
@@ -663,6 +676,12 @@ class ConverterApp:
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
+        sts2_authorized = False
+        if self.inspection.backend == "sts2":
+            sts2_authorized = messagebox.askyesno(
+                APP_NAME, "Confirm that you own this game and have the applicable FMOD and Spine permissions for this personal conversion. No game or vendor binaries will be redistributed.")
+            if not sts2_authorized:
+                return
         if (
             self.inspection.engine == "renpy"
             and self.renpy_runtime is None
@@ -705,6 +724,7 @@ class ConverterApp:
                     archive=archive,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
+                    acknowledge_licenses=sts2_authorized,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:

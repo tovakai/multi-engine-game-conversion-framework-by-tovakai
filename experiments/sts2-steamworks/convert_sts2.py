@@ -154,7 +154,8 @@ def create_tar(root, destination):
         temporary.unlink(missing_ok=True)
 
 
-def convert(source, output, native_dir, archives, *, authorized=False, _profile=None, _pack_transform=None):
+def convert(source, output, native_dir, archives, *, authorized=False, _profile=None, _pack_transform=None,
+            _native_build=None):
     if not authorized:
         raise ValueError("Acknowledge legitimate game ownership and dependency permissions with --acknowledge-licenses")
     profile = load_profile() if _profile is None else _profile
@@ -210,12 +211,15 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
             for name, raw in {"launch.sh": LAUNCH, "collect-startup.sh": COLLECT,
                               "verify_output.py": (HERE / "verify_output.py").read_bytes(), "CONVERSION-NOTICES.txt": NOTICES}.items():
                 write_new(stage / name, raw, 0o755 if executable(name) else 0o644)
+            if _native_build is not None:
+                write_new(stage / "native-build.json",
+                          (json.dumps(_native_build, indent=2, sort_keys=True) + "\n").encode())
         # The input archive descriptors have now also passed their closing identity checks.
         files = []
         for path in sorted(p for p in stage.rglob("*") if p.is_file()):
             name = path.relative_to(stage).as_posix()
             files.append({"path": name, "executable": executable(name), **inspect(path)})
-        manifest = {"manifest_version": 1, "converter_recipe": "sts2-standalone-v1", "release": profile["release"],
+        manifest = {"manifest_version": 1, "converter_recipe": "sts2-source-v1" if _native_build else "sts2-standalone-v1", "release": profile["release"],
                     "commit": profile["commit"], "appid": profile["appid"], "files": files,
                     "source_pack": profile["pack"], "pack_adaptation": pack_report, "deps_adaptation": deps_report,
                     "scope": "Locally staged conversion. No game execution, ownership, authentication, achievements or Frame validation claimed."}

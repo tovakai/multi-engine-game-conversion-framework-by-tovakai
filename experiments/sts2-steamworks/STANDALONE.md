@@ -1,5 +1,10 @@
 # STS2 standalone ARM64 converter: first acceptance run
 
+The continuation adds the source-building backend `pipeline.py`. See
+[SOURCE_PIPELINE.md](SOURCE_PIPELINE.md) for framework integration, requirements
+and remaining vendor/source/device acceptance limitations. The procedure below
+retains the supplied-native baseline for comparison.
+
 ## Scope
 
 This is the first complete **locally tested** standalone pipeline, isolated from
