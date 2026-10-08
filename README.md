@@ -240,13 +240,18 @@ inspection confidently identifies Ren'Py 7.4.x with **Python 2**, the runtime
 selector says **experimental Ren'Py 7.5.0** instead of incorrectly promising
 automatic 7.4.x support. Clicking **CONVERT** asks for explicit consent:
 
-- **Yes:** download and verify the official Ren'Py 7.5.0 sdkarm Python 2
-  platform slice and graft it into a copy of the original game;
+- **Yes:** download and checksum-verify the official Ren'Py 7.5.0 sdkarm,
+  use its **matching Ren'Py 7.5 Python engine and Python 2 ARM64 binaries**
+  together, and copy the original game's `game/` assets and scripts into
+  the new runtime. We do **not** combine the 7.4 Python engine with 7.5
+  compiled graphics libraries;
 - **No:** browse for a manually supplied compatible ARM64 Ren'Py runtime;
 - **Cancel:** do nothing.
 
 The experimental cross-minor fallback is intentionally limited to detected
 7.4.x / Python 2 games, never automatic and never a Python 2-to-3 upgrade.
+The original installation is left unchanged; the converted copy runs on
+7.5.0 engine code rather than the source game's 7.4 engine code.
 The output clearly warns that gameplay compatibility is **not established**.
 Other pre-7.5 Ren'Py games still require an explicitly selected runtime.
 The converter does **not silently** substitute a nearby Ren'Py version.
