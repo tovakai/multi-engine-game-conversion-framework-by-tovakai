@@ -215,7 +215,25 @@ def complete_frame_artwork(
         }
 
     manual = present()
-    sources = {slot: "manual" for slot in manual}
+    meta = root / ".megcfbt" / "package.json"
+    stored_sources = {}
+    if meta.is_file():
+        try:
+            stored = json.loads(meta.read_text(encoding="utf-8"))
+            if isinstance(stored, dict):
+                artwork_info = stored.get("artwork")
+                if isinstance(artwork_info, dict) and isinstance(artwork_info.get("slots"), dict):
+                    stored_sources = artwork_info["slots"]
+        except (OSError, ValueError):
+            pass
+    sources = {
+        slot: (
+            stored_sources.get(slot)
+            if stored_sources.get(slot) in {"manual", "official_steam", "steamgriddb"}
+            else "manual"
+        )
+        for slot in manual
+    }
     appid = detected_steam_appid(root)
     if appid:
         fetch_official_steam_artwork(root, progress=progress)
