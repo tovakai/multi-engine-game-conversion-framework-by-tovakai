@@ -44,6 +44,17 @@ def normalize_release_version(version: str) -> str:
 
 
 
+def requires_pre_sdkarm_override(version: str | None, generation: int | None) -> bool:
+    """Whether the official matching ARM64 runtime predates Ren'Py 7.5."""
+    if generation != 7 or not version:
+        return False
+    try:
+        major, minor, _patch = map(int, normalize_release_version(version).split("."))
+    except RuntimeDownloadError:
+        return False
+    return major == 7 and minor < 5
+
+
 def experimental_arm64_fallback(version: str | None, generation: int | None) -> str | None:
     """Offer a deliberately narrow Python 2 fallback for Ren'Py 7.4.x.
 
