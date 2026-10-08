@@ -294,26 +294,41 @@ def test_legacy_renpy_build_requires_explicit_opt_in(tmp_path: Path) -> None:
         build_game(game, output=tmp_path / "out", runtime_manager=manager)
 
 
-def test_opted_in_legacy_build_grafts_official_py2_fallback_and_preserves_source(
+
+def _fake_legacy_sdk(root: Path) -> Path:
+    (root / "renpy").mkdir(parents=True)
+    (root / "renpy/__init__.py").write_text("# Ren'Py 7.5 engine\n")
+    (root / "renpy/versions.py").write_text('version = "7.5.0"\n')
+    (root / "renpy.py").write_text("# Ren'Py entrypoint\n")
+    launcher = root / "renpy.sh"
+    launcher.write_text(
+        '#!/bin/sh\n'
+        'printf "full_sdk=%s game=%s\\n" "7.5.0" "$1"\n',
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+    platform = root / "lib/py2-linux-aarch64"
+    _write_elf(platform / "renpy")
+    _write_elf(platform / "python")
+    (platform / "runtime-marker.txt").write_text("official 7.5.0")
+    return root
+
+
+def test_opted_in_legacy_build_uses_matched_engine_and_preserves_original_game(
     tmp_path: Path,
 ) -> None:
     source = _legacy_renpy_game(tmp_path / "Legacy")
-    platform = tmp_path / "cache" / "7.5.0" / "py2-linux-aarch64"
-    _write_elf(platform / "renpy")
-    _write_elf(platform / "python")
-    (platform / "runtime-marker.txt").write_text("official 7.5.0", encoding="utf-8")
+    (source / "game" / "unique_asset.txt").write_text("original ES game")
+    sdk = _fake_legacy_sdk(tmp_path / "cache" / "full-sdk")
 
     class FakeManager:
-        def platform_path(self, version, tag):
-            assert version == "7.5.0"
-            assert tag == "py2"
-            return platform
+        def full_sdk_path(self, version, tag):
+            assert (version, tag) == ("7.5.0", "py2")
+            return sdk
 
-        def ensure_platform(self, version, tag, *, progress=None, force=False):
-            assert force is False
-            assert version == "7.5.0"
-            assert tag == "py2"
-            return platform
+        def ensure_full_sdk(self, version, tag, *, progress=None):
+            assert (version, tag) == ("7.5.0", "py2")
+            return sdk
 
     out = tmp_path / "converted"
     logs = []
@@ -326,17 +341,18 @@ def test_opted_in_legacy_build_grafts_official_py2_fallback_and_preserves_source
     assert result.runtime_version == "7.5.0"
     assert result.runtime_architecture == "aarch64"
     assert any("EXPERIMENTAL" in warning for warning in result.warnings)
+    assert any("matching official Ren'Py 7.5.0" in warning for warning in result.warnings)
     assert any("explicitly approved" in line for line in logs)
     assert (out / "lib/py2-linux-aarch64/renpy").is_file()
     assert (out / "lib/py2-linux-aarch64/runtime-marker.txt").read_text() == "official 7.5.0"
-    assert (out / "lib/py2-linux-x86_64").is_dir()
-    assert (source / "lib/py2-linux-aarch64").exists() is False
+    assert (out / "renpy/versions.py").read_text() == 'version = "7.5.0"\n'
+    assert (out / "game/unique_asset.txt").read_text() == "original ES game"
+    assert not (out / "lib/py2-linux-x86_64").exists()
+    assert not (source / "lib/py2-linux-aarch64").exists()
     assert (source / "renpy/versions.py").read_text() == 'version = "7.4.11"\n'
-    assert 'exec bash "$ROOT/Game.sh"' in (out / "launch.sh").read_text()
-    assert 'export RENPY_PLATFORM="py2-linux-aarch64"' in (out / "launch.sh").read_text()
-    assert 'RUNTIME_DIR="$ROOT/lib/py2-linux-aarch64"' in (out / "launch.sh").read_text()
-    assert 'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"' not in (out / "launch.sh").read_text()
-
+    assert result.launcher_path == out / "Legacy.sh"
+    assert 'exec "$ROOT/renpy.sh"' in result.launcher_path.read_text()
+    assert "sdk-compat" not in result.launcher_path.read_text()
 
 def test_legacy_fallback_rejects_renpy8_and_wrong_7x_even_if_approved(tmp_path: Path):
     for version in ("8.5.3", "7.3.5", "7.5.0"):
@@ -387,59 +403,32 @@ def test_unified_inspection_preserves_legacy_python_generation_and_fallback_hint
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="Needs Bash for POSIX launch test")
-def test_legacy_generated_launcher_reaches_py2_sdkarm_game_binary(tmp_path: Path):
-    """Regression: the original launcher resolves lib/$RENPY_PLATFORM itself."""
+def test_legacy_full_engine_generated_launcher_executes_sdk_script(tmp_path: Path):
+    """Regression: don't reuse a Ren'Py 7.4 launcher with Ren'Py 7.5 binaries."""
     source = _legacy_renpy_game(tmp_path / "Legacy")
-    (source / "Game.sh").write_text(
-        '#!/bin/sh\n'
-        'ROOT=$(cd "$(dirname "$0")"; pwd)\n'
-        'if [ -z "$RENPY_PLATFORM" ]; then\n'
-        '    case "$(uname -s)-$(uname -m)" in\n'
-        '        Linux-*)\n'
-        '            RENPY_PLATFORM="linux-x86_64"\n'
-        '            ;;\n'
-        '    esac\n'
-        'fi\n'
-        'LIB="$ROOT/lib/$RENPY_PLATFORM"\n'
-        'if [ ! -d "$LIB" ]; then\n'
-        '    echo "Missing platform: $LIB" >&2\n'
-        '    exit 35\n'
-        'fi\n'
-        'exec "$LIB/Game" "$@"\n',
-        encoding="utf-8",
-    )
-    platform = tmp_path / "cache" / "7.5.0" / "py2-linux-aarch64"
-    _write_elf(platform / "renpy")
+    sdk = _fake_legacy_sdk(tmp_path / "sdk")
 
     class FakeManager:
-        def platform_path(self, version, tag):
+        def full_sdk_path(self, version, tag):
             assert (version, tag) == ("7.5.0", "py2")
-            return platform
+            return sdk
 
-        def ensure_platform(self, version, tag, *, progress=None, force=False):
+        def ensure_full_sdk(self, version, tag, *, progress=None):
             assert (version, tag) == ("7.5.0", "py2")
-            return platform
+            return sdk
 
     out = tmp_path / "out"
-    build_game(
+    result = build_game(
         source, output=out, runtime_manager=FakeManager(),
         legacy_arm64_fallback=True,
     )
-    # Replace the fake ARM ELF at the test-only output path with a shell stub.
-    # This exercises the *real* generated launch chain without an ARM machine.
-    executable = out / "lib/py2-linux-aarch64/Game"
-    executable.write_text(
-        '#!/bin/sh\n'
-        'printf "launched platform=%s\\n" "$RENPY_PLATFORM"\n',
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
     completed = subprocess.run(
-        ["bash", str(out / "launch.sh")],
+        ["bash", str(result.launcher_path)],
         cwd=out,
         capture_output=True,
         text=True,
         check=False,
     )
     assert completed.returncode == 0, completed.stderr
-    assert "launched platform=py2-linux-aarch64" in completed.stdout
+    assert "full_sdk=7.5.0" in completed.stdout
+    assert str(out) in completed.stdout
