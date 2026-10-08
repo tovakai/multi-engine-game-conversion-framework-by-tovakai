@@ -14,6 +14,7 @@ from renframe.runtime import (
     RuntimeDownloadError,
     RuntimeManager,
     detect_runtime_layout,
+    experimental_arm64_fallback,
     inspect_runtime,
     normalize_release_version,
     python_tag_for_generation,
@@ -538,6 +539,7 @@ def build_game(
     force: bool = False,
     dry_run: bool = False,
     allow_version_mismatch: bool = False,
+    legacy_arm64_fallback: bool = False,
     progress: Callable[[str], None] | None = None,
     runtime_manager: RuntimeManager | None = None,
 ) -> BuildResult:
@@ -566,6 +568,12 @@ def build_game(
     )
     warnings.extend(game_inspection.warnings)
 
+    if legacy_arm64_fallback and runtime is not None:
+        raise BuildError(
+            "Choose either a manual Ren'Py runtime or the experimental "
+            "7.5.0 fallback, not both."
+        )
+
     automatic_runtime = runtime is None
     runtime_inspection: RuntimeInspection | None = None
 
@@ -578,6 +586,26 @@ def build_game(
         try:
             release = normalize_release_version(game_inspection.renpy_version)
             python_tag = python_tag_for_generation(game_inspection.generation)
+            if legacy_arm64_fallback:
+                fallback_release = experimental_arm64_fallback(
+                    game_inspection.renpy_version, game_inspection.generation
+                )
+                if fallback_release is None:
+                    raise BuildError(
+                        "Experimental Ren'Py 7.5.0 ARM64 fallback is only "
+                        "available for identified Ren'Py 7.4.x Python 2 games."
+                    )
+                release = fallback_release
+                warnings.append(
+                    f"EXPERIMENTAL: game uses Ren'Py {game_inspection.renpy_version}; "
+                    f"using Ren'Py {release} Python 2 ARM64 runtime instead. "
+                    "Gameplay compatibility has not been verified."
+                )
+                if progress:
+                    progress(
+                        f"Experimental Ren'Py 7.4 to {release} ARM64 fallback "
+                        "(explicitly approved)"
+                    )
             manager = runtime_manager or RuntimeManager()
             runtime_path = manager.platform_path(release, python_tag)
             if not dry_run:
