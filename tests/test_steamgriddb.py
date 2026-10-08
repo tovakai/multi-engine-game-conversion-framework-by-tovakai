@@ -232,3 +232,28 @@ def test_nsfw_opt_in_can_include_explicit_asset(tmp_path, monkeypatch):
     result = complete_frame_artwork(root, game_name="My Pig Princess")
     assert "grid" in result
     assert any("nsfw=any" in c for c in calls if "/game/" in c)
+
+
+def test_artwork_cli_refreshes_existing_build_without_reconversion(tmp_path, monkeypatch, capsys):
+    from megcfbt.cli import main
+
+    monkeypatch.setenv("STEAMGRIDDB_API_KEY", "test-key-not-for-public")
+    root = setup_build(tmp_path)
+    mock_service(monkeypatch)
+    assert main(["artwork", str(root), "--repackage"]) == 0
+    output = capsys.readouterr().out
+    assert "Updated Frame package" in output
+    assert (root / ".megcfbt/artwork/grid.png").is_file()
+    assert root.parent.joinpath("MyPigPrincess-linux-aarch64.zip").is_file()
+
+
+def test_invalid_explicit_id_does_not_crash_conversion(tmp_path, monkeypatch):
+    monkeypatch.setenv("STEAMGRIDDB_API_KEY", "test-key-not-for-public")
+    root = setup_build(tmp_path)
+    messages = []
+    result = complete_frame_artwork(
+        root, game_name="My Pig Princess", steamgriddb_game_id=-1,
+        progress=messages.append,
+    )
+    assert result == {}
+    assert any("positive integer" in line for line in messages)
