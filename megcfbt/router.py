@@ -113,6 +113,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         buildable=buildable,
         warnings=warnings,
         evidence=evidence,
+        renpy_generation=result.generation,
     )
 
 
@@ -211,6 +212,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 buildable=result.buildable,
                 warnings=result.warnings,
                 evidence=result.evidence,
+                renpy_generation=result.renpy_generation,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc
