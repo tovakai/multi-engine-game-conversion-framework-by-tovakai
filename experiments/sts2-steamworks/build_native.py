@@ -121,15 +121,16 @@ def build(work, sdk, *, steam_api=STEAM_API, scons="scons", jobs=4):
         (fmod / name).write_bytes(resources[name])
     evidence["fmod_patches"] = patches
     layout = work / "sdk-layout"
-    for section, name in (("core", "libfmod"), ("studio", "libfmodstudio")):
+    for section, library_stem in (("core", "libfmod"), ("studio", "libfmodstudio")):
         inc = layout / "linux" / section / "inc"
         inc.mkdir(parents=True)
-        for name, raw in headers.items():
-            if name.startswith(f"api/{section}/inc/"):
-                write_new(inc / Path(name).name, raw)
+        for header_path, header_bytes in headers.items():
+            if header_path.startswith(f"api/{section}/inc/"):
+                write_new(inc / Path(header_path).name, header_bytes)
         lib = layout / "linux" / section / "lib/arm64"
-        write_new(lib / (name + ".so"), vendor[name + ".so.14"])
-        write_new(lib / (name + ".so.14"), vendor[name + ".so.14"])
+        runtime = vendor[library_stem + ".so.14"]
+        write_new(lib / (library_stem + ".so"), runtime)
+        write_new(lib / (library_stem + ".so.14"), runtime)
     flags = ["platform=linux", "arch=arm64", "target=template_release", f"-j{jobs}"]
     evidence["build_arguments"] = flags
     evidence["vendor_inputs"] = {"steam_api": {"provider": str(steam_api), **inspect(safe(steam_api))},

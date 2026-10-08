@@ -1,5 +1,8 @@
 # STS2 source-building pipeline
 
+The four remaining release gates are tracked separately in
+[RELEASE_BLOCKERS.md](RELEASE_BLOCKERS.md).
+
 Continuation: `feat/sts2-reproducible-pipeline`, based on handoff `3747037`.
 The original dirty checkout was left intact; development uses
 `/tmp/sts2-converter-continuation`. Hardware experiments are confined to
@@ -102,6 +105,13 @@ controls, audio, saves, achievements or cloud sync; those need separate
 acceptance through the owned Steam library entry.
 
 ## Hardware results, 2026-10-08
+
+These are historical results from the earlier deployed software bundle, not a
+full-pipeline validation of commit `be471a9`. That commit's later SDK header-copy
+loop introduced variable shadowing; the regression and its committed fix are
+covered by a test that executes the complete native builder with synthetic
+checkouts/compiler outputs and real verified SDK-layout writes. Fresh hardware
+results for the fix will be recorded separately with the exact tested commit.
 
 - Two independent fresh builds on the Frame reproduce both original extension
   SHA-256 hashes exactly, using GCC 15.1.1, SCons 4.11.1, Python 3.12.3 and
