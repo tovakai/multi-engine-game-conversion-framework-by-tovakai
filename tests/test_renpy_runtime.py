@@ -144,6 +144,57 @@ def test_runtime_manager_downloads_verifies_extracts_and_reuses_cache(
     assert (first / "payload.txt").read_text(encoding="utf-8") == "arm runtime"
 
 
+
+def _full_sdkarm_archive(path: Path) -> str:
+    src = path.parent / "full-sdk-fixture" / "renpy-7.5.0-sdkarm"
+    _fake_legacy_sdk(src)
+    (src / "game").mkdir()
+    (src / "game" / "example.rpy").write_text("label example:\n    pass\n")
+    (src / "lib" / "py2-linux-x86_64").mkdir()
+    (src / "lib" / "py2-linux-x86_64" / "python").write_text("x86")
+    with tarfile.open(path, "w:bz2") as archive:
+        archive.add(src, arcname="renpy-7.5.0-sdkarm")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_full_sdk_manager_extracts_matching_engine_and_arm64_and_reuses_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archive = tmp_path / "renpy-7.5.0-sdkarm.tar.bz2"
+    digest = _full_sdkarm_archive(archive)
+    manager = RuntimeManager(
+        cache_dir=tmp_path / "cache", base_url="https://example.invalid/dl"
+    )
+    monkeypatch.setattr(
+        manager, "_read_url", lambda url: f"# sha256\n{digest} {archive.name}\n"
+    )
+    count = []
+    def fake_download(url, destination, *, progress):
+        count.append(url)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(archive, destination)
+    monkeypatch.setattr(manager, "_download", fake_download)
+    first = manager.ensure_full_sdk("7.5.0", "py2")
+    second = manager.ensure_full_sdk("7.5.0", "py2")
+    assert first == second
+    assert len(count) == 1
+    assert (first / "renpy/__init__.py").read_text() == "# Ren'Py 7.5 engine\n"
+    assert (first / "renpy/versions.py").read_text() == 'version = "7.5.0"\n'
+    assert (first / "renpy.py").is_file()
+    assert (first / "renpy.sh").is_file()
+    assert (first / "lib/py2-linux-aarch64/python").is_file()
+    assert not (first / "lib/py2-linux-x86_64").exists()
+    assert not (first / "game").exists()
+
+
+def test_full_sdk_manager_rejects_wrong_python_generation(tmp_path: Path) -> None:
+    manager = RuntimeManager(cache_dir=tmp_path / "cache")
+    with pytest.raises(RuntimeDownloadError, match="only available"):
+        manager.ensure_full_sdk("7.5.0", "py3")
+    with pytest.raises(RuntimeDownloadError, match="only available"):
+        manager.ensure_full_sdk("8.5.3", "py2")
+
+
 def test_runtime_manager_refuses_versions_before_official_aarch64_support(
     tmp_path: Path,
 ) -> None:
