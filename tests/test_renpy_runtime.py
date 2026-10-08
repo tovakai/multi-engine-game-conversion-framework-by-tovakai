@@ -355,3 +355,27 @@ def test_legacy_fallback_rejects_manual_runtime_combination(tmp_path: Path):
             source, output=tmp_path / "out", runtime=runtime,
             legacy_arm64_fallback=True, dry_run=True,
         )
+
+
+
+def test_unified_inspection_preserves_legacy_python_generation_and_fallback_hint(
+    tmp_path: Path,
+) -> None:
+    from megcfbt.router import inspect_source
+
+    legacy = _legacy_renpy_game(tmp_path / "Legacy")
+    detected = inspect_source(legacy)
+    assert detected.renpy_generation == 7
+    assert detected.engine_version == "7.4.11"
+    assert "experimental Ren'Py 7.5.0 Python 2 ARM64" in detected.runtime_kind
+    assert "requires user approval" in detected.runtime_kind
+
+    old = _legacy_renpy_game(tmp_path / "Older", version="7.3.5")
+    detected_old = inspect_source(old)
+    assert detected_old.renpy_generation == 7
+    assert "manual compatible ARM64" in detected_old.runtime_kind
+
+    modern = _renpy_game(tmp_path / "Modern", version="8.5.3")
+    detected_modern = inspect_source(modern)
+    assert detected_modern.renpy_generation == 8
+    assert "sdkarm platform (automatic)" in detected_modern.runtime_kind
