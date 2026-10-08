@@ -101,7 +101,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
     fallback = experimental_arm64_fallback(result.renpy_version, result.generation)
     ddlc_candidate = original_ddlc_candidate(result)
     if ddlc_candidate:
-        runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; hardware unverified)"
+        runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; menu/launch tested on Frame; story unverified)"
     elif fallback:
         runtime_kind = (
             f"experimental Ren'Py {fallback} Python 2 ARM64 fallback "
