@@ -235,8 +235,22 @@ When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
 The original game's `renpy/` engine tree and other payload files are preserved.
 This is intentionally more surgical than replacing the game with a complete SDK.
 
-The converter does **not** substitute a nearby Ren'Py version when detection is
-ambiguous. A manual runtime remains available as an escape hatch:
+**Ren'Py 7.4.x** predates official ARM64 sdkarm releases. In the GUI, when
+inspection confidently identifies Ren'Py 7.4.x with **Python 2**, the runtime
+selector says **experimental Ren'Py 7.5.0** instead of incorrectly promising
+automatic 7.4.x support. Clicking **CONVERT** asks for explicit consent:
+
+- **Yes:** download and verify the official Ren'Py 7.5.0 sdkarm Python 2
+  platform slice and graft it into a copy of the original game;
+- **No:** browse for a manually supplied compatible ARM64 Ren'Py runtime;
+- **Cancel:** do nothing.
+
+The experimental cross-minor fallback is intentionally limited to detected
+7.4.x / Python 2 games, never automatic and never a Python 2-to-3 upgrade.
+The output clearly warns that gameplay compatibility is **not established**.
+Other pre-7.5 Ren'Py games still require an explicitly selected runtime.
+The converter does **not silently** substitute a nearby Ren'Py version.
+A manual runtime remains available as an escape hatch:
 
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build Game.zip \
