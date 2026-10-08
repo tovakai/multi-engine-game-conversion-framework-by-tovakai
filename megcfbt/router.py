@@ -226,6 +226,7 @@ def build_source(
     force: bool = False,
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
+    renpy_legacy_arm64_fallback: bool = False,
     steam_cover: Path | str | None = None,
     steamgriddb_game_id: int | None = None,
     progress: Callable[[str], None] | None = None,
@@ -283,6 +284,7 @@ def build_source(
                     runtime=renpy_runtime,
                     force=force,
                     allow_version_mismatch=allow_renpy_version_mismatch,
+                    legacy_arm64_fallback=renpy_legacy_arm64_fallback,
                     progress=progress,
                 )
                 launcher_path = result.launcher_path
