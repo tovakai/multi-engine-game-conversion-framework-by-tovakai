@@ -168,6 +168,14 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
     tmp_path: Path,
 ) -> None:
     source = _renpy_game(tmp_path / "Synthetic")
+    # Shipped Ren'Py installations can contain bytecode-only stdlib modules.
+    stdlib = source / "lib" / "python3.9"
+    (stdlib / "encodings").mkdir(parents=True)
+    (stdlib / "encodings" / "__init__.pyc").write_bytes(b"bytecode")
+    (stdlib / "__future__.pyc").write_bytes(b"bytecode")
+    cache = stdlib / "__pycache__"
+    cache.mkdir()
+    (cache / "abc.cpython-39.pyc").write_bytes(b"bytecode")
     platform = tmp_path / "runtime" / "8.5.3" / "py3-linux-aarch64"
     _write_elf(platform / "renpy")
     (platform / "runtime-marker.txt").write_text("arm", encoding="utf-8")
@@ -207,6 +215,9 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
     )
     assert (output / "game/script.rpy").is_file()
     assert (output / "lib/py3-linux-x86_64").is_dir()
+    assert (output / "lib/python3.9/encodings/__init__.pyc").read_bytes() == b"bytecode"
+    assert (output / "lib/python3.9/__future__.pyc").read_bytes() == b"bytecode"
+    assert (output / "lib/python3.9/__pycache__/abc.cpython-39.pyc").read_bytes() == b"bytecode"
 
     # Only the exact ARM platform slice is grafted in.
     assert (output / "lib/py3-linux-aarch64/renpy").is_file()
