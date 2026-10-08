@@ -17,6 +17,7 @@ from rpgmframe.godot_custom_runtime import (
     automatic_recipe_for,
     host_can_build_automatic_runtime,
 )
+from megcfbt.artwork import fetch_official_steam_portrait
 from megcfbt.frame_package import (
     FRAMEDROP_ZIP_UNPACK_LIMIT,
     FramePackageError,
@@ -319,6 +320,8 @@ def build_source(
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)
+        else:
+            fetch_official_steam_portrait(output_path, progress=progress)
         if archive:
             stage(0.88, "Creating Frame-ready ZIP")
             archive_path = create_frame_zip(
