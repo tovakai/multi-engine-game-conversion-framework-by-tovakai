@@ -431,7 +431,7 @@ def _write_grafted_launcher(
     launcher = root / "launch.sh"
     if source_launcher is not None and _patch_source_launcher_for_arm(source_launcher):
         relative = source_launcher.relative_to(root).as_posix()
-        command = f'exec "$ROOT/{relative}" "$ROOT" "$@"'
+        command = f'exec bash "$ROOT/{relative}" "$ROOT" "$@"'
     else:
         command = (
             f'RUNTIME="$ROOT/lib/{platform_name}"\n'
@@ -449,6 +449,17 @@ def _write_grafted_launcher(
         "set -euo pipefail\n\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
         'export RENPY_PLATFORM="linux-aarch64"\n\n'
+        '# Files transferred through Windows may lose executable permissions.\n'
+        '# Restore them for the selected ARM64 runtime before launching.\n'
+        'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"\n'
+        '[[ -d "$RUNTIME_DIR" ]] || RUNTIME_DIR="$ROOT/lib/py2-linux-aarch64"\n'
+        'if [[ -d "$RUNTIME_DIR" ]]; then\n'
+        '    for binary in "$RUNTIME_DIR"/*; do\n'
+        '        [[ -f "$binary" && ! -L "$binary" && -x "$binary" ]] && continue\n'
+        '        [[ -f "$binary" && ! -L "$binary" ]] || continue\n'
+        '        chmod u+x "$binary" 2>/dev/null || true\n'
+        '    done\n'
+        'fi\n\n'
         + command
         + "\n",
         encoding="utf-8",

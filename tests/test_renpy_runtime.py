@@ -232,7 +232,9 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
 
     launcher = (output / "launch.sh").read_text(encoding="utf-8")
     assert 'export RENPY_PLATFORM="linux-aarch64"' in launcher
-    assert 'exec "$ROOT/Game.sh" "$ROOT" "$@"' in launcher
+    assert 'exec bash "$ROOT/Game.sh" "$ROOT" "$@"' in launcher
+    assert 'chmod u+x "$binary"' in launcher
+    assert 'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"' in launcher
 
 
 def test_automatic_builder_dry_run_does_not_download(tmp_path: Path) -> None:
