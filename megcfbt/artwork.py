@@ -183,3 +183,102 @@ def fetch_official_steam_portrait(
     if progress:
         progress(f"Matched Steam library portrait using AppID {appid}")
     return target
+
+
+def complete_frame_artwork(
+    build: Path,
+    *,
+    game_name: str,
+    progress=None,
+    steamgriddb_game_id: int | None = None,
+) -> dict[str, Path]:
+    """Fill Frame artwork via manual > official Steam > optional SteamGridDB.
+
+    Existing artwork is always kept. Record per-slot provider provenance in
+    package metadata, but never persist SteamGridDB credentials or requests.
+    """
+    from megcfbt.steamgriddb import fetch_steamgriddb_artwork
+
+    root = Path(build)
+    art_dir = root / ".megcfbt" / "artwork"
+    slots = ("grid", "wide", "hero", "logo")
+    suffixes = (".png", ".jpg", ".jpeg")
+
+    def present() -> dict[str, Path]:
+        return {
+            slot: next(
+                path for suffix in suffixes
+                if (path := art_dir / (slot + suffix)).is_file()
+            )
+            for slot in slots
+            if any((art_dir / (slot + suffix)).is_file() for suffix in suffixes)
+        }
+
+    manual = present()
+    meta = root / ".megcfbt" / "package.json"
+    stored_sources = {}
+    previous_sgdb = None
+    if meta.is_file():
+        try:
+            stored = json.loads(meta.read_text(encoding="utf-8"))
+            if isinstance(stored, dict):
+                artwork_info = stored.get("artwork")
+                if isinstance(artwork_info, dict):
+                    if isinstance(artwork_info.get("slots"), dict):
+                        stored_sources = artwork_info["slots"]
+                    if isinstance(artwork_info.get("steamgriddb"), dict):
+                        previous_sgdb = artwork_info["steamgriddb"]
+        except (OSError, ValueError):
+            pass
+    sources = {
+        slot: (
+            stored_sources.get(slot)
+            if stored_sources.get(slot) in {"manual", "official_steam", "steamgriddb"}
+            else "manual"
+        )
+        for slot in manual
+    }
+    appid = detected_steam_appid(root)
+    if appid:
+        fetch_official_steam_artwork(root, progress=progress)
+        for slot in set(present()) - set(manual):
+            sources[slot] = "official_steam"
+    elif progress:
+        progress("Official Steam artwork unavailable: no embedded Steam AppID")
+
+    sgdb_assets, sgdb_match = fetch_steamgriddb_artwork(
+        root,
+        game_name=game_name,
+        steam_appid=appid,
+        progress=progress,
+        selected_game_id=steamgriddb_game_id,
+    )
+    sources.update({slot: "steamgriddb" for slot in sgdb_assets})
+
+    art = present()
+    if art:
+        meta = root / ".megcfbt" / "package.json"
+        if meta.is_file():
+            try:
+                payload = json.loads(meta.read_text(encoding="utf-8"))
+                if isinstance(payload, dict):
+                    provenance: dict[str, object] = {"slots": sources}
+                    if sgdb_assets and sgdb_match is not None:
+                        provenance["steamgriddb"] = sgdb_match
+                    elif "steamgriddb" in sources.values() and previous_sgdb:
+                        provenance["steamgriddb"] = previous_sgdb
+                    if appid:
+                        provenance["steam_appid"] = appid
+                    payload["artwork"] = provenance
+                    meta.write_text(
+                        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8",
+                    )
+            except (OSError, ValueError) as exc:
+                if progress:
+                    progress(f"Could not save artwork provenance: {exc}")
+        if progress:
+            progress("Bundled artwork slots: " + ", ".join(sorted(art)))
+    elif progress:
+        progress("No game artwork available; conversion will proceed without artwork")
+    return art

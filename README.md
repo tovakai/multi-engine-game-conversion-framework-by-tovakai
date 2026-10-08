@@ -15,6 +15,7 @@ There is no short public product name. You have to say the whole thing.
 - [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
 - [Ren'Py runtime resolution](#renpy-runtime-resolution)
 - [Custom Godot / GodotSteam compatibility runtime](#custom-godot--godotsteam-compatibility-runtime)
+- [Optional SteamGridDB artwork](#optional-steamgriddb-artwork-for-non-steam-games)
 - [Launching converted games on Linux ARM64](#launching-converted-games-on-linux-arm64)
 - [Tested game compatibility](#tested-game-compatibility)
 - [Support the project](#support-the-project-)
@@ -162,6 +163,60 @@ Direct installation through third-party sideloaders such as FrameDrop or Frame
 Control is not a supported contract yet. Their executable-selection and Devkit
 Game behavior can bypass the generated launcher or conflict with games that use
 their original Steam AppID.
+
+## Optional SteamGridDB artwork for non-Steam games
+
+Set the `STEAMGRIDDB_API_KEY` **process environment variable** before running
+the converter to enable [SteamGridDB](https://www.steamgriddb.com/api/v2) artwork.
+The key is never written to the repository, portable ZIP, metadata or Steam shortcut.
+
+For non-Steam games such as My Pig Princess, the converter searches for a
+**unique exact title match**, rather than guessing based on fuzzy titles.
+With an existing embedded Steam AppID, official Steam CDN artwork takes priority,
+and SteamGridDB resolves the game by that platform ID only for missing slots.
+
+Artwork priority for each slot: **user-selected > official Steam > SteamGridDB**.
+The provider fills available portrait (600x900), horizontal grid, hero and logo
+slots with static JPEG/PNG. Missing artwork or network/API errors never block conversion.
+SteamGridDB defaults to its safe `nsfw=false` filter. To allow adult artwork
+from the community, set `STEAMGRIDDB_NSFW=any` explicitly in the environment.
+
+To get art when the **converted game is not on this computer**, fetch it
+standalone by title. No game files, launcher, or conversion output are needed:
+
+~~~powershell
+.\.venv-win\Scripts\python.exe -m megcfbt.cli artwork `
+    --name "My Pig Princess" `
+    --output "$env:USERPROFILE\Downloads\MyPigPrincess-artwork"
+~~~
+Images are saved under `.megcfbt/artwork/` inside that destination.
+Copy those small image files to the existing Frame installation and use its
+Steam installer if available. Standalone mode intentionally does **not**
+generate a fake game launcher or a game ZIP, and rejects `--repackage`.
+
+You can also **refresh artwork on an existing converted game** without rebuilding:
+
+~~~powershell
+# Run from the repository root. The key is entered without echoing.
+$secure = Read-Host "SteamGridDB API key" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try {
+    $env:STEAMGRIDDB_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+}
+$env:STEAMGRIDDB_NSFW = "any"  # Optional: allow adult-tagged artwork
+.\.venv-win\Scripts\python.exe -m megcfbt.cli artwork "C:\path\to\MyPigPrincess-frame" --repackage --force
+~~~
+
+Use `--steamgriddb-id NUMBER` if there are several exact-title records;
+otherwise the converter skips ambiguous matches instead of using the wrong
+game's art. The `artwork` command expects the **original converted build**
+directory, not an already extracted Frame ZIP wrapper, when using `--repackage`.
+On the Frame, run `./install-to-steam.sh` again to refresh custom art for
+the existing non-Steam shortcut. The installer uses the actual non-Steam shortcut
+ID, never the SteamGridDB game ID. Artwork provenance is recorded in
+`.megcfbt/package.json`; no API credentials are recorded.
 
 ## Ren'Py runtime resolution
 

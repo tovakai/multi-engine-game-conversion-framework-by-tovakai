@@ -17,7 +17,7 @@ from rpgmframe.godot_custom_runtime import (
     automatic_recipe_for,
     host_can_build_automatic_runtime,
 )
-from megcfbt.artwork import fetch_official_steam_artwork
+from megcfbt.artwork import complete_frame_artwork
 from megcfbt.frame_package import (
     FramePackageError,
     create_frame_zip,
@@ -227,6 +227,7 @@ def build_source(
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
     steam_cover: Path | str | None = None,
+    steamgriddb_game_id: int | None = None,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
@@ -317,7 +318,12 @@ def build_source(
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)
-        fetch_official_steam_artwork(output_path, progress=progress)
+        complete_frame_artwork(
+            output_path,
+            game_name=game_name or inspection.game_name or source_base_name(path),
+            progress=progress,
+            steamgriddb_game_id=steamgriddb_game_id,
+        )
         if archive:
             stage(0.88, "Creating Frame-ready ZIP")
             archive_path = create_frame_zip(

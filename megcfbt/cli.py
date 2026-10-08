@@ -47,6 +47,31 @@ def _parser() -> argparse.ArgumentParser:
         help="optional PNG/JPEG portrait artwork to bundle for Steam",
     )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
+    build_cmd.add_argument(
+        "--steamgriddb-id",
+        type=int,
+        help="optional exact SteamGridDB game ID when title lookup is ambiguous",
+    )
+
+    artwork_cmd = sub.add_parser(
+        "artwork",
+        help="fetch art standalone or refresh an existing converted Frame game",
+    )
+    artwork_cmd.add_argument(
+        "build", nargs="?", type=Path,
+        help="optional converted game folder; omit with --name and --output",
+    )
+    artwork_cmd.add_argument(
+        "-o", "--output", type=Path,
+        help="standalone destination for artwork-only downloads, no converted game needed",
+    )
+    artwork_cmd.add_argument("--name", help="manual game title override for SteamGridDB lookup")
+    artwork_cmd.add_argument("--steamgriddb-id", type=int, help="specific SteamGridDB game ID")
+    artwork_cmd.add_argument(
+        "--repackage", action="store_true",
+        help="refresh the Frame ZIP after adding art (original converted builds only)",
+    )
+    artwork_cmd.add_argument("--force", action="store_true", help="overwrite existing Frame ZIP")
 
     frame_control_cmd = sub.add_parser(
         "frame-control-limit",
@@ -77,6 +102,55 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "artwork":
+            from megcfbt.artwork import complete_frame_artwork
+            from megcfbt.frame_package import create_frame_zip, load_frame_metadata
+
+            if args.build is None:
+                if not args.name or not args.output:
+                    raise RuntimeError(
+                        "Standalone artwork requires --name GAME and --output DIRECTORY"
+                    )
+                if args.repackage:
+                    raise RuntimeError(
+                        "--repackage requires a converted game directory; "
+                        "standalone artwork contains no game runtime"
+                    )
+                root = args.output.expanduser().resolve()
+                if root.exists() and not root.is_dir():
+                    raise RuntimeError(f"Artwork output exists but is not a directory: {root}")
+                root.mkdir(parents=True, exist_ok=True)
+                metadata = None
+                name = args.name
+                print(f"Standalone artwork destination: {root}")
+            else:
+                if args.output:
+                    raise RuntimeError(
+                        "--output is only for standalone downloads; "
+                        "omit the positional game directory"
+                    )
+                root = args.build.expanduser().resolve()
+                metadata = load_frame_metadata(root)
+                name = args.name or metadata.get("name") or root.name
+            art = complete_frame_artwork(
+                root,
+                game_name=name,
+                steamgriddb_game_id=args.steamgriddb_id,
+                progress=print,
+            )
+            print(f"Artwork slots present: {', '.join(sorted(art)) if art else 'none'}")
+            if art:
+                print(f"Artwork files: {root / '.megcfbt' / 'artwork'}")
+            if args.repackage:
+                if metadata.get("payload"):
+                    raise RuntimeError(
+                        "Cannot repackage an extracted Frame ZIP wrapper; "
+                        "use the original converted build directory."
+                    )
+                package = create_frame_zip(root, force=args.force)
+                print(f"Updated Frame package: {package}")
+            return 0
+
         if args.command == "frame-control-limit":
             from megcfbt.frame_control_patch import (
                 FrameControlPatchError,
@@ -154,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             force=args.force,
             archive=not args.no_archive,
             steam_cover=args.steam_cover,
+            steamgriddb_game_id=args.steamgriddb_id,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             **kwargs,
