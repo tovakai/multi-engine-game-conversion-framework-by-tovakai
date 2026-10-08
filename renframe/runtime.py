@@ -362,6 +362,66 @@ def _safe_tar_members(
     return members
 
 
+
+def _safe_full_sdk_members(
+    archive: tarfile.TarFile,
+    release: str,
+    python_tag: str,
+) -> tuple[list[tarfile.TarInfo], str]:
+    """Select a complete matching Ren'Py engine and Python 2 ARM64 runtime.
+
+    Archive contents are never extracted wholesale; SDK examples, other CPU
+    architectures, and unrelated editor files are intentionally excluded.
+    """
+    selected: list[tarfile.TarInfo] = []
+    prefixes: set[str] = set()
+    platform = f"{python_tag}-linux-aarch64"
+    for member in archive.getmembers():
+        path = PurePosixPath(member.name)
+        if path.is_absolute() or ".." in path.parts:
+            raise RuntimeDownloadError(
+                f"Refusing unsafe path in official Ren'Py archive: {member.name}"
+            )
+        parts = path.parts
+        if len(parts) < 2 or not parts[0].startswith(f"renpy-{release}-"):
+            continue
+        relative = parts[1:]
+        wanted = (
+            relative[0] == "renpy"
+            or relative == ("renpy.py",)
+            or relative == ("renpy.sh",)
+            or (len(relative) >= 2 and relative[:2] == ("lib", platform))
+            or (len(relative) >= 2 and relative[:2] == ("lib", "python2.7"))
+            or relative in {("lib", "python2.7.zip"), ("lib", "python27.zip")}
+        )
+        if not wanted:
+            continue
+        if member.issym() or member.islnk():
+            link = PurePosixPath(member.linkname)
+            if link.is_absolute() or ".." in link.parts:
+                raise RuntimeDownloadError(
+                    f"Refusing unsafe link in official Ren'Py archive: "
+                    f"{member.name} -> {member.linkname}"
+                )
+        prefixes.add(parts[0])
+        selected.append(member)
+    if len(prefixes) != 1:
+        raise RuntimeDownloadError(
+            f"Expected one Ren'Py {release} SDK root, found {sorted(prefixes)}"
+        )
+    return selected, next(iter(prefixes))
+
+
+def _validate_full_sdk(path: Path, platform: str) -> None:
+    if not (path / "renpy" / "__init__.py").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing its Python engine")
+    if not (path / "renpy.py").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing renpy.py")
+    if not (path / "renpy.sh").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing renpy.sh")
+    _validate_platform_dir(path / "lib" / platform)
+
+
 def _extract_selected_members(
     archive: tarfile.TarFile,
     members: list[tarfile.TarInfo],
@@ -434,6 +494,79 @@ class RuntimeManager:
     def platform_path(self, version: str, python_tag: str) -> Path:
         release = normalize_release_version(version)
         return self.cache_dir / release / f"{python_tag}-linux-aarch64"
+
+    def full_sdk_path(self, version: str, python_tag: str) -> Path:
+        release = normalize_release_version(version)
+        return self.cache_dir / release / f"{python_tag}-arm64-compat-sdk"
+
+    def ensure_full_sdk(
+        self,
+        version: str,
+        python_tag: str,
+        *,
+        progress: Callable[[str], None] | None = None,
+    ) -> Path:
+        """Cache a matched Ren'Py engine plus ARM64 binaries for 7.4 migrations.
+
+        Official runtime archive and checksum come from renpy.org. Only the
+        selected engine, entrypoint, Python 2 support, and ARM64 platform are
+        extracted. Builds use this SDK as a complete replacement engine.
+        """
+        release = normalize_release_version(version)
+        if release != "7.5.0" or python_tag != "py2":
+            raise RuntimeDownloadError(
+                "Full engine fallback is only available for Ren'Py 7.5.0 Python 2."
+            )
+        destination = self.full_sdk_path(release, python_tag)
+        try:
+            _validate_full_sdk(destination, "py2-linux-aarch64")
+            if progress:
+                progress("Using cached complete Ren'Py 7.5.0 Python 2 ARM64 engine")
+            return destination
+        except RuntimeDownloadError:
+            pass
+
+        filename = f"renpy-{release}-sdkarm.tar.bz2"
+        url = f"{self.base_url}/{release}"
+        if progress:
+            progress(f"Resolving official Ren'Py {release} full ARM64 SDK")
+        expected = _parse_sha256(
+            self._read_url(f"{url}/checksums.txt"), filename
+        )
+        archive_path = self.cache_dir / "downloads" / filename
+        if not archive_path.is_file() or _sha256(archive_path) != expected:
+            self._download(f"{url}/{filename}", archive_path, progress=progress)
+        if _sha256(archive_path) != expected:
+            archive_path.unlink(missing_ok=True)
+            raise RuntimeDownloadError(
+                f"SHA256 verification failed for official {filename}"
+            )
+        if progress:
+            progress("Ren'Py 7.5.0 full SDK checksum verified")
+
+        release_root = destination.parent
+        release_root.mkdir(parents=True, exist_ok=True)
+        temporary = Path(tempfile.mkdtemp(prefix=".sdk-", dir=str(release_root)))
+        try:
+            with tarfile.open(archive_path, "r:bz2") as archive:
+                members, prefix = _safe_full_sdk_members(archive, release, python_tag)
+                if not members:
+                    raise RuntimeDownloadError(
+                        f"Official {filename} has no selected engine/runtime files"
+                    )
+                extracted = temporary / "extracted"
+                _extract_selected_members(archive, members, extracted)
+            staged = extracted / prefix
+            _validate_full_sdk(staged, "py2-linux-aarch64")
+            if destination.exists():
+                shutil.rmtree(destination)
+            staged.replace(destination)
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
+
+        if progress:
+            progress("Cached complete Ren'Py 7.5.0 engine and Python 2 ARM64 runtime")
+        return destination
 
     def find_platform(self, version: str, python_tag: str) -> Path | None:
         path = self.platform_path(version, python_tag)
