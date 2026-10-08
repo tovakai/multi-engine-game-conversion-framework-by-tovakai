@@ -14,10 +14,10 @@ complete:
 1. Strip a **copy** of the tested Godot ARM64 executable; keep the working
    unstripped binary untouched.
 2. Test the stripped executable on Steam Frame with the original Brotato PCK.
-3. Create a flat `tar.gz` containing `godot.arm64` and `runtime.json`.
-   For the initial version, include the known-working ARM64 `libsteam_api.so`
-   only if redistribution is permitted. Otherwise adapt the launcher to use
-   the installed Frame copy and test the new packaging end-to-end.
+3. Create a flat `tar.gz` containing only `godot.arm64` and `runtime.json`.
+   The generated launcher uses the Frame-installed native Steam API from
+   `/opt/steamvr/bin/linuxarm64`; the release asset must not bundle
+   `libsteam_api.so`.
 4. Upload the archive to a versioned GitHub Release asset.
 5. Compute the archive's SHA-256 and add the pinned GitHub Release URL and hash
    to the index under
