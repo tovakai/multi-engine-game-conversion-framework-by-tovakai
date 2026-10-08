@@ -57,7 +57,8 @@ def test_godotsteam_data_is_copied_beside_runtime(tmp_path: Path) -> None:
     staging.mkdir()
     (source / "steam_data.json").write_text('{"app_id":"1942280"}', encoding="utf-8")
 
-    assert _copy_godotsteam_data(source, staging) is True
+    copied_from = _copy_godotsteam_data(source, staging)
+    assert copied_from == source / "steam_data.json"
     assert (staging / "steam_data.json").read_text(encoding="utf-8") == '{"app_id":"1942280"}'
 
 
@@ -67,7 +68,7 @@ def test_missing_godotsteam_data_is_not_invented(tmp_path: Path) -> None:
     source.mkdir()
     staging.mkdir()
 
-    assert _copy_godotsteam_data(source, staging) is False
+    assert _copy_godotsteam_data(source, staging) is None
     assert not (staging / "steam_data.json").exists()
 
 
