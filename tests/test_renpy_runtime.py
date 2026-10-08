@@ -8,13 +8,15 @@ from pathlib import Path
 
 import pytest
 
-from renframe.builder import build_game
+from renframe.builder import BuildError, build_game
 from renframe.inspect_service import inspect_game
 from renframe.runtime import (
     RuntimeDownloadError,
     RuntimeManager,
     _parse_sha256,
     normalize_release_version,
+    experimental_arm64_fallback,
+    requires_pre_sdkarm_override,
     python_tag_for_generation,
 )
 
@@ -257,3 +259,99 @@ def test_automatic_builder_dry_run_does_not_download(tmp_path: Path) -> None:
 
     assert result.success
     assert not output.exists()
+
+
+
+def _legacy_renpy_game(root: Path, version: str = "7.4.11") -> Path:
+    game = _renpy_game(root, version=version)
+    (game / "lib/py3-linux-x86_64").rename(game / "lib/py2-linux-x86_64")
+    return game
+
+
+def test_legacy_fallback_requires_verified_python2_and_74_version() -> None:
+    assert experimental_arm64_fallback("7.4.11", 7) == "7.5.0"
+    assert experimental_arm64_fallback("7.4.11.2266", 7) == "7.5.0"
+    assert experimental_arm64_fallback("7.4.11", 8) is None
+    assert experimental_arm64_fallback("7.4.11", None) is None
+    assert experimental_arm64_fallback("7.3.5", 7) is None
+    assert experimental_arm64_fallback("7.5.0", 7) is None
+    assert experimental_arm64_fallback("8.0.1", 8) is None
+    assert experimental_arm64_fallback("not a release", 7) is None
+    assert requires_pre_sdkarm_override("7.4.11", 7)
+    assert requires_pre_sdkarm_override("7.3.5", 7)
+    assert not requires_pre_sdkarm_override("7.5.0", 7)
+    assert not requires_pre_sdkarm_override("8.0.1", 8)
+
+
+def test_legacy_renpy_build_requires_explicit_opt_in(tmp_path: Path) -> None:
+    game = _legacy_renpy_game(tmp_path / "Legacy")
+    inspection = inspect_game(game)
+    assert inspection.renpy_version == "7.4.11"
+    assert inspection.generation == 7
+    manager = RuntimeManager(cache_dir=tmp_path / "runtime-cache")
+    with pytest.raises(BuildError, match="predates official Linux AArch64"):
+        build_game(game, output=tmp_path / "out", runtime_manager=manager)
+
+
+def test_opted_in_legacy_build_grafts_official_py2_fallback_and_preserves_source(
+    tmp_path: Path,
+) -> None:
+    source = _legacy_renpy_game(tmp_path / "Legacy")
+    platform = tmp_path / "cache" / "7.5.0" / "py2-linux-aarch64"
+    _write_elf(platform / "renpy")
+    _write_elf(platform / "python")
+    (platform / "runtime-marker.txt").write_text("official 7.5.0", encoding="utf-8")
+
+    class FakeManager:
+        def platform_path(self, version, tag):
+            assert version == "7.5.0"
+            assert tag == "py2"
+            return platform
+
+        def ensure_platform(self, version, tag, *, progress=None, force=False):
+            assert force is False
+            assert version == "7.5.0"
+            assert tag == "py2"
+            return platform
+
+    out = tmp_path / "converted"
+    logs = []
+    result = build_game(
+        source, output=out, runtime_manager=FakeManager(),
+        legacy_arm64_fallback=True, progress=logs.append,
+    )
+    assert result.success
+    assert result.source_version == "7.4.11"
+    assert result.runtime_version == "7.5.0"
+    assert result.runtime_architecture == "aarch64"
+    assert any("EXPERIMENTAL" in warning for warning in result.warnings)
+    assert any("explicitly approved" in line for line in logs)
+    assert (out / "lib/py2-linux-aarch64/renpy").is_file()
+    assert (out / "lib/py2-linux-aarch64/runtime-marker.txt").read_text() == "official 7.5.0"
+    assert (out / "lib/py2-linux-x86_64").is_dir()
+    assert (source / "lib/py2-linux-aarch64").exists() is False
+    assert (source / "renpy/versions.py").read_text() == 'version = "7.4.11"\n'
+    assert 'exec bash "$ROOT/Game.sh"' in (out / "launch.sh").read_text()
+
+
+def test_legacy_fallback_rejects_renpy8_and_wrong_7x_even_if_approved(tmp_path: Path):
+    for version in ("8.5.3", "7.3.5", "7.5.0"):
+        source = _renpy_game(tmp_path / ("Game-" + version), version=version)
+        if version.startswith("7."):
+            (source / "lib/py3-linux-x86_64").rename(source / "lib/py2-linux-x86_64")
+        with pytest.raises(BuildError, match="only available for identified Ren'Py 7.4"):
+            build_game(
+                source, output=tmp_path / ("out-" + version),
+                legacy_arm64_fallback=True, dry_run=True,
+            )
+
+
+def test_legacy_fallback_rejects_manual_runtime_combination(tmp_path: Path):
+    source = _legacy_renpy_game(tmp_path / "Legacy")
+    runtime = tmp_path / "manual"
+    runtime.mkdir()
+    with pytest.raises(BuildError, match="either a manual"):
+        build_game(
+            source, output=tmp_path / "out", runtime=runtime,
+            legacy_arm64_fallback=True, dry_run=True,
+        )
