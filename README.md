@@ -122,19 +122,23 @@ now, treat it as a normal file transfer rather than a magic sideload bundle:
 1. copy the ZIP to the Steam Frame using Frame Control, SCP, a USB drive, or any
    other file-transfer method
 2. extract it on the Frame
-3. fully exit Steam
+3. leave Steam / SteamVR running
 4. open a terminal in the extracted folder
 5. run `./install-to-steam.sh`
-6. reopen Steam
 
-The bundled installer writes the package's `launch.sh` as a normal **non-Steam
-game** in the active user's `shortcuts.vdf`. It computes Steam's deterministic
-non-Steam AppID from the exact executable string plus game name, then uses that
-same ID to install any bundled artwork into Steam's grid directory. The existing
-`shortcuts.vdf` is backed up before it is changed.
+The bundled installer asks the running Steam client to import the package's
+`launch.sh` as a normal **non-Steam game** using SteamOS's
+`steam://addnonsteamgame/` path. It then reads back the shortcut Steam created
+and installs bundled artwork under that shortcut's actual non-Steam AppID.
 
-Steam must be closed while the installer edits `shortcuts.vdf`; otherwise the
-running client can overwrite the changes from its in-memory copy.
+The installer also computes the deterministic non-Steam AppID formula used by
+Deckport and related tools. That gives us a predictable ID when Steam preserves
+the expected executable/name strings, while the read-back step remains the
+authority if Steam normalizes the imported shortcut differently.
+
+This avoids directly rewriting `shortcuts.vdf` while Steam is closed, which is
+important on Steam Frame because shutting down Steam/SteamVR also tears down the
+desktop environment.
 
 Direct installation through third-party sideloaders such as FrameDrop or Frame
 Control is not a supported contract yet. Their executable-selection and Devkit
