@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
 
 import megcfbt.steam_install as steam_install
@@ -36,8 +37,12 @@ def test_install_tree_writes_devkit_sidecars_and_launcher_mode(tmp_path, monkeyp
     destination = steam_install._install_tree(source, "Example_Game", "launch.sh")
 
     assert destination == devkit / "Example_Game"
-    assert stat.S_IMODE((destination / "launch.sh").stat().st_mode) & 0o111
-    assert stat.S_IMODE((destination / "godot.arm64").stat().st_mode) & 0o111
+    # Windows filesystems do not expose POSIX executable bits through chmod/stat.
+    # The installer is Linux ARM64-only in production, so verify modes only on
+    # hosts where those bits are meaningful while still testing sidecars here.
+    if os.name != "nt":
+        assert stat.S_IMODE((destination / "launch.sh").stat().st_mode) & 0o111
+        assert stat.S_IMODE((destination / "godot.arm64").stat().st_mode) & 0o111
     assert json.loads((devkit / "Example_Game-argv.json").read_text()) == ["launch.sh"]
     assert json.loads((devkit / "Example_Game-env.json").read_text()) == {}
     settings = json.loads((devkit / "Example_Game-settings.json").read_text())
