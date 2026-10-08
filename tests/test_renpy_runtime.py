@@ -233,7 +233,7 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
     assert 'RENPY_PLATFORM="linux-aarch64"' in patched
 
     launcher = (output / "launch.sh").read_text(encoding="utf-8")
-    assert 'export RENPY_PLATFORM="linux-aarch64"' in launcher
+    assert 'export RENPY_PLATFORM="py3-linux-aarch64"' in launcher
     assert 'exec bash "$ROOT/Game.sh" "$ROOT" "$@"' in launcher
     assert 'chmod u+x "$binary"' in launcher
     assert 'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"' in launcher
@@ -332,6 +332,7 @@ def test_opted_in_legacy_build_grafts_official_py2_fallback_and_preserves_source
     assert (source / "lib/py2-linux-aarch64").exists() is False
     assert (source / "renpy/versions.py").read_text() == 'version = "7.4.11"\n'
     assert 'exec bash "$ROOT/Game.sh"' in (out / "launch.sh").read_text()
+    assert 'export RENPY_PLATFORM="py2-linux-aarch64"' in (out / "launch.sh").read_text()
     assert 'RUNTIME_DIR="$ROOT/lib/py2-linux-aarch64"' in (out / "launch.sh").read_text()
     assert 'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"' not in (out / "launch.sh").read_text()
 
