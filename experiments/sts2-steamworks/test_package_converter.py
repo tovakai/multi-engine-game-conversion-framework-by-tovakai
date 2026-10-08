@@ -32,7 +32,8 @@ class SoftwareDistributionTests(unittest.TestCase):
             unpacked = root / "unpacked/sts2-converter"
             environment = dict(os.environ)
             environment.pop("PYTHONPATH", None)
-            for script in ("convert_sts2.py", "fetch_converter_runtimes.py", "verify_output.py"):
+            for script in ("convert_sts2.py", "fetch_converter_runtimes.py", "verify_output.py",
+                           "pipeline.py", "build_native.py", "preflight.py"):
                 # -S removes site packages; the distribution must really be stdlib-only.
                 result = subprocess.run([sys.executable, "-S", str(unpacked / script), "--help"], cwd=root,
                                         env=environment, capture_output=True, text=True, timeout=20)

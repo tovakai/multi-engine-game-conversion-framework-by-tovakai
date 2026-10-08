@@ -1,5 +1,12 @@
 # STS2 Standalone Converter V1 Handoff
 
+Continuation, 2026-10-08: the preserved baseline below now has a source-building
+backend and framework integration on `feat/sts2-reproducible-pipeline`. See
+[SOURCE_PIPELINE.md](SOURCE_PIPELINE.md) and
+[hardware_validation_20261008.json](hardware_validation_20261008.json) for the
+actual fresh-build, complete-conversion and Frame startup evidence, and the
+remaining vendor/pristine-source/owned-Steam acceptance limitations.
+
 ## Preservation Boundary
 
 This handoff preserves the completed isolated experiment; it does not begin

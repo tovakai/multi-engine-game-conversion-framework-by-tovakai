@@ -137,6 +137,16 @@ func _initialize():
                 self.run_conversion(output=path)
         self.assert_no_stage()
 
+    def test_source_build_evidence_is_integrity_tracked(self):
+        evidence = {"recipe": "synthetic-source-build", "sources": {"extension": "pinned commit"}}
+        self.run_conversion(_native_build=evidence)
+        manifest = json.loads((self.output / "conversion-manifest.json").read_bytes())
+        self.assertEqual(manifest["converter_recipe"], "sts2-source-v1")
+        self.assertEqual(json.loads((self.output / "native-build.json").read_bytes()), evidence)
+        self.assertIn("native-build.json", {p["path"] for p in manifest["files"]})
+        (self.output / "native-build.json").write_text("tampered build evidence")
+        self.assertTrue(verify(self.output)["errors"])
+
     def test_authorization_required(self):
         with self.assertRaisesRegex(ValueError, "Acknowledge"):
             self.run_conversion(authorized=False)

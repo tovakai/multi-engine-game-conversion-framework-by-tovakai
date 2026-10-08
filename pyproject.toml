@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Multi-engine game runtime conversion tooling for Linux ARM64."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "GPL-3.0-only" }
+license = { text = "AGPL-3.0-only" }
 authors = [{ name = "Tovakai" }]
 keywords = ["renpy", "rpg-maker", "godot", "arm64", "linux", "steam-frame"]
 classifiers = [
@@ -16,7 +16,7 @@ classifiers = [
     "Environment :: Console",
     "Environment :: Win32 (MS Windows)",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
@@ -57,7 +57,7 @@ include = ["megcfbt*", "renframe*", "rpgmframe*"]
     "experiments/sts2-steamworks/preflight.py",
     "experiments/sts2-steamworks/build_native.py",
     "experiments/sts2-steamworks/adapt_fmod_build_sources.py",
-    "experiments/sts2-steamworks/fmod_sdk_observation_v1.json",
+    "experiments/sts2-steamworks/fmod_sdk_headers_v1.json",
     "experiments/sts2-steamworks/sdk_archive.py",
     "LICENSE",
 ]

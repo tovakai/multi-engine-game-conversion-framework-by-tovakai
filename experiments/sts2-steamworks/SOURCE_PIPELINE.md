@@ -94,7 +94,55 @@ Baseline standalone tests: 145 passed, 43 fixture skips. The framework baseline
 has two pre-existing failures in `tests/test_godot_runtime_bundle.py`:
 obsolete boolean assertions for a helper returning Path/None. Both were
 independently reproduced from an unmodified handoff export.
+Their assertions have been updated to the existing helper contract, retaining
+the file-copy and missing-file checks without changing GodotSteam behavior.
 Hardware and current regression results are recorded as they complete.
 Native inspection/headless startup do not prove Steam ownership, graphics,
 controls, audio, saves, achievements or cloud sync; those need separate
 acceptance through the owned Steam library entry.
+
+## Hardware results, 2026-10-08
+
+- Two independent fresh builds on the Frame reproduce both original extension
+  SHA-256 hashes exactly, using GCC 15.1.1, SCons 4.11.1, Python 3.12.3 and
+  binutils 2.42.0. This demonstrates equality on this toolchain, not arbitrary
+  compiler reproducibility. Only the existing generic SCons tool was reused;
+  no earlier game-specific extension/native output was consumed.
+- The complete `pipeline.py` run used the selected original source files, the
+  original vendor SDK archive, installed Valve API and checksum-verified official
+  downloads. It freshly compiled its own extensions and produced an output with
+  227 manifest-tracked files, all verified with correct modes on AArch64.
+- Native headless execution initialized Godot 4.5.1 Mono, hostfxr/GodotPlugins,
+  FMOD and both Sentry components. The genuine ARM64 Steam client loaded.
+  Steam initialization failed with missing AppID because this was an SSH process,
+  not an owned Steam launch. Exit code zero is **not** Steam acceptance.
+  No synthetic AppID or `steam_appid.txt` was provided. User-data directories were
+  isolated using XDG paths under the test workspace.
+- The owned STS2 appmanifest is absent on the Frame. Manual acceptance requires
+  installing/launching the owned game entry with the temporary launch option:
+
+  ```text
+  bash -c 'exec "/run/media/steamos/SD512/sts2-pipeline-dev-20261008/native-output-01/collect-startup.sh"' -- %command%
+  ```
+
+  Preserve previous launch options for rollback. Confirm Steam initialization,
+  main menu, audio, controls and save/reload; achievements/cloud need separate
+  evidence. Originals and SteamOS configuration have not been modified.
+- Source PCK inspection found 13,158 entries and **zero embedded native library
+  entries**; the pack cannot supply the missing ARM64 vendor runtimes.
+- All eleven C/C++ FMOD build headers were checked against the original verified
+  SDK archive. Unused C# and FSBank wrappers are excluded from the build layout.
+- The optimized private-staging PCK writer uses no-replace rename, avoiding the
+  second full pack write without requiring hard links. A real-pack hardware run
+  produced the exact same SHA-256 as the full pipeline:
+  `25e58dc52e8f5571f54b929ce5359e9057d6d7c4e6213db920f60d7ad8a2a19a`.
+  The 21 original source files passed full hash verification afterward.
+- Wheel build and installation into an isolated environment locate the backend
+  correctly; the installed CLI rejects the actual unsupported Steam build.
+- Final local regression suites: 36 framework tests passed; 156 standalone
+  tests passed, 43 optional proprietary/inspection fixture tests skipped.
+  The preserved five-check CLR harness was not rerun in this environment.
+
+Raw startup logs, native inventories and complete conversion reports remain in
+the isolated Frame workspace. No game, SDK, generated runtime or personal log
+is committed. A sanitized hardware summary accompanies this document.

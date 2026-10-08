@@ -113,6 +113,18 @@ class PackPatchTests(unittest.TestCase):
         self.assertEqual(self.source.read_bytes(), self.raw)
         self.assertFalse(any(path.suffix == ".tmp" for path in self.root.iterdir()))
 
+    def test_private_staging_rename_preserves_concurrent_destination(self):
+        real_publish = patcher.publish_new
+        def racing_publish(temporary, destination):
+            self.output.write_bytes(b"concurrent user file")
+            return real_publish(temporary, destination)
+        with mock.patch.object(patcher, "publish_new", side_effect=racing_publish):
+            with self.assertRaises(FileExistsError):
+                self.run_patch(atomic_publication=False)
+        self.assertEqual(self.output.read_bytes(), b"concurrent user file")
+        self.assertEqual(self.source.read_bytes(), self.raw)
+        self.assertFalse(any(path.suffix == ".tmp" for path in self.root.iterdir()))
+
     def test_flush_or_identity_failure_cleans_temporary_files(self):
         with mock.patch.object(patcher.os, "fsync", side_effect=OSError("synthetic disk error")):
             with self.assertRaises(OSError): self.run_patch()

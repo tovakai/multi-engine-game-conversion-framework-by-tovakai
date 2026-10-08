@@ -59,6 +59,15 @@ def sdk_file(root, name):
     return safe(path)
 
 
+def sdk_headers(sdk):
+    pins = json.loads((HERE / "fmod_sdk_headers_v1.json").read_bytes())
+    actual = {p.relative_to(sdk).as_posix() for section in ("core", "studio")
+              for p in (sdk / "api" / section / "inc").glob("*") if p.suffix in {".h", ".hpp"}}
+    if actual != set(pins):
+        raise ValueError("FMOD SDK build-header inventory differs from pinned vendor SDK")
+    return {name: read_verified(sdk_file(sdk, name), pin) for name, pin in pins.items()}
+
+
 def build(work, sdk, *, steam_api=STEAM_API, scons="scons", jobs=4):
     if platform.system() != "Linux" or platform.machine() not in {"aarch64", "arm64"}:
         raise ValueError("Extension compilation currently requires a Linux AArch64 host")
@@ -72,11 +81,7 @@ def build(work, sdk, *, steam_api=STEAM_API, scons="scons", jobs=4):
     steam_pin = next(p for p in profile["native_files"] if p["provider_name"] == "libsteam_api64.so")
     steam = read_verified(steam_api, steam_pin)
     require_elf(steam, "Steam platform API")
-    sdk_observation = json.loads((HERE / "fmod_sdk_observation_v1.json").read_bytes())
-    for row in sdk_observation["files"]:
-        if row["kind"] == "header":
-            name = row["resolved_relative"].split("/api/", 1)[1]
-            read_verified(sdk_file(sdk, "api/" + name), row)
+    headers = sdk_headers(sdk)
     vendor = {}
     for section, name in (("core", "libfmod.so.14"), ("studio", "libfmodstudio.so.14")):
         pin = next(p for p in profile["native_files"] if p["provider_name"] == name)
@@ -119,11 +124,9 @@ def build(work, sdk, *, steam_api=STEAM_API, scons="scons", jobs=4):
     for section, name in (("core", "libfmod"), ("studio", "libfmodstudio")):
         inc = layout / "linux" / section / "inc"
         inc.mkdir(parents=True)
-        for header in sorted((sdk / "api" / section / "inc").iterdir()):
-            resolved = sdk_file(sdk, header.relative_to(sdk))
-            if not resolved.is_file():
-                raise ValueError("Unexpected SDK header entry")
-            shutil.copyfile(resolved, inc / header.name)
+        for name, raw in headers.items():
+            if name.startswith(f"api/{section}/inc/"):
+                write_new(inc / Path(name).name, raw)
         lib = layout / "linux" / section / "lib/arm64"
         write_new(lib / (name + ".so"), vendor[name + ".so.14"])
         write_new(lib / (name + ".so.14"), vendor[name + ".so.14"])

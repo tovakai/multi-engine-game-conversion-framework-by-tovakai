@@ -1,0 +1,87 @@
+{
+  "compiled_extensions_match_reference": {
+    "libGodotFmod.linux.template_release.arm64.so": true,
+    "libspine_godot.linux.template_release.arm64.so": true
+  },
+  "date": "2026-10-08",
+  "files_verified": 227,
+  "full_pipeline_errors": [],
+  "graphical_gameplay_and_owned_steam_acceptance": "pending",
+  "headless_checks": {
+    "exit_code": 0,
+    "fmod_initialized": true,
+    "godot_plugins_initialized": true,
+    "hostfxr_initialized": true,
+    "sentry_dotnet_initialized": true,
+    "sentry_native_initialized": true,
+    "steam_client_loaded": true,
+    "steam_context_missing": true,
+    "steam_initialization_succeeded": false,
+    "user_data_isolated": true
+  },
+  "host_architecture": "aarch64",
+  "integrity_errors": [],
+  "manifest_sha256": "cf99981e2c9892f94c6e4dd2d20a790217c08c255119b7dddaf30dff38c16893",
+  "native_objects_inspected": 23,
+  "native_output_hashes": {
+    "libGodotFmod.linux.template_release.arm64.so": {
+      "elf_machine": 183,
+      "sha256": "0d5be1a919feb1d287e29b8115441c4e99d8795b8fcad031fc74699ca2a2cf62",
+      "size_bytes": 3281280
+    },
+    "libfmod.so.14": {
+      "elf_machine": 183,
+      "sha256": "3f890c918d513aa1e6c6efba330f9869ff15258d49bf3e2b52f9bee832c90de5",
+      "size_bytes": 1290880
+    },
+    "libfmodstudio.so.14": {
+      "elf_machine": 183,
+      "sha256": "d1bc3c729d534d9f03933d24cbc84139f73a460f92334e09ccdf388c334dcd31",
+      "size_bytes": 1302256
+    },
+    "libspine_godot.linux.template_release.arm64.so": {
+      "elf_machine": 183,
+      "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
+      "size_bytes": 4328984
+    },
+    "libsteam_api64.so": {
+      "elf_machine": 183,
+      "sha256": "9d354c631f01f7318bc00e8fa29842b83678f4293b52d0d5c11806edd76a7f4b",
+      "size_bytes": 381904
+    }
+  },
+  "pack_sha256": "25e58dc52e8f5571f54b929ce5359e9057d6d7c4e6213db920f60d7ad8a2a19a",
+  "scope": "Real conversion from matching source fixture and fresh source builds on Frame. No previous game-specific binaries consumed. Vendor permissions, pristine source and owned-Steam graphical acceptance remain release gates.",
+  "sdk_archive_sha256": "48241c836b45116e1b25f9f2cb121e45c64140c5af205706b48c8b1c3712f963",
+  "sdk_build_headers_verified": 11,
+  "single_write_pack_matches_pipeline": true,
+  "source_commit": "f4eeecc6",
+  "source_provenance": "User-authorized matching testgames comparison fixture; publisher-pristine provenance is not established.",
+  "source_release": "v0.98.2",
+  "source_validation_after_conversion": {
+    "commit": "f4eeecc6",
+    "errors": [],
+    "files_checked": 21,
+    "release": "v0.98.2",
+    "source_verified": true,
+    "supported": true
+  },
+  "sources": {
+    "fmod": {
+      "commit": "fda1f89a08c0048ed313b333f90b7a7258ce2e61",
+      "url": "https://github.com/utopia-rise/fmod-gdextension.git"
+    },
+    "fmod-godot-cpp": {
+      "commit": "e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77",
+      "url": "https://github.com/godotengine/godot-cpp.git"
+    },
+    "spine": {
+      "commit": "e7dc1435fa4a0083ab431f1b28e083c14a1f5c68",
+      "url": "https://github.com/EsotericSoftware/spine-runtimes.git"
+    },
+    "spine-godot-cpp": {
+      "commit": "27d9dd23c83871e0619fca5dc2cddfbfd69e926a",
+      "url": "https://github.com/godotengine/godot-cpp.git"
+    }
+  }
+}

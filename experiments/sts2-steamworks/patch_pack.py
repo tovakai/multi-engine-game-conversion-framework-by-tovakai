@@ -14,10 +14,10 @@ import stat
 import struct
 import tempfile
 import sys
-import shutil
 
 from adapt_packed_manifests import RECIPES, UNCHANGED, adapt_bundle
 from inventory_package import COMPARE_HANDLE_PATH_STATS, identity
+from converter_io import publish_new
 
 
 SOURCE_SHA256 = "c0c4b951fa6b342d379c4221e2d96eba8a8bbfce5cd7cd2049254a74f6575d41"
@@ -177,17 +177,9 @@ def rewrite_pack(source, destination, *, expected_sha256, expected_size, transfo
             if atomic_publication:
                 os.link(temporary, destination)
             else:
-                try:
-                    with destination.open("xb") as published, temporary.open("rb") as candidate:
-                        shutil.copyfileobj(candidate, published, BLOCK_SIZE)
-                        published.flush()
-                        os.fsync(published.fileno())
-                except FileExistsError:
-                    raise
-                except BaseException:
-                    destination.unlink(missing_ok=True)
-                    raise
-                os.chmod(destination, 0o644)
+                # Same-filesystem no-replace rename avoids writing the entire
+                # pack twice, while retaining collision protection without links.
+                publish_new(temporary, destination)
             return {"source_sha256": source_hash.hexdigest(), "output_sha256": output_hash.hexdigest(),
                     "output_size_bytes": output_size, "entry_count": len(entries), "changed_paths": changes,
                     "source_directory": old_directory, "output_directory": new_directory,

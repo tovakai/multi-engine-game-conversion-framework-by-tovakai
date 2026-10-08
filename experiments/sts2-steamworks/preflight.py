@@ -21,13 +21,15 @@ def inspect_source(source, *, full=True, profile=None):
             raise ValueError("Release metadata exceeds limit")
         metadata = safe(metadata)
         release = json.loads(metadata.read_bytes())
+        if not isinstance(release, dict):
+            raise ValueError("Release metadata must be an object")
         report.update(release=release.get("version"), commit=release.get("commit"))
         if (report["release"], report["commit"]) != (profile["release"], profile["commit"]):
             raise ValueError("Unsupported STS2 build: only v0.98.2 / f4eeecc6 is supported")
         pin = next(p for p in profile["copy_files"] if p["source"] == "release_info.json")
         read_verified(source / "release_info.json", pin)
         report["supported"] = True
-    except (OSError, ValueError, StopIteration) as error:
+    except (OSError, ValueError, StopIteration, UnicodeError) as error:
         report["errors"].append(str(error))
         return report
     if not full:

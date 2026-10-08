@@ -18,6 +18,15 @@ def pin(raw):
 
 
 class SourcePipelineTests(unittest.TestCase):
+    def test_malformed_release_is_a_diagnostic(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for raw in (b"[]", b"null", b"{broken", b"\xff"):
+                (root / "release_info.json").write_bytes(raw)
+                report = preflight.inspect_source(root)
+                self.assertFalse(report["supported"])
+                self.assertTrue(report["errors"])
+
     def test_complete_source_hash_validation_and_multiple_diagnostics(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -75,6 +84,25 @@ class SourcePipelineTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "not empty"):
                     build_native.checkout("https://example.test/source", "a" * 40, checkout, root / "log")
                 run.assert_not_called()
+
+    def test_all_sdk_headers_are_pinned_including_cpp_wrappers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "api/core/inc").mkdir(parents=True)
+            header = root / "api/core/inc/fmod.hpp"
+            header.write_bytes(b"original C++ wrapper")
+            (header.parent / "fmod.cs").write_bytes(b"unused vendor C# wrapper")
+            (root / "api/fsbank/inc").mkdir(parents=True)
+            (root / "api/fsbank/inc/fsbank.h").write_bytes(b"unused bank compiler")
+            pins = {"api/core/inc/fmod.hpp": pin(header.read_bytes())}
+            with mock.patch.object(build_native.json, "loads", return_value=pins):
+                self.assertEqual(build_native.sdk_headers(root)["api/core/inc/fmod.hpp"], b"original C++ wrapper")
+                header.write_bytes(b"modified C++ wrapper")
+                with self.assertRaises(ValueError):
+                    build_native.sdk_headers(root)
+                (header.parent / "extra.hpp").write_bytes(b"unexpected")
+                with self.assertRaisesRegex(ValueError, "inventory"):
+                    build_native.sdk_headers(root)
 
     def test_cache_cannot_modify_original_source(self):
         with tempfile.TemporaryDirectory() as directory:
