@@ -1,3 +1,11 @@
 {
-  "recipes": {}
+  "recipes": {
+    "godot-3.7-dev1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1": {
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-godot-3.7-dev1-godotsteam-3.30-arm64-v1/godot-3.7-dev1-godotsteam-3.30-frame-arm64-v1.tar.gz",
+      "sha256": "f87130aa44fae591a098eb03df8a419f84b47d25100756f04bb645e44102e34a",
+      "size_bytes": 18212780,
+      "status": "validated",
+      "validation": "Brotato 1.1.14.6 full gameplay run on Steam Frame"
+    }
+  }
 }
