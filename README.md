@@ -134,7 +134,10 @@ and installs bundled artwork under that shortcut's actual non-Steam AppID.
 The installer also computes the deterministic non-Steam AppID formula used by
 Deckport and related tools. That gives us a predictable ID when Steam preserves
 the expected executable/name strings, while the read-back step remains the
-authority if Steam normalizes the imported shortcut differently.
+authority if Steam normalizes the imported shortcut differently. When the source
+exposes an exact Steam AppID, the converter best-effort bundles official portrait,
+horizontal banner, hero, and logo art. Steam may require a Steam / SteamVR
+environment restart before newly copied custom artwork becomes visible.
 
 This avoids directly rewriting `shortcuts.vdf` while Steam is closed, which is
 important on Steam Frame because shutting down Steam/SteamVR also tears down the
