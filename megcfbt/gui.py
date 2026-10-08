@@ -22,6 +22,7 @@ from megcfbt.frame_control_patch import (
 )
 from megcfbt.frame_package import FRAMEDROP_ZIP_UNPACK_LIMIT, zip_unpacked_size
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from renframe.runtime import experimental_arm64_fallback, requires_pre_sdkarm_override
 from megcfbt.router import (
     ConversionError,
     automatic_custom_godot_runtime_available,
@@ -611,10 +612,19 @@ class ConverterApp:
         self.engine_label.configure(text=f"Engine: {result.engine_label}{version}", text_color=C_TEXT)
         self.backend_label.configure(text=f"Backend: {result.backend or 'none'}", text_color=C_MUTED)
         auto_custom_runtime = automatic_custom_godot_runtime_available(result)
+        legacy_fallback = (
+            experimental_arm64_fallback(result.engine_version, result.renpy_generation)
+            if result.engine == "renpy" else None
+        )
+        pre_sdkarm = (
+            requires_pre_sdkarm_override(result.engine_version, result.renpy_generation)
+            if result.engine == "renpy" else False
+        )
         self.compat_label.configure(
             text=f"Compatibility: {result.compatibility}  ·  confidence {result.confidence}",
             text_color=(
-                C_OK if result.buildable
+                C_WARN if pre_sdkarm
+                else C_OK if result.buildable
                 else C_WARN if auto_custom_runtime
                 else C_ERR
             ),
@@ -623,6 +633,12 @@ class ConverterApp:
         if result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
+            elif legacy_fallback:
+                runtime_text = (
+                    f"RUNTIME // TRY {legacy_fallback} ARM64 (EXPERIMENTAL)…"
+                )
+            elif pre_sdkarm:
+                runtime_text = "RUNTIME // MANUAL ARM64 REQUIRED…"
             elif result.engine_version:
                 runtime_text = f"RUNTIME // AUTO REN'PY {result.engine_version}  //  OVERRIDE…"
             else:
@@ -642,7 +658,11 @@ class ConverterApp:
         self.convert_btn.configure(
             state="normal" if self._conversion_allowed() else "disabled"
         )
-        if result.buildable:
+        if legacy_fallback:
+            drop_text = "PAYLOAD LOCKED // EXPERIMENTAL ARM64"
+        elif pre_sdkarm:
+            drop_text = "PAYLOAD LOCKED // MANUAL ARM64 REQUIRED"
+        elif result.buildable:
             drop_text = "PAYLOAD LOCKED"
         elif auto_custom_runtime:
             drop_text = "PAYLOAD LOCKED // AUTO COMPAT RUNTIME"
@@ -655,6 +675,34 @@ class ConverterApp:
             f"Detected {result.engine_label}" if result.backend else "No supported engine detected",
             C_TEAL if result.backend else C_ERR,
         )
+        if legacy_fallback:
+            advisory = (
+                f"Ren'Py {result.engine_version} predates official ARM64 support. "
+                f"Click CONVERT to approve an experimental official Ren'Py "
+                f"{legacy_fallback} Python 2 runtime download, or use RUNTIME "
+                "to select a manual override. Gameplay is not yet verified."
+            )
+            self._log("Inspect: " + advisory)
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        elif pre_sdkarm:
+            advisory = (
+                f"Ren'Py {result.engine_version} has no exact official ARM64 "
+                "runtime. Select a compatible manual runtime to convert."
+            )
+            self._log("Inspect: " + advisory)
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        else:
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "ROUTING MATRIX ONLINE.\n\n"
+                "Engine detection selects the conversion path; source files remain untouched.")
+            self.notes_box.configure(state="disabled")
         for warning in result.warnings:
             self._log("Inspect: " + warning)
 
@@ -752,6 +800,44 @@ class ConverterApp:
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
+        legacy_arm64_approved = False
+        if self.inspection.engine == "renpy" and self.renpy_runtime is None:
+            fallback = experimental_arm64_fallback(
+                self.inspection.engine_version, self.inspection.renpy_generation
+            )
+            if fallback:
+                choice = messagebox.askyesnocancel(
+                    APP_NAME,
+                    f"Ren'Py {self.inspection.engine_version} predates official "
+                    "Linux ARM64 support.\n\n"
+                    f"YES: Automatically download the official checksum-verified "
+                    f"Ren'Py {fallback} Python 2 ARM64 runtime and try conversion.\n\n"
+                    "NO: Select your own compatible ARM64 Ren'Py runtime folder.\n\n"
+                    "CANCEL: Do nothing.\n\n"
+                    "This is experimental. The game may not run correctly, "
+                    "even if conversion succeeds. Original game files remain untouched.",
+                    icon="warning",
+                )
+                if choice is None:
+                    return
+                if choice:
+                    legacy_arm64_approved = True
+                else:
+                    self._pick_renpy_runtime()
+                    if self.renpy_runtime is None:
+                        return
+            elif requires_pre_sdkarm_override(
+                self.inspection.engine_version, self.inspection.renpy_generation
+            ):
+                messagebox.showinfo(
+                    APP_NAME,
+                    f"Ren'Py {self.inspection.engine_version} has no matching "
+                    "official Linux ARM64 runtime. Please select a compatible "
+                    "runtime folder to attempt conversion.",
+                )
+                self._pick_renpy_runtime()
+                if self.renpy_runtime is None:
+                    return
         if (
             self.inspection.engine == "renpy"
             and self.renpy_runtime is None
@@ -789,6 +875,7 @@ class ConverterApp:
                     source,
                     output=output,
                     renpy_runtime=self.renpy_runtime,
+                    renpy_legacy_arm64_fallback=legacy_arm64_approved,
                     backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,
