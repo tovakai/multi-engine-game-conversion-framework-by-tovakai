@@ -19,6 +19,61 @@ NATIVE_EXTENSIONS = {
 _INCOMPATIBLE_ARCHES = frozenset({"x86_64", "x86", "amd64", "i386", "i686"})
 
 
+
+# Everlasting Summer ships standalone Steam Workshop upload/editor programs
+# inside game/mods. These Windows tools are not Ren'Py runtime extensions.
+# Only recognize their known companion binaries and only when the exact
+# executable marker is present: arbitrary DLLs under game/mods stay blockers.
+_ES_UPLOADER = "game/mods/es_content_uploader.exe"
+_ES_EDITOR = "game/mods/editor/escu_bbcode_editor.exe"
+
+_ES_UPLOADER_BINARIES = frozenset({
+    _ES_UPLOADER,
+    "game/mods/qt5core.dll",
+    "game/mods/qt5gui.dll",
+    "game/mods/qt5widgets.dll",
+    "game/mods/steam_api.dll",
+    "game/mods/vc_redist.x86.exe",
+    "game/mods/platforms/qwindows.dll",
+    "game/mods/styles/qwindowsvistastyle.dll",
+    *(f"game/mods/imageformats/{name}" for name in (
+        "qgif.dll", "qicns.dll", "qico.dll", "qjpeg.dll", "qtga.dll",
+        "qtiff.dll", "qwbmp.dll", "qwebp.dll",
+    )),
+})
+
+_ES_EDITOR_BINARIES = frozenset({
+    _ES_EDITOR,
+    "game/mods/editor/qtwebengineprocess.exe",
+    "game/mods/editor/d3dcompiler_47.dll",
+    "game/mods/editor/bearer/qgenericbearer.dll",
+    *(f"game/mods/editor/{name}" for name in (
+        "qt5core.dll", "qt5gui.dll", "qt5network.dll",
+        "qt5positioning.dll", "qt5printsupport.dll", "qt5qml.dll",
+        "qt5qmlmodels.dll", "qt5quick.dll", "qt5quickwidgets.dll",
+        "qt5serialport.dll", "qt5svg.dll", "qt5webchannel.dll",
+        "qt5webenginecore.dll", "qt5webenginewidgets.dll",
+        "qt5widgets.dll",
+    )),
+})
+
+
+def _native_relative_name(dep: NativeDependency) -> str:
+    return str(dep.path).replace("\\", "/").casefold()
+
+
+def _is_es_workshop_tool(dep: NativeDependency, names: set[str]) -> bool:
+    """Narrow exception for stock standalone uploader/editor binaries only."""
+    if dep.ownership != Ownership.GAME:
+        return False
+    path = _native_relative_name(dep)
+    if _ES_UPLOADER not in names:
+        return False
+    if path in _ES_UPLOADER_BINARIES:
+        return True
+    return _ES_EDITOR in names and path in _ES_EDITOR_BINARIES
+
+
 def classify_ownership(root: Path, absolute: Path) -> Ownership:
     """Classify whether a file is stock runtime or game-specific."""
     try:
@@ -81,8 +136,11 @@ def scan_native_dependencies(root: Path) -> list[NativeDependency]:
 def game_owned_native_problems(deps: list[NativeDependency]) -> list[NativeDependency]:
     """Return game-owned natives that look incompatible with Linux aarch64."""
     problems: list[NativeDependency] = []
+    names = {_native_relative_name(dep) for dep in deps if dep.ownership == Ownership.GAME}
     for dep in deps:
         if dep.ownership != Ownership.GAME:
+            continue
+        if _is_es_workshop_tool(dep, names):
             continue
         arch = (dep.architecture or "").lower()
         if dep.kind in {"windows_dll", "windows_executable", "python_extension"}:
@@ -141,13 +199,21 @@ def classify_compatibility(
         )
         return Compatibility.NEEDS_TESTING, issues
 
-    # Soft signals that deserve testing even without hard native blockers.
+    # Soft signals: preserve visibility of bundled auxiliary Windows binaries.
     game_natives = [d for d in native_dependencies if d.ownership == Ownership.GAME]
     if game_natives:
-        issues.append(
-            "Game-owned binary artifacts present but none clearly x86-incompatible; "
-            "needs runtime testing"
-        )
+        names = {_native_relative_name(dep) for dep in game_natives}
+        if any(_is_es_workshop_tool(dep, names) for dep in game_natives):
+            issues.append(
+                "Bundled Everlasting Summer Workshop uploader/editor Windows tools "
+                "are not ARM64-compatible; they are auxiliary, but game and mod "
+                "compatibility still needs testing"
+            )
+        else:
+            issues.append(
+                "Game-owned binary artifacts present but none clearly x86-incompatible; "
+                "needs runtime testing"
+            )
         return Compatibility.NEEDS_TESTING, issues
 
     if warnings:
