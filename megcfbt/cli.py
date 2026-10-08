@@ -55,9 +55,16 @@ def _parser() -> argparse.ArgumentParser:
 
     artwork_cmd = sub.add_parser(
         "artwork",
-        help="fetch missing art for an existing converted Frame game without rebuilding it",
+        help="fetch art standalone or refresh an existing converted Frame game",
     )
-    artwork_cmd.add_argument("build", type=Path, help="converted game folder")
+    artwork_cmd.add_argument(
+        "build", nargs="?", type=Path,
+        help="optional converted game folder; omit with --name and --output",
+    )
+    artwork_cmd.add_argument(
+        "-o", "--output", type=Path,
+        help="standalone destination for artwork-only downloads, no converted game needed",
+    )
     artwork_cmd.add_argument("--name", help="manual game title override for SteamGridDB lookup")
     artwork_cmd.add_argument("--steamgriddb-id", type=int, help="specific SteamGridDB game ID")
     artwork_cmd.add_argument(
@@ -99,9 +106,32 @@ def main(argv: list[str] | None = None) -> int:
             from megcfbt.artwork import complete_frame_artwork
             from megcfbt.frame_package import create_frame_zip, load_frame_metadata
 
-            root = args.build.expanduser().resolve()
-            metadata = load_frame_metadata(root)
-            name = args.name or metadata.get("name") or root.name
+            if args.build is None:
+                if not args.name or not args.output:
+                    raise RuntimeError(
+                        "Standalone artwork requires --name GAME and --output DIRECTORY"
+                    )
+                if args.repackage:
+                    raise RuntimeError(
+                        "--repackage requires a converted game directory; "
+                        "standalone artwork contains no game runtime"
+                    )
+                root = args.output.expanduser().resolve()
+                if root.exists() and not root.is_dir():
+                    raise RuntimeError(f"Artwork output exists but is not a directory: {root}")
+                root.mkdir(parents=True, exist_ok=True)
+                metadata = None
+                name = args.name
+                print(f"Standalone artwork destination: {root}")
+            else:
+                if args.output:
+                    raise RuntimeError(
+                        "--output is only for standalone downloads; "
+                        "omit the positional game directory"
+                    )
+                root = args.build.expanduser().resolve()
+                metadata = load_frame_metadata(root)
+                name = args.name or metadata.get("name") or root.name
             art = complete_frame_artwork(
                 root,
                 game_name=name,
@@ -109,6 +139,8 @@ def main(argv: list[str] | None = None) -> int:
                 progress=print,
             )
             print(f"Artwork slots present: {', '.join(sorted(art)) if art else 'none'}")
+            if art:
+                print(f"Artwork files: {root / '.megcfbt' / 'artwork'}")
             if args.repackage:
                 if metadata.get("payload"):
                     raise RuntimeError(
