@@ -208,6 +208,10 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
     assert result.runtime_version == "8.5.3"
     assert result.runtime_architecture == "aarch64"
     assert result.launcher_path == output / "launch.sh"
+    installer = (output / "add-to-steam.sh").read_text(encoding="utf-8")
+    assert "steam://addnonsteamgame/" in installer
+    assert "MyPigPrincess" not in installer or "python3" in installer
+    assert "python3 -" in installer
 
     # The distributed engine/game remains the source of truth.
     assert (output / "renpy/versions.py").read_text(encoding="utf-8") == (
