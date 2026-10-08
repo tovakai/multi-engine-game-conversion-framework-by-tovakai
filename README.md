@@ -6,6 +6,37 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
+## Why should I care?
+
+Most PC games are distributed for x86-64 processors. On an ARM64 Linux device,
+running those versions often means using translation or compatibility layers
+such as FEX and Proton. Those tools are impressive, but sometimes the game
+itself is already portable: it is the **bundled engine runtime** that was
+built for x86-64.
+
+This project takes a different route. When an engine is supported, it keeps
+your existing game files and substitutes a compatible **native Linux ARM64
+runtime**, rather than translating the original x86-64 runtime while playing.
+
+Why bother?
+
+- **Less translation work:** the engine executes directly on the ARM64 CPU,
+  potentially reducing overhead, memory use, and power consumption.
+- **Another way to run games:** some titles may work natively even when their
+  original Windows or x86 Linux builds struggle through compatibility layers.
+- **More than one device:** the goal is portable ARM64 Linux output, whether
+  you're using a Steam Frame, a Raspberry Pi, an ARM handheld, or a laptop.
+- **Your games, your setup:** convert games you already own for your own device;
+  no bundled game downloads, mandatory storefront, or prescribed launcher.
+
+**Native does not automatically mean faster or more compatible.** Results
+depend on the engine version, graphics drivers, native libraries, and the
+individual game. FEX and Proton may still be the better option for some games.
+Not every title made with a supported engine can be converted successfully.
+
+The idea is simple: **if a game doesn't actually need an x86-64 CPU, why make
+it pretend it has one?**
+
 ## Current engine backends
 
 | Engine family | Backend | Conversion strategy | Hardware status |
