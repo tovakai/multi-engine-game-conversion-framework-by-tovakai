@@ -181,7 +181,21 @@ slots with static JPEG/PNG. Missing artwork or network/API errors never block co
 SteamGridDB defaults to its safe `nsfw=false` filter. To allow adult artwork
 from the community, set `STEAMGRIDDB_NSFW=any` explicitly in the environment.
 
-You can **refresh artwork on an existing converted game** without rebuilding:
+To get art when the **converted game is not on this computer**, fetch it
+standalone by title. No game files, launcher, or conversion output are needed:
+
+~~~powershell
+.\\.venv-win\\Scripts\\python.exe -m megcfbt.cli artwork \`
+    --name "My Pig Princess" \`
+    --output "$env:USERPROFILE\\Downloads\\MyPigPrincess-artwork"
+~~~
+
+Images are saved under `.megcfbt/artwork/` inside that destination.
+Copy those small image files to the existing Frame installation and use its
+Steam installer if available. Standalone mode intentionally does **not**
+generate a fake game launcher or a game ZIP, and rejects `--repackage`.
+
+You can also **refresh artwork on an existing converted game** without rebuilding:
 
 ~~~powershell
 # Run from the repository root. The key is entered without echoing.
