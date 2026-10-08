@@ -1,9 +1,13 @@
 # Original DDLC 1.1.1 experimental ARM64 migration
 
 Issue [#37](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues/37).
-Hardware verification is **pending**. Conversion success does not establish
-menu, story, save, later-act, restart, ending, or mod compatibility. Do not
-merge this milestone until real Steam Frame testing is complete.
+**Steam Frame Stage A passed (2026-10-08, user-confirmed):** native launch,
+warning/menu, audio, input, exit and graphical relaunch work with the prepared
+personal-use package. This is a **hardware smoke test**, not a complete game
+playthrough. Story/poem, save/load, later-act character-file transitions,
+in-story restarts and ending compatibility remain **unverified**. The user
+approved merging the guarded experimental feature after Stage A; later-stage
+verification continues separately.
 
 ## Scope and architecture
 
@@ -125,7 +129,7 @@ uploaded to CI. Converted output is an unofficial personal-use copy kept local.
 
 | Milestone | Verify on the same converted copy | Status |
 | --- | --- | --- |
-| A | Native menu, sound, exit and graphical relaunch | Pending |
+| A | Native menu, sound, controls, exit and graphical relaunch | **Passed on Steam Frame (2026-10-08)** |
 | B | Dialogue, choices, poem input, save/load, quit/relaunch and Frame reboot restore | Pending |
 | C | Later-act character-file creation/deletion, persistent act transitions, intentional restarts, ending, Steam/Frametop keyboard/mouse controls | Pending |
 | D | Mod compatibility as a separate optional scope | Not included |
