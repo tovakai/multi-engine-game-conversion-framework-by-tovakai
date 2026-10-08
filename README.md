@@ -68,7 +68,10 @@ Multi-Engine Game Conversion Framework by Tovakai
                      |
              Linux ARM64 build
                      |
-             optional tar.gz
+          Frame-ready ZIP package
+                     |
+       Frame Control / FrameDrop
+          or local Steam install
 ```
 
 The current import points are recorded under `docs/backends/`.
@@ -102,6 +105,18 @@ Build it:
 
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build /path/to/game
+```
+
+Successful builds produce a detected-game-name package such as
+`Brotato-linux-aarch64.zip`. The ZIP preserves Linux execute bits and contains
+one unambiguous top-level `launch.sh`, so it can be dropped directly into
+Frame Control or FrameDrop.
+
+On Linux ARM64, an already converted build can also be registered directly with
+local Steam:
+
+```bash
+multi-engine-game-conversion-framework-by-tovakai steam-install /path/to/Brotato-frame
 ```
 
 Open the GUI:
@@ -146,10 +161,15 @@ honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 Custom Godot development exports are still treated conservatively. The first
 automatic compatibility recipe is deliberately narrow: Godot 3.7.0 custom
-builds with a built-in GodotSteam marker on native Linux ARM64.
+builds with a built-in GodotSteam marker.
 
-On Steam Frame, the converter can build and cache the proven compatibility
-stack automatically:
+For this validated recipe the converter now downloads a small, SHA-256-pinned
+ARM64 runtime from the project's GitHub Release assets and caches it
+automatically. The user follows the same flow as any other supported title:
+select the game and press **Convert**. On a compatible Linux ARM64 development
+host the source-build route remains available as a fallback.
+
+The proven compatibility stack is:
 
 - Godot 3.7-dev1 at `a117d512...`
 - upstream CanvasItem cast fix from Godot PR #123099
@@ -160,6 +180,31 @@ stack automatically:
 A manual custom runtime remains available as an override. See
 `docs/custom-godot-arm64-runtime.md` for the exact recipe and host
 requirements.
+
+## Automatic Steam artwork
+
+When a converted game exposes a numeric Steam App ID, the converter uses that
+stable identity to make a best-effort fetch of official Steam library artwork.
+Available portrait/grid, wide, hero, and logo assets are bundled under
+`.megcfbt/artwork/` and can be consumed by the on-device Steam installer.
+
+Artwork lookup is optional enrichment: network failures or missing assets never
+block conversion. The GUI keeps a manual artwork picker as an override rather
+than making it part of the normal workflow.
+
+Converted builds also carry `.megcfbt/package.json` with the canonical
+launcher, engine information, ARM64 runtime declaration, and detected Steam
+App ID when available.
+
+## Frame transfer notes
+
+The end-user package is ZIP, not the older umbrella `.tar.gz` format. This
+avoids the temporary gzip-header nesting issue seen with some extractors and
+matches the Frame Control / FrameDrop import path directly.
+
+For unusually large packages, the included Frame Control and FrameDrop helpers
+can inspect their current upload/extraction limits and offer safer fallback
+routes instead of silently producing an unusable package.
 
 ## Design rule
 
