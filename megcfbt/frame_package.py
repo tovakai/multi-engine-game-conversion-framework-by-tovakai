@@ -107,6 +107,7 @@ def write_frame_metadata(
     launcher_path: Path,
     engine: str,
     engine_version: str | None = None,
+    steam_app_id: str | None = None,
 ) -> Path:
     """Write conversion metadata consumed by the on-device Steam installer."""
 
@@ -131,6 +132,7 @@ def write_frame_metadata(
                 "runtime": "SteamLinuxRuntime_4-arm64",
                 "engine": engine,
                 "engine_version": engine_version,
+                "steam_app_id": steam_app_id,
             },
             indent=2,
             ensure_ascii=False,
