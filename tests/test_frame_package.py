@@ -62,9 +62,11 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
 
         installer = zf.read("Example-frame/.megcfbt/install-to-steam.py").decode("utf-8")
         compile(installer, "install-to-steam.py", "exec")
-        assert "steam://addnonsteamgame/" in installer
+        assert "steam://addnonsteamgame/" not in installer
+        assert "zlib.crc32" in installer
         assert "shortcuts.vdf" in installer
-        assert '"config" / "grid"' in installer
+        assert '"DevkitOverrideAppID": 0' in installer
+        assert 'ARTWORK = {' in installer
 
         metadata = json.loads(
             zf.read("Example-frame/.megcfbt/package.json").decode("utf-8")
@@ -132,3 +134,39 @@ def test_framedrop_compatibility_uses_total_unpacked_zip_size(tmp_path, monkeypa
 
     monkeypatch.setattr(frame_package, "FRAMEDROP_ZIP_UNPACK_LIMIT", 8)
     assert framedrop_zip_compatible(package)
+
+
+def test_bundled_installer_matches_steam_shortcut_appid_formula(tmp_path):
+    from megcfbt.nonsteam_package import INSTALLER_PYTHON
+
+    namespace = {
+        "__name__": "embedded_installer_test",
+        "__file__": str(tmp_path / "Example-frame/.megcfbt/install-to-steam.py"),
+    }
+    exec(compile(INSTALLER_PYTHON, "install-to-steam.py", "exec"), namespace)
+
+    exe = '"/home/steamos/Games/Brotato-frame/launch.sh"'
+    assert namespace["shortcut_appid"](exe, "Brotato") == 3929824991
+    assert namespace["to_signed32"](3929824991) == -365142305
+
+
+def test_bundled_installer_round_trips_shortcuts_vdf(tmp_path):
+    from megcfbt.nonsteam_package import INSTALLER_PYTHON
+
+    namespace = {
+        "__name__": "embedded_installer_test",
+        "__file__": str(tmp_path / "Example-frame/.megcfbt/install-to-steam.py"),
+    }
+    exec(compile(INSTALLER_PYTHON, "install-to-steam.py", "exec"), namespace)
+
+    path = tmp_path / "shortcuts.vdf"
+    original = {
+        "0": {
+            "appid": -365142305,
+            "AppName": "Brotato",
+            "Exe": '"/home/steamos/Games/Brotato-frame/launch.sh"',
+            "tags": {"0": "Tovakai ARM64"},
+        }
+    }
+    namespace["save_shortcuts"](path, original)
+    assert namespace["load_shortcuts"](path) == original
