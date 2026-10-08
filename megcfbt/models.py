@@ -20,6 +20,7 @@ class UnifiedInspection:
     buildable: bool
     warnings: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
+    renpy_generation: int | None = None
 
 
 @dataclass(frozen=True)

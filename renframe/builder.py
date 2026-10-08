@@ -14,6 +14,7 @@ from renframe.runtime import (
     RuntimeDownloadError,
     RuntimeManager,
     detect_runtime_layout,
+    experimental_arm64_fallback,
     inspect_runtime,
     normalize_release_version,
     python_tag_for_generation,
@@ -448,11 +449,10 @@ def _write_grafted_launcher(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-        'export RENPY_PLATFORM="linux-aarch64"\n\n'
+        f'export RENPY_PLATFORM="{platform_name}"\n\n'
         '# Files transferred through Windows may lose executable permissions.\n'
         '# Restore them for the selected ARM64 runtime before launching.\n'
-        'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"\n'
-        '[[ -d "$RUNTIME_DIR" ]] || RUNTIME_DIR="$ROOT/lib/py2-linux-aarch64"\n'
+        f'RUNTIME_DIR="$ROOT/lib/{platform_name}"\n'
         'if [[ -d "$RUNTIME_DIR" ]]; then\n'
         '    for binary in "$RUNTIME_DIR"/*; do\n'
         '        [[ -f "$binary" && ! -L "$binary" && -x "$binary" ]] && continue\n'
@@ -538,15 +538,17 @@ def build_game(
     force: bool = False,
     dry_run: bool = False,
     allow_version_mismatch: bool = False,
+    legacy_arm64_fallback: bool = False,
     progress: Callable[[str], None] | None = None,
     runtime_manager: RuntimeManager | None = None,
 ) -> BuildResult:
     """
     Create a self-contained Linux ARM64 Ren'Py game directory.
 
-    Automatic mode preserves the distributed game tree and grafts the exact
-    official sdkarm AArch64 platform slice into it. A manually supplied runtime
-    keeps the older full-runtime replacement path as an escape hatch.
+    Normal automatic mode grafts the exact official sdkarm ARM64 platform slice
+    into the original engine. The opt-in Ren'Py 7.4 compatibility mode instead
+    uses a matched official 7.5 engine AND ARM64 runtime, retaining game assets.
+    A manually supplied runtime uses the full-runtime replacement path.
     """
     source_path = normalize_path(source)
     output_path = (
@@ -566,6 +568,12 @@ def build_game(
     )
     warnings.extend(game_inspection.warnings)
 
+    if legacy_arm64_fallback and runtime is not None:
+        raise BuildError(
+            "Choose either a manual Ren'Py runtime or the experimental "
+            "7.5.0 fallback, not both."
+        )
+
     automatic_runtime = runtime is None
     runtime_inspection: RuntimeInspection | None = None
 
@@ -578,14 +586,46 @@ def build_game(
         try:
             release = normalize_release_version(game_inspection.renpy_version)
             python_tag = python_tag_for_generation(game_inspection.generation)
-            manager = runtime_manager or RuntimeManager()
-            runtime_path = manager.platform_path(release, python_tag)
-            if not dry_run:
-                runtime_path = manager.ensure_platform(
-                    release,
-                    python_tag,
-                    progress=progress,
+            if legacy_arm64_fallback:
+                fallback_release = experimental_arm64_fallback(
+                    game_inspection.renpy_version, game_inspection.generation
                 )
+                if fallback_release is None:
+                    raise BuildError(
+                        "Experimental Ren'Py 7.5.0 ARM64 fallback is only "
+                        "available for identified Ren'Py 7.4.x Python 2 games."
+                    )
+                release = fallback_release
+                warnings.append(
+                    f"EXPERIMENTAL: game uses Ren'Py {game_inspection.renpy_version}; "
+                    f"using Ren'Py {release} Python 2 ARM64 runtime instead. "
+                    "Gameplay compatibility has not been verified."
+                )
+                if progress:
+                    progress(
+                        f"Experimental Ren'Py 7.4 to {release} ARM64 fallback "
+                        "(explicitly approved)"
+                    )
+            manager = runtime_manager or RuntimeManager()
+            if legacy_arm64_fallback:
+                runtime_path = manager.full_sdk_path(release, python_tag)
+                if not dry_run:
+                    runtime_path = manager.ensure_full_sdk(
+                        release, python_tag, progress=progress
+                    )
+                warnings.append(
+                    "Experimental compatibility mode replaces the source "
+                    "Ren'Py engine with the matching official Ren'Py 7.5.0 "
+                    "engine and Python 2 ARM64 runtime while preserving game/ assets."
+                )
+            else:
+                runtime_path = manager.platform_path(release, python_tag)
+                if not dry_run:
+                    runtime_path = manager.ensure_platform(
+                        release,
+                        python_tag,
+                        progress=progress,
+                    )
         except RuntimeDownloadError as exc:
             raise BuildError(str(exc)) from exc
 
@@ -626,7 +666,7 @@ def build_game(
     display_name, fs_name = _resolve_names(game_inspection, source_path)
     launcher_path = (
         output_path / "launch.sh"
-        if automatic_runtime
+        if automatic_runtime and not legacy_arm64_fallback
         else output_path / f"{fs_name}.sh"
     )
 
@@ -663,7 +703,7 @@ def build_game(
         shutil.rmtree(staging)
 
     try:
-        if automatic_runtime:
+        if automatic_runtime and not legacy_arm64_fallback:
             built_launcher = _copy_source_and_arm_platform(
                 source=source_path,
                 platform=runtime_path,

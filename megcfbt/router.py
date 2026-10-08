@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
+from renframe.runtime import experimental_arm64_fallback, requires_pre_sdkarm_override
 from renframe.builder import BuildError as RenFrameBuildError
 from renframe.builder import build_game as build_renpy_game
 from renframe.inspect_service import inspect_game as inspect_renpy_game
@@ -96,6 +97,19 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         issue for issue in result.potential_issues if issue != "none"
     ])
 
+    fallback = experimental_arm64_fallback(result.renpy_version, result.generation)
+    if fallback:
+        runtime_kind = (
+            f"experimental Ren'Py {fallback} Python 2 ARM64 fallback "
+            "(requires user approval)"
+        )
+    elif requires_pre_sdkarm_override(result.renpy_version, result.generation):
+        runtime_kind = "manual compatible ARM64 runtime required (no matching sdkarm)"
+    elif result.renpy_version:
+        runtime_kind = f"official Ren'Py {result.renpy_version} sdkarm platform (automatic)"
+    else:
+        runtime_kind = "Ren'Py ARM64 runtime (manual override required)"
+
     return UnifiedInspection(
         source_path=root,
         backend="renframe",
@@ -105,14 +119,11 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         game_name=result.game_name,
         compatibility=compatibility,
         confidence=(result.version_hints[0].confidence if result.version_hints else "low"),
-        runtime_kind=(
-            f"official Ren'Py {result.renpy_version} sdkarm platform (automatic)"
-            if result.renpy_version
-            else "Ren'Py ARM64 runtime (manual override required)"
-        ),
+        runtime_kind=runtime_kind,
         buildable=buildable,
         warnings=warnings,
         evidence=evidence,
+        renpy_generation=result.generation,
     )
 
 
@@ -211,6 +222,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 buildable=result.buildable,
                 warnings=result.warnings,
                 evidence=result.evidence,
+                renpy_generation=result.renpy_generation,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc
@@ -226,6 +238,7 @@ def build_source(
     force: bool = False,
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
+    renpy_legacy_arm64_fallback: bool = False,
     steam_cover: Path | str | None = None,
     steamgriddb_game_id: int | None = None,
     progress: Callable[[str], None] | None = None,
@@ -283,6 +296,7 @@ def build_source(
                     runtime=renpy_runtime,
                     force=force,
                     allow_version_mismatch=allow_renpy_version_mismatch,
+                    legacy_arm64_fallback=renpy_legacy_arm64_fallback,
                     progress=progress,
                 )
                 launcher_path = result.launcher_path
