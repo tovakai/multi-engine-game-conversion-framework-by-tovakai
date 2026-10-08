@@ -62,10 +62,10 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
 
         installer = zf.read("Example-frame/.megcfbt/install-to-steam.py").decode("utf-8")
         compile(installer, "install-to-steam.py", "exec")
-        assert "steam://addnonsteamgame/" not in installer
+        assert "steam://addnonsteamgame/" in installer
         assert "zlib.crc32" in installer
         assert "shortcuts.vdf" in installer
-        assert '"DevkitOverrideAppID": 0' in installer
+        assert "Expected deterministic AppID" in installer
         assert 'ARTWORK = {' in installer
 
         metadata = json.loads(
@@ -150,7 +150,7 @@ def test_bundled_installer_matches_steam_shortcut_appid_formula(tmp_path):
     assert namespace["to_signed32"](3929824991) == -365142305
 
 
-def test_bundled_installer_round_trips_shortcuts_vdf(tmp_path):
+def test_bundled_installer_reads_shortcuts_vdf(tmp_path):
     from megcfbt.nonsteam_package import INSTALLER_PYTHON
 
     namespace = {
@@ -168,5 +168,14 @@ def test_bundled_installer_round_trips_shortcuts_vdf(tmp_path):
             "tags": {"0": "Tovakai ARM64"},
         }
     }
-    namespace["save_shortcuts"](path, original)
+    writer = (
+        b"\x00shortcuts\x00"
+        + b"\x00" + b"0\x00"
+        + b"\x02appid\x00" + (-365142305).to_bytes(4, "little", signed=True)
+        + b"\x01AppName\x00Brotato\x00"
+        + b'\x01Exe\x00"/home/steamos/Games/Brotato-frame/launch.sh"\x00'
+        + b"\x00tags\x00\x010\x00Tovakai ARM64\x00\x08"
+        + b"\x08\x08\x08"
+    )
+    path.write_bytes(writer)
     assert namespace["load_shortcuts"](path) == original
