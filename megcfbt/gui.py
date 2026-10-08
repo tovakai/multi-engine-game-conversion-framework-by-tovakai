@@ -404,6 +404,20 @@ class ConverterApp:
         )
         self.activity_progress.pack(fill="x", pady=(2, 0))
         self.activity_progress.stop()
+        self.download_label = ctk.CTkLabel(
+            progress_panel,
+            text="RUNTIME DOWNLOAD // WAITING",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+        )
+        self.download_bar = ctk.CTkProgressBar(
+            progress_panel,
+            mode="determinate",
+            fg_color=C_PANEL,
+            progress_color=C_TEAL,
+        )
+        self.download_bar.set(0)
         status_row = ctk.CTkFrame(self.root, fg_color="transparent")
         status_row.pack(fill="x", padx=28, pady=(0, 14))
         self.status = ctk.CTkLabel(
@@ -453,6 +467,27 @@ class ConverterApp:
 
         self._dispatch(update)
 
+    def _download_progress(self, received: int, total: int | None) -> None:
+        def update() -> None:
+            if not self.download_bar.winfo_manager():
+                self.download_label.pack(fill="x", pady=(8, 0))
+                self.download_bar.pack(fill="x", pady=(2, 0))
+            if total and total > 0:
+                self.download_bar.configure(mode="determinate")
+                self.download_bar.set(min(1.0, received / total))
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} / "
+                    f"{total / 1048576:.1f} MiB "
+                    f"({received * 100 // total}%)"
+                )
+            else:
+                self.download_bar.configure(mode="indeterminate")
+                self.download_bar.start()
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} MiB"
+                )
+        self._dispatch(update)
+
     def _progress_log(self, message: str) -> None:
         self._log(message)
         self._dispatch(
@@ -480,10 +515,16 @@ class ConverterApp:
             self.progress_percent_label.configure(text="0%")
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
+            self.download_bar.stop()
+            self.download_bar.configure(mode="determinate")
+            self.download_bar.set(0)
+            self.download_bar.pack_forget()
+            self.download_label.pack_forget()
         else:
             allowed = self._conversion_allowed()
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
+            self.download_bar.stop()
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -705,6 +746,7 @@ class ConverterApp:
                     archive=archive,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
+                    download_progress=self._download_progress,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
