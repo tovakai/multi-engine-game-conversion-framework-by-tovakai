@@ -54,7 +54,20 @@ _ES_EDITOR_BINARIES = frozenset({
         "qt5serialport.dll", "qt5svg.dll", "qt5webchannel.dll",
         "qt5webenginecore.dll", "qt5webenginewidgets.dll",
         "qt5widgets.dll",
+        "libegl.dll", "libglesv2.dll",
     )),
+    "game/mods/editor/iconengines/qsvgicon.dll",
+    *(f"game/mods/editor/imageformats/{name}" for name in (
+        "qgif.dll", "qicns.dll", "qico.dll", "qjpeg.dll",
+        "qsvg.dll", "qtga.dll", "qtiff.dll", "qwbmp.dll", "qwebp.dll",
+    )),
+    "game/mods/editor/platforms/qwindows.dll",
+    *(f"game/mods/editor/position/{name}" for name in (
+        "qtposition_positionpoll.dll", "qtposition_serialnmea.dll",
+        "qtposition_winrt.dll",
+    )),
+    "game/mods/editor/printsupport/windowsprintersupport.dll",
+    "game/mods/editor/styles/qwindowsvistastyle.dll",
 })
 
 
