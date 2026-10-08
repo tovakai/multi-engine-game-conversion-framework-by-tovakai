@@ -169,7 +169,7 @@ not a promise that every game using an engine will work.
 
 | Game | Engine | Tested device | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Brotato | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (tested ~30 min) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
+| Brotato | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
 but gameplay not yet validated; **Issues** = runs with notable problems;
