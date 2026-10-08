@@ -90,7 +90,7 @@ def synchronous_threads(monkeypatch):
 def test_legacy_gui_displays_experimental_option_and_warning(tmp_path):
     app = app_for_inspection(tmp_path)
     app._show_inspection(inspection(app.source))
-    assert "TRY 7.5.0" in app.runtime_button.values["text"]
+    assert "7.5.0 EXPERIMENTAL // OVERRIDE" in app.runtime_button.values["text"]
     assert "EXPERIMENTAL" in app.runtime_button.values["text"]
     assert app.convert_btn.values["state"] == "normal"
     assert "EXPERIMENTAL ARM64" in app.drop_label.values["text"]
