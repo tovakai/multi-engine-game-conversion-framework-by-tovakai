@@ -12,6 +12,7 @@ from renframe.models import Compatibility as RenpyCompatibility
 from rpgmframe.builder import BuildError as RPGMFrameBuildError
 from rpgmframe.builder import build_game as build_rpgm_game
 from rpgmframe.detector import inspect_game as inspect_rpgm_game
+from rpgmframe.godot_runtime_download import downloadable
 from rpgmframe.godot_custom_runtime import (
     automatic_recipe_for,
     host_can_build_automatic_runtime,
@@ -176,7 +177,7 @@ def automatic_custom_godot_runtime_available(
         custom_build=True,
         godotsteam=godotsteam,
     )
-    return recipe is not None and host_can_build_automatic_runtime()
+    return recipe is not None and (downloadable(recipe) or host_can_build_automatic_runtime())
 
 
 def inspect_source(source: Path | str) -> UnifiedInspection:
@@ -214,6 +215,7 @@ def build_source(
     allow_renpy_version_mismatch: bool = False,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
+    download_progress: Callable[[int, int | None], None] | None = None,
 ) -> UnifiedBuildResult:
     def stage(value: float, message: str) -> None:
         if stage_progress:
@@ -284,6 +286,7 @@ def build_source(
                 force=force,
                 progress=progress,
                 stage_progress=backend_stage,
+                download_progress=download_progress,
             )
             launcher_path = result.launcher_path
             warnings = tuple(result.warnings)
