@@ -50,6 +50,25 @@ def test_stock_es_workshop_uploader_and_editor_are_nonblocking(tmp_path):
         "game/mods/editor/QtWebEngineProcess.exe",
         "game/mods/editor/bearer/qgenericbearer.dll",
         "game/mods/editor/d3dcompiler_47.dll",
+        # Remaining stock Qt editor DLLs observed in a fresh Steam installation.
+        "game/mods/editor/iconengines/qsvgicon.dll",
+        "game/mods/editor/imageformats/qgif.dll",
+        "game/mods/editor/imageformats/qicns.dll",
+        "game/mods/editor/imageformats/qico.dll",
+        "game/mods/editor/imageformats/qjpeg.dll",
+        "game/mods/editor/imageformats/qsvg.dll",
+        "game/mods/editor/imageformats/qtga.dll",
+        "game/mods/editor/imageformats/qtiff.dll",
+        "game/mods/editor/imageformats/qwbmp.dll",
+        "game/mods/editor/imageformats/qwebp.dll",
+        "game/mods/editor/libEGL.dll",
+        "game/mods/editor/libGLESv2.dll",
+        "game/mods/editor/platforms/qwindows.dll",
+        "game/mods/editor/position/qtposition_positionpoll.dll",
+        "game/mods/editor/position/qtposition_serialnmea.dll",
+        "game/mods/editor/position/qtposition_winrt.dll",
+        "game/mods/editor/printsupport/windowsprintersupport.dll",
+        "game/mods/editor/styles/qwindowsvistastyle.dll",
     ]
     for rel in binaries:
         path = root / rel
@@ -82,12 +101,16 @@ def test_unknown_mod_native_code_still_blocks_with_uploader_present():
         _dep("game/mods/ES_Content_Uploader.exe"),
         _dep("game/mods/custom_mod/required.dll"),
         _dep("game/mods/editor/custom_plugin.dll"),
+        _dep("game/mods/editor/imageformats/custom_codec.dll"),
+        _dep("game/mods/editor/position/custom_provider.dll"),
         _dep("game/native/required.pyd"),
     ]
     problems = game_owned_native_problems(deps)
     assert {p.path.as_posix() for p in problems} == {
         "game/mods/custom_mod/required.dll",
         "game/mods/editor/custom_plugin.dll",
+        "game/mods/editor/imageformats/custom_codec.dll",
+        "game/mods/editor/position/custom_provider.dll",
         "game/native/required.pyd",
     }
     assert _verdict(deps)[0] == Compatibility.INCOMPATIBLE_NATIVE_CODE
