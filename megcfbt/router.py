@@ -17,11 +17,20 @@ from rpgmframe.godot_custom_runtime import (
     automatic_recipe_for,
     host_can_build_automatic_runtime,
 )
-from rpgmframe.packaging import PackagingError, create_tar_gz
+from megcfbt.frame_package import (
+    FRAMEDROP_ZIP_UNPACK_LIMIT,
+    FramePackageError,
+    create_frame_zip,
+    embed_steam_cover,
+    framedrop_zip_compatible,
+    zip_unpacked_size,
+    write_frame_metadata,
+)
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from renframe.utils import sanitize_fs_name
 
 
 class ConversionError(RuntimeError):
@@ -33,8 +42,14 @@ def source_base_name(source: Path | str) -> str:
     return path.stem if path.suffix.lower() == ".zip" else path.name
 
 
-def output_path_for_source(source: Path | str, output_dir: Path | str) -> Path:
-    return Path(output_dir).expanduser() / f"{source_base_name(source)}-frame"
+def output_path_for_source(
+    source: Path | str,
+    output_dir: Path | str,
+    game_name: str | None = None,
+) -> Path:
+    fallback = source_base_name(source)
+    base = sanitize_fs_name(game_name or fallback, fallback=fallback)
+    return Path(output_dir).expanduser() / f"{base}-frame"
 
 
 def _single_directory_child(root: Path) -> Path | None:
@@ -213,6 +228,7 @@ def build_source(
     force: bool = False,
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
+    steam_cover: Path | str | None = None,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
@@ -252,7 +268,7 @@ def build_source(
     output_path = (
         Path(output).expanduser().resolve()
         if output is not None
-        else path.parent / f"{source_base_name(path)}-frame"
+        else output_path_for_source(path, path.parent, inspection.game_name)
     )
 
     try:
@@ -294,16 +310,36 @@ def build_source(
             engine_version = result.engine_version
 
         stage(0.82, "Game build complete")
+        write_frame_metadata(
+            output_path,
+            name=game_name or inspection.game_name or source_base_name(path),
+            launcher_path=launcher_path,
+            engine=inspection.engine,
+            engine_version=engine_version,
+        )
+        if steam_cover is not None:
+            embed_steam_cover(output_path, steam_cover)
         if archive:
-            stage(0.88, "Creating transfer archive")
-            archive_path = create_tar_gz(output_path, force=force)
+            stage(0.88, "Creating Frame-ready ZIP")
+            archive_path = create_frame_zip(
+                output_path,
+                launcher_path=launcher_path,
+                force=force,
+            )
+            if not framedrop_zip_compatible(archive_path) and progress:
+                unpacked_gib = zip_unpacked_size(archive_path) / (1024 ** 3)
+                progress(
+                    f"Warning: FrameDrop's ZIP limit is 4 GiB unpacked; "
+                    f"this package unpacks to {unpacked_gib:.2f} GiB. "
+                    f"Transfer the converted folder instead: {output_path}"
+                )
         else:
             archive_path = None
         stage(1.0, "Complete")
     except (
         RenFrameBuildError,
         RPGMFrameBuildError,
-        PackagingError,
+        FramePackageError,
         SourceError,
     ) as exc:
         raise ConversionError(str(exc)) from exc
