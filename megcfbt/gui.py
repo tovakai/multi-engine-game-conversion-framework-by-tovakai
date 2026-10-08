@@ -11,6 +11,16 @@ from pathlib import Path
 from typing import Any
 
 from megcfbt import APP_NAME
+from megcfbt.frame_control_patch import (
+    PATCHED_LIMIT_GIB,
+    STOCK_LIMIT_GIB,
+    FrameControlPatchError,
+    inspect_frame_control,
+    locate_frame_control_server,
+    patch_upload_limit,
+    restore_upload_limit,
+)
+from megcfbt.frame_package import FRAMEDROP_ZIP_UNPACK_LIMIT, zip_unpacked_size
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt.router import (
     ConversionError,
@@ -121,6 +131,8 @@ class ConverterApp:
         self.backend_runtime: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
+        self.last_result: UnifiedBuildResult | None = None
+        self.steam_cover: Path | None = None
         self.output_dir = Path.home() / "Desktop"
         if not self.output_dir.is_dir():
             self.output_dir = Path.home()
@@ -238,7 +250,16 @@ class ConverterApp:
             command=self._start_convert,
         )
         self.convert_btn.pack(side="left")
-
+        ctk.CTkButton(
+            controls,
+            text="CUSTOM COVER…",
+            width=130,
+            height=40,
+            fg_color=C_PANEL_2,
+            hover_color=C_BORDER,
+            text_color=C_MUTED,
+            command=self._pick_steam_cover,
+        ).pack(side="left", padx=(10, 0))
         ctk.CTkButton(
             controls,
             text="OUTPUT FOLDER",
@@ -266,7 +287,7 @@ class ConverterApp:
         options.pack(fill="x", padx=28, pady=(0, 8))
         ctk.CTkCheckBox(
             options,
-            text="CREATE TRANSFER .TAR.GZ",
+            text="CREATE STEAM FRAME PACKAGE (.ZIP)",
             variable=self.archive_var,
             fg_color=C_TEAL,
             text_color=C_MUTED,
@@ -404,6 +425,20 @@ class ConverterApp:
         )
         self.activity_progress.pack(fill="x", pady=(2, 0))
         self.activity_progress.stop()
+        self.download_label = ctk.CTkLabel(
+            progress_panel,
+            text="RUNTIME DOWNLOAD // WAITING",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+        )
+        self.download_bar = ctk.CTkProgressBar(
+            progress_panel,
+            mode="determinate",
+            fg_color=C_PANEL,
+            progress_color=C_TEAL,
+        )
+        self.download_bar.set(0)
         status_row = ctk.CTkFrame(self.root, fg_color="transparent")
         status_row.pack(fill="x", padx=28, pady=(0, 14))
         self.status = ctk.CTkLabel(
@@ -427,11 +462,20 @@ class ConverterApp:
             self._ui_queue.put(callback)
 
     def _drain_ui_queue(self) -> None:
-        try:
-            while True:
-                self._ui_queue.get_nowait()()
-        except queue.Empty:
-            pass
+        while True:
+            try:
+                callback = self._ui_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                callback()
+            except Exception as exc:
+                # One bad queued callback must not permanently stop GUI updates.
+                try:
+                    self.log_box.insert("end", f"UI callback error: {exc}\n")
+                    self.log_box.see("end")
+                except Exception:
+                    pass
         try:
             self.root.after(25, self._drain_ui_queue)
         except Exception:
@@ -451,6 +495,27 @@ class ConverterApp:
             self.progress_percent_label.configure(text=f"{round(clamped * 100)}%")
             self.activity_label.configure(text=f"CURRENT OPERATION // {message.upper()}")
 
+        self._dispatch(update)
+
+    def _download_progress(self, received: int, total: int | None) -> None:
+        def update() -> None:
+            if not self.download_bar.winfo_manager():
+                self.download_label.pack(fill="x", pady=(8, 0))
+                self.download_bar.pack(fill="x", pady=(2, 0))
+            if total and total > 0:
+                self.download_bar.configure(mode="determinate")
+                self.download_bar.set(min(1.0, received / total))
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} / "
+                    f"{total / 1048576:.1f} MiB "
+                    f"({received * 100 // total}%)"
+                )
+            else:
+                self.download_bar.configure(mode="indeterminate")
+                self.download_bar.start()
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} MiB"
+                )
         self._dispatch(update)
 
     def _progress_log(self, message: str) -> None:
@@ -480,10 +545,16 @@ class ConverterApp:
             self.progress_percent_label.configure(text="0%")
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
+            self.download_bar.stop()
+            self.download_bar.configure(mode="determinate")
+            self.download_bar.set(0)
+            self.download_bar.pack_forget()
+            self.download_label.pack_forget()
         else:
             allowed = self._conversion_allowed()
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
+            self.download_bar.stop()
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -498,6 +569,8 @@ class ConverterApp:
         self.inspection = None
         self.renpy_runtime = None
         self.backend_runtime = None
+        self.steam_cover = None
+        self.last_result = None
         self.log_box.delete("1.0", "end")
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
@@ -518,7 +591,14 @@ class ConverterApp:
                 result = inspect_source(source)
                 self._dispatch(lambda: self._show_inspection(result) if generation == self._generation else None)
             except Exception as exc:
-                self._dispatch(lambda: self._inspection_failed(str(exc)) if generation == self._generation else None)
+                message = str(exc)
+                self._dispatch(
+                    lambda message=message: (
+                        self._inspection_failed(message)
+                        if generation == self._generation
+                        else None
+                    )
+                )
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -660,6 +740,15 @@ class ConverterApp:
         else:
             _open_path(self.output_dir)
 
+    def _pick_steam_cover(self) -> None:
+        selected = filedialog.askopenfilename(
+            title="Optional Steam portrait artwork",
+            filetypes=[("Images", "*.png *.jpg *.jpeg")],
+        )
+        if selected:
+            self.steam_cover = Path(selected)
+            self._log(f"Custom artwork: {self.steam_cover}")
+
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
@@ -682,7 +771,7 @@ class ConverterApp:
                 return
 
         source = self.source
-        output = output_path_for_source(source, self.output_dir)
+        output = output_path_for_source(source, self.output_dir, self.inspection.game_name)
         force = bool(self.force_var.get())
         archive = bool(self.archive_var.get())
 
@@ -703,14 +792,18 @@ class ConverterApp:
                     backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,
+                    steam_cover=self.steam_cover,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
+                    download_progress=self._download_progress,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
-                self._dispatch(lambda: self._fail(str(exc)))
+                message = str(exc)
+                self._dispatch(lambda message=message: self._fail(message))
             except Exception as exc:
-                self._dispatch(lambda: self._fail(f"Unexpected error: {exc}"))
+                message = f"Unexpected error: {exc}"
+                self._dispatch(lambda message=message: self._fail(message))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -718,10 +811,11 @@ class ConverterApp:
         self._set_progress(1.0, "Complete")
         self.last_output = result.output_path
         self.last_archive = result.archive_path
+        self.last_result = result
         self._set_busy(False)
         self._log(f"Built: {result.output_path}")
         if result.archive_path:
-            self._log(f"Archive: {result.archive_path}")
+            self._log(f"Steam Frame package: {result.archive_path}")
         for warning in result.warnings:
             self._log("Warning: " + warning)
         target = result.archive_path or result.output_path
@@ -730,7 +824,8 @@ class ConverterApp:
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
             f"Build directory:\n{result.output_path}\n\n"
-            + (f"Transfer archive:\n{result.archive_path}\n" if result.archive_path else ""),
+            + (f"Steam Frame package:\n{result.archive_path}\n\n"
+              f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else ""),
         )
 
     def _fail(self, message: str) -> None:

@@ -137,6 +137,12 @@ def test_custom_godot_build_requires_runtime_override(
 ) -> None:
     root = tmp_path / "custom-godot"
     _write_custom_godot_export(root)
+    # Simulate a recipe that is neither published nor buildable locally.
+    # Published recipes are intentionally usable on Windows now.
+    monkeypatch.setattr(
+        "megcfbt.router.downloadable",
+        lambda recipe: False,
+    )
     monkeypatch.setattr(
         "megcfbt.router.host_can_build_automatic_runtime",
         lambda: False,
@@ -163,8 +169,11 @@ def test_custom_godot_automatic_runtime_reaches_backend_without_override(
     def fake_build(path, **kwargs):
         seen["path"] = path
         seen["runtime"] = kwargs.get("runtime")
+        output.mkdir(parents=True, exist_ok=True)
+        launcher = output / "launch.sh"
+        launcher.write_text("#!/bin/sh\n", encoding="utf-8")
         return SimpleNamespace(
-            launcher_path=output / "launch.sh",
+            launcher_path=launcher,
             warnings=[],
             game_name="Brotato",
             engine_version="3.7.0",
@@ -197,8 +206,11 @@ def test_custom_godot_runtime_override_reaches_backend(
     def fake_build(path, **kwargs):
         seen["path"] = path
         seen["runtime"] = kwargs.get("runtime")
+        output.mkdir(parents=True, exist_ok=True)
+        launcher = output / "launch.sh"
+        launcher.write_text("#!/bin/sh\n", encoding="utf-8")
         return SimpleNamespace(
-            launcher_path=output / "launch.sh",
+            launcher_path=launcher,
             warnings=[],
             game_name="Brotato",
             engine_version="3.7.0",

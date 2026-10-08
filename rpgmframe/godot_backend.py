@@ -133,6 +133,7 @@ def build_godot_game(
     archive_type: str | None,
     progress: Callable[[str], None] | None,
     stage_progress: Callable[[float, str], None] | None = None,
+    download_progress: Callable[[int, int | None], None] | None = None,
 ) -> BuildResult:
     def stage(value: float, message: str) -> None:
         if stage_progress:
@@ -178,20 +179,35 @@ def build_godot_game(
             )
 
         stage(0.12, "Resolving custom GodotSteam ARM64 compatibility runtime")
-        configured_cache = os.environ.get("RPGMFRAME_CACHE_DIR")
-        cache_root = (
-            Path(configured_cache).expanduser()
-            if configured_cache
-            else output_path.parent / ".tovakai-runtime-cache"
+        from rpgmframe.godot_runtime_download import (
+            RuntimeDownloadError,
+            downloadable,
+            ensure_downloaded_runtime,
         )
-        manager = CustomGodotRuntimeManager(
-            cache_dir=cache_root,
-            work_dir=output_path.parent / ".tovakai-runtime-work" / recipe,
-        )
-        try:
-            runtime_path = manager.ensure_runtime(progress=progress)
-        except CustomGodotRuntimeError as exc:
-            raise GodotBuildError(str(exc)) from exc
+        if downloadable(recipe):
+            try:
+                runtime_path = ensure_downloaded_runtime(
+                    recipe,
+                    progress=progress,
+                    download_progress=download_progress,
+                )
+            except RuntimeDownloadError as exc:
+                raise GodotBuildError(str(exc)) from exc
+        else:
+            configured_cache = os.environ.get("RPGMFRAME_CACHE_DIR")
+            cache_root = (
+                Path(configured_cache).expanduser()
+                if configured_cache
+                else output_path.parent / ".tovakai-runtime-cache"
+            )
+            manager = CustomGodotRuntimeManager(
+                cache_dir=cache_root,
+                work_dir=output_path.parent / ".tovakai-runtime-work" / recipe,
+            )
+            try:
+                runtime_path = manager.ensure_runtime(progress=progress)
+            except CustomGodotRuntimeError as exc:
+                raise GodotBuildError(str(exc)) from exc
     elif runtime is None:
         stage(0.15, f"Resolving Godot {inspection.engine_version} ARM64 runtime")
         try:
