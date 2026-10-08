@@ -55,10 +55,9 @@ Multi-Engine Game Conversion Framework by tovakai
 2. Drop a Ren'Py, RPG Maker, or Godot game folder / ZIP.
 3. Let the framework detect the engine.
 4. Convert.
-5. Copy the generated *-linux-aarch64.tar.gz to the target Linux ARM64 device.
+5. Drop the generated *-linux-aarch64.zip into Frame Control or FrameDrop.
 
-RPG Maker and Godot runtimes are resolved automatically.
-Ren'Py currently requires a matching ARM64 Ren'Py runtime folder.
+Supported runtimes are resolved automatically and cached when needed.
 "@
 Set-Content -Path (Join-Path $release "README.txt") -Value $readme -Encoding UTF8
 
