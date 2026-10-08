@@ -57,7 +57,7 @@ it pretend it has one?**
 
 | Engine family | Backend | Conversion strategy | Hardware status |
 | --- | --- | --- | --- |
-| Ren'Py | RenFrame | replace the distributed runtime with a matching Linux ARM64 Ren'Py runtime | proven separately in RenFrame; combined path needs validation |
+| Ren'Py | RenFrame | use matching Linux ARM64 Ren'Py runtimes; experimental full-engine migration for legacy 7.4.x | Ren'Py 7.4.11 (via 7.5.0) and Ren'Py 8 games playable on Steam Frame in initial testing |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
@@ -308,6 +308,8 @@ not a promise that every game using an engine will work.
 | --- | --- | --- | --- | --- |
 | [Brotato 1.1.14.6](https://store.steampowered.com/app/1942280/Brotato/) | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
 | [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
+| [Everlasting Summer 1.6](https://store.steampowered.com/app/331470/Everlasting_Summer/) (original release) | Ren'Py 7.4.11 / Python 2; experimental full-engine migration to Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief skip-through; full testing pending) | Game launches, passes splash screen and progresses through dialogue. Requires the opt-in 7.5.0 engine/runtime fallback; the previous 7.4 engine + 7.5 graphics-library hybrid crashed at GL initialization. |
+| Everlasting Summer (author's Ren'Py 8 beta) | Ren'Py 8.x; exact beta/runtime version not recorded | Steam Frame | Playable (initial gameplay confirmed; full testing pending) | Standard conversion ran without observed issues during initial play. Upstream beta status relates to potential mod compatibility; mods were not tested. |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
 but gameplay not yet validated; **Issues** = runs with notable problems;
