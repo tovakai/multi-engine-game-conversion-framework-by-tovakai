@@ -4,6 +4,8 @@ import json
 import stat
 import zipfile
 
+import pytest
+
 from megcfbt import frame_package
 from megcfbt.frame_package import (
     create_frame_zip,
@@ -179,3 +181,43 @@ def test_bundled_installer_reads_shortcuts_vdf(tmp_path):
     )
     path.write_bytes(writer)
     assert namespace["load_shortcuts"](path) == original
+
+
+def test_frame_zip_large_streamed_entry_uses_zip64(tmp_path, monkeypatch):
+    # Emulate ZIP64's multi-gigabyte boundary without storing a huge fixture.
+    # This failed with "File size too large, try using force_zip64" when the
+    # streaming ZipInfo did not declare its source file's size.
+    build = tmp_path / "Large-frame"
+    build.mkdir()
+    launcher = build / "launch.sh"
+    launcher.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    payload = build / "large.bin"
+    payload.write_bytes(b"x" * 2048)
+
+    monkeypatch.setattr(zipfile, "ZIP64_LIMIT", 256)
+    archive = create_frame_zip(build, launcher_path=launcher)
+
+    with zipfile.ZipFile(archive) as zf:
+        name = "Large-frame/payload/large.bin"
+        assert zf.testzip() is None
+        assert zf.read(name) == payload.read_bytes()
+        assert stat.S_IMODE(zf.getinfo(name).external_attr >> 16) == 0o644
+
+
+def test_frame_zip_stream_error_removes_partial_archive(tmp_path, monkeypatch):
+    build = tmp_path / "Interrupted-frame"
+    build.mkdir()
+    launcher = build / "launch.sh"
+    launcher.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (build / "data.bin").write_bytes(b"example data")
+    archive = tmp_path / "Interrupted-linux-aarch64.zip"
+
+    def interrupt_copy(src, dst, block_size):
+        dst.write(src.read(2))
+        raise OSError("interrupted while streaming")
+
+    monkeypatch.setattr(frame_package.shutil, "copyfileobj", interrupt_copy)
+    with pytest.raises(frame_package.FramePackageError, match="interrupted while streaming"):
+        create_frame_zip(build, launcher_path=launcher, output=archive)
+    assert not archive.exists()
+    assert not list(tmp_path.glob(f".{archive.name}.tmp-*"))

@@ -365,6 +365,10 @@ def create_frame_zip(
                     permissions=0o755 if executable else 0o644,
                     file_type=stat.S_IFREG,
                 )
+                # ZIP64 needs the size before a streamed member is opened.
+                # Without it, large files fail after copying even though the
+                # archive itself has allowZip64=True.
+                info.file_size = path.stat().st_size
                 with path.open("rb") as src, zf.open(info, "w") as dst:
                     shutil.copyfileobj(src, dst, 1 << 20)
 
