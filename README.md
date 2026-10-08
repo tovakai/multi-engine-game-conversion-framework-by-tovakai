@@ -6,6 +6,21 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
+## Contents
+
+- [Why should I care?](#why-should-i-care)
+- [Current engine backends](#current-engine-backends)
+- [Architecture](#architecture)
+- [Install for development](#install-for-development)
+- [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
+- [Ren'Py runtime resolution](#renpy-runtime-resolution)
+- [Custom Godot / GodotSteam compatibility runtime](#custom-godot--godotsteam-compatibility-runtime)
+- [Launching converted games on Linux ARM64](#launching-converted-games-on-linux-arm64)
+- [Tested game compatibility](#tested-game-compatibility)
+- [Support the project](#support-the-project-)
+- [Design rule](#design-rule)
+- [License](#license)
+
 ## Why should I care?
 
 Most PC games are distributed for x86-64 processors. On an ARM64 Linux device,
