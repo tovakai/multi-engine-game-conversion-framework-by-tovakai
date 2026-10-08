@@ -43,6 +43,23 @@ def normalize_release_version(version: str) -> str:
     return ".".join(match.groups())
 
 
+
+def experimental_arm64_fallback(version: str | None, generation: int | None) -> str | None:
+    """Offer a deliberately narrow Python 2 fallback for Ren'Py 7.4.x.
+
+    Ren'Py 7.5.0 is the first official sdkarm release. This is an opt-in,
+    cross-minor experiment, not evidence that every 7.4 game will run.
+    Never infer a Python generation from the version alone.
+    """
+    if generation != 7 or not version:
+        return None
+    try:
+        release = normalize_release_version(version)
+    except RuntimeDownloadError:
+        return None
+    return "7.5.0" if release.startswith("7.4.") else None
+
+
 def python_tag_for_generation(generation: int | None) -> str:
     if generation == 8:
         return "py3"
