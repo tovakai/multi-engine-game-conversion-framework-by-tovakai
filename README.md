@@ -68,7 +68,7 @@ Multi-Engine Game Conversion Framework by Tovakai
                      |
              Linux ARM64 build
                      |
-             optional tar.gz
+          Steam Frame ZIP package
 ```
 
 The current import points are recorded under `docs/backends/`.
@@ -113,6 +113,28 @@ multi-engine-game-conversion-framework-by-tovakai gui
 There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
+
+## Steam Frame install flow
+
+The default build also creates a portable `*-linux-aarch64.zip` package. For
+now, treat it as a normal file transfer rather than a magic sideload bundle:
+
+1. copy the ZIP to the Steam Frame using Frame Control, SCP, a USB drive, or any
+   other file-transfer method
+2. extract it on the Frame
+3. open a terminal in the extracted folder
+4. run `./install-to-steam.sh`
+
+The bundled installer asks the running Steam client to add the package's
+`launch.sh` as a normal **non-Steam game**, then applies any bundled artwork
+from `.megcfbt/artwork/`. If Steam does not import the shortcut automatically,
+add `launch.sh` manually through Steam's **Add a Non-Steam Game** flow and run
+`install-to-steam.sh` again to apply the artwork.
+
+Direct installation through third-party sideloaders such as FrameDrop or Frame
+Control is not a supported contract yet. Their executable-selection and Devkit
+Game behavior can bypass the generated launcher or conflict with games that use
+their original Steam AppID.
 
 ## Ren'Py runtime resolution
 
