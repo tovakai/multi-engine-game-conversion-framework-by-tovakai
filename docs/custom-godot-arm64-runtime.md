@@ -55,6 +55,9 @@ The backend:
 - bundles `godot.arm64`, `libsteam_api.so`, and runtime provenance
 - copies a game's `steam_data.json` beside the runtime when the original
   export provides one
+- derives `steam_appid.txt` plus `SteamAppId` / `SteamGameId` launcher
+  metadata from that sidecar, preventing `SteamAPI_RestartAppIfNecessary`
+  from bouncing a native ARM64 launch through the Frame's x86 Steam bootstrapper
 
 The source PCK and game data remain untouched.
 

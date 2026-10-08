@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import uuid
@@ -72,13 +73,31 @@ def _copy_runtime_bundle(runtime_path: Path, staging: Path) -> list[str]:
 
     return copied
 
-def _copy_godotsteam_data(source_root: Path, staging: Path) -> bool:
+def _copy_godotsteam_data(source_root: Path, staging: Path) -> Path | None:
     """Copy steam_data.json beside godot.arm64 when the game ships one."""
     source = source_root / "steam_data.json"
     if not source.is_file():
-        return False
+        return None
     shutil.copy2(source, staging / "steam_data.json")
-    return True
+    return source
+
+
+def _steam_app_id(steam_data: Path) -> str | None:
+    """Read a numeric Steam App ID from a GodotSteam steam_data.json sidecar."""
+    try:
+        value = json.loads(steam_data.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, dict):
+        return None
+    app_id = str(value.get("app_id", "")).strip()
+    return app_id if app_id.isdigit() else None
+
+
+def _write_steam_app_id(staging: Path, game_dir: Path, app_id: str) -> None:
+    """Prevent SteamAPI_RestartAppIfNecessary from bouncing into x86 Steam."""
+    for target in (staging / "steam_appid.txt", game_dir / "steam_appid.txt"):
+        target.write_text(app_id + "\n", encoding="ascii")
 
 
 def _staging_path(output: Path) -> Path:
@@ -230,7 +249,21 @@ def build_godot_game(
         # not only from the PCK/game working directory. Preserve the original
         # sidecar beside godot.arm64 when present.
         if fingerprint is not None and fingerprint.godotsteam:
-            if _copy_godotsteam_data(inspection.game_root, staging):
+            steam_data = _copy_godotsteam_data(inspection.game_root, staging)
+            if steam_data is not None:
+                app_id = _steam_app_id(steam_data)
+                if app_id is not None:
+                    _write_steam_app_id(staging, game_dir, app_id)
+                    if progress:
+                        progress(
+                            "Installed Steam app id metadata for direct ARM64 launch: "
+                            + app_id
+                        )
+                else:
+                    warnings.append(
+                        "GodotSteam steam_data.json did not contain a numeric app_id; "
+                        "direct Steam launch metadata was not generated."
+                    )
                 if progress:
                     progress("Copied GodotSteam steam_data.json beside runtime")
             else:
@@ -248,6 +281,11 @@ def build_godot_game(
 
         stage(0.78, "Checking native Windows dependencies")
         dlls = list(inspection.game_root.rglob("*.dll"))
+        if fingerprint is not None and fingerprint.godotsteam:
+            dlls = [
+                dll for dll in dlls
+                if dll.name.casefold() not in {"steam_api.dll", "steam_api64.dll"}
+            ]
         if dlls:
             warnings.append(
                 f"Found {len(dlls)} Windows DLL file(s). If the game uses native "
