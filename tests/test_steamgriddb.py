@@ -269,3 +269,4 @@ def test_second_refresh_keeps_original_provider_provenance(tmp_path, monkeypatch
     complete_frame_artwork(root, game_name="My Pig Princess")
     after = json.loads((root / ".megcfbt/package.json").read_text())
     assert after["artwork"]["slots"]["grid"] == "steamgriddb"
+    assert after["artwork"]["steamgriddb"]["game_id"] == 123
