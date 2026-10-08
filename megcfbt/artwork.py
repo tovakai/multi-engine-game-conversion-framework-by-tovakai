@@ -153,8 +153,33 @@ def fetch_official_steam_portrait(
     *,
     progress=None,
 ) -> Path | None:
-    """Backward-compatible portrait helper.
+    """Cache only the official portrait artwork for a detected Steam AppID.
 
-    New callers should use :func:`fetch_official_steam_artwork`.
+    This preserves the historical helper's narrow side effects. New conversion
+    code should use :func:`fetch_official_steam_artwork` to fetch the complete
+    portrait/banner/hero/logo set.
     """
-    return fetch_official_steam_artwork(build, progress=progress).get("grid")
+    root = Path(build)
+    appid = detected_steam_appid(root)
+    if not appid:
+        return None
+
+    artwork_dir = root / ".megcfbt" / "artwork"
+    for candidate in (".png", ".jpg", ".jpeg"):
+        existing = artwork_dir / f"grid{candidate}"
+        if existing.is_file():
+            return existing
+
+    target = artwork_dir / "grid.jpg"
+    try:
+        data = _download_asset(appid, "library_600x900.jpg", ".jpg")
+    except (OSError, urllib.error.URLError, ValueError) as exc:
+        if progress:
+            progress(f"Steam portrait unavailable for AppID {appid}: {exc}")
+        return None
+
+    artwork_dir.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    if progress:
+        progress(f"Matched Steam library portrait using AppID {appid}")
+    return target
