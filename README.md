@@ -161,6 +161,25 @@ A manual custom runtime remains available as an override. See
 `docs/custom-godot-arm64-runtime.md` for the exact recipe and host
 requirements.
 
+## Diagnosing a game that fails to launch
+
+Run a converted game's launcher through the reusable diagnostics wrapper:
+
+```bash
+bash tools/diagnose-game.sh /path/to/converted-game/launch.sh
+```
+
+You can replace `launch.sh` with another launcher and pass its arguments
+after the path. The script runs from the game's directory, preserves the
+exit code, captures stdout/stderr, basic OS/GPU information, common game
+logs, and optional coredump listings. Each run gets its own directory under
+`~/tovakai-diagnostics/`. Override it with `TOVAKAI_DIAGNOSTICS_DIR`.
+
+This is evidence collection, not an automatic fix: missing debug symbols,
+launcher subprocesses, GPU hangs and system-level crashes may need additional
+investigation. Review diagnostics for personal paths or tokens before posting
+them publicly.
+
 ## Tested game compatibility
 
 This table tracks **real game tests on Linux ARM64 hardware**, not games that
