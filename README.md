@@ -182,6 +182,23 @@ versions. To contribute a result, open a GitHub issue or pull request with
 the game name and version, engine, device/distro, status, reproduction steps,
 and relevant logs. **Do not upload or redistribute game files.**
 
+## Support the project ☕
+
+**Why tip a vibecoded project?**
+
+The code may be AI-assisted, but the testing is very much hands-on. I spend
+hours converting games, chasing down compatibility issues, and actually playing
+them on ARM64 hardware to find out whether they work beyond the title screen.
+I'm also buying games out of my own pocket just to put more engines, versions,
+and edge cases through their paces.
+
+This is **100% a passion project**. The converter is free, and you don't need
+to donate to use it. But if it helps you enjoy a game on a device it wasn't
+originally built for, and you'd like to help fund the next round of testing,
+you can [buy me a coffee on Ko-fi](https://ko-fi.com/tovakai).
+
+Every little bit helps keep the compatibility list growing. Thank you! ❤️
+
 ## Design rule
 
 A game exposing a compatibility problem is a test case, not a product target.
