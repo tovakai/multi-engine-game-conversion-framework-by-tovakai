@@ -270,3 +270,58 @@ def test_second_refresh_keeps_original_provider_provenance(tmp_path, monkeypatch
     after = json.loads((root / ".megcfbt/package.json").read_text())
     assert after["artwork"]["slots"]["grid"] == "steamgriddb"
     assert after["artwork"]["steamgriddb"]["game_id"] == 123
+
+
+def test_artwork_cli_standalone_needs_no_game_build(tmp_path, monkeypatch, capsys):
+    from megcfbt.cli import main
+
+    monkeypatch.setenv("STEAMGRIDDB_API_KEY", "test-key-not-for-public")
+    calls = mock_service(monkeypatch)
+    folder = tmp_path / "SteamGridDB-MyPigPrincess"
+    assert main([
+        "artwork",
+        "--name", "My Pig Princess",
+        "--output", str(folder),
+    ]) == 0
+
+    art = folder / ".megcfbt/artwork"
+    assert sorted(p.name for p in art.iterdir()) == [
+        "grid.png", "hero.png", "logo.png", "wide.png"
+    ]
+    assert not (folder / "game").exists()
+    assert not (folder / ".megcfbt/package.json").exists()
+    assert "Artwork files:" in capsys.readouterr().out
+    assert "search/autocomplete/My%20Pig%20Princess" in calls
+
+
+def test_standalone_artwork_requires_title_and_output(tmp_path, capsys):
+    from megcfbt.cli import main
+
+    assert main(["artwork", "--name", "My Pig Princess"]) == 1
+    assert "requires --name GAME and --output DIRECTORY" in capsys.readouterr().out
+
+    assert main(["artwork", "--output", str(tmp_path / "art")]) == 1
+    assert "requires --name GAME and --output DIRECTORY" in capsys.readouterr().out
+    assert not (tmp_path / "art").exists()
+
+
+def test_standalone_artwork_refuses_repackaging(tmp_path, capsys):
+    from megcfbt.cli import main
+
+    folder = tmp_path / "art"
+    assert main([
+        "artwork", "--name", "My Pig Princess",
+        "--output", str(folder), "--repackage"
+    ]) == 1
+    assert "contains no game runtime" in capsys.readouterr().out
+    assert not folder.exists()
+
+
+def test_existing_build_rejects_standalone_output_argument(tmp_path, capsys):
+    from megcfbt.cli import main
+
+    root = setup_build(tmp_path)
+    assert main([
+        "artwork", str(root), "--output", str(tmp_path / "somewhere"),
+    ]) == 1
+    assert "only for standalone downloads" in capsys.readouterr().out
