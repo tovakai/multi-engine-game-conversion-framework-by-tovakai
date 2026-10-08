@@ -53,6 +53,19 @@ def _parser() -> argparse.ArgumentParser:
         help="optional exact SteamGridDB game ID when title lookup is ambiguous",
     )
 
+    artwork_cmd = sub.add_parser(
+        "artwork",
+        help="fetch missing art for an existing converted Frame game without rebuilding it",
+    )
+    artwork_cmd.add_argument("build", type=Path, help="converted game folder")
+    artwork_cmd.add_argument("--name", help="manual game title override for SteamGridDB lookup")
+    artwork_cmd.add_argument("--steamgriddb-id", type=int, help="specific SteamGridDB game ID")
+    artwork_cmd.add_argument(
+        "--repackage", action="store_true",
+        help="refresh the Frame ZIP after adding art (original converted builds only)",
+    )
+    artwork_cmd.add_argument("--force", action="store_true", help="overwrite existing Frame ZIP")
+
     frame_control_cmd = sub.add_parser(
         "frame-control-limit",
         help="inspect, patch, or restore Frame Control's local upload-size guard",
@@ -82,6 +95,30 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "artwork":
+            from megcfbt.artwork import complete_frame_artwork
+            from megcfbt.frame_package import create_frame_zip, load_frame_metadata
+
+            root = args.build.expanduser().resolve()
+            metadata = load_frame_metadata(root)
+            name = args.name or metadata.get("name") or root.name
+            art = complete_frame_artwork(
+                root,
+                game_name=name,
+                steamgriddb_game_id=args.steamgriddb_id,
+                progress=print,
+            )
+            print(f"Artwork slots present: {', '.join(sorted(art)) if art else 'none'}")
+            if args.repackage:
+                if metadata.get("payload"):
+                    raise RuntimeError(
+                        "Cannot repackage an extracted Frame ZIP wrapper; "
+                        "use the original converted build directory."
+                    )
+                package = create_frame_zip(root, force=args.force)
+                print(f"Updated Frame package: {package}")
+            return 0
+
         if args.command == "frame-control-limit":
             from megcfbt.frame_control_patch import (
                 FrameControlPatchError,
