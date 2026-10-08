@@ -1,4 +1,4 @@
-"""Best-effort Steam library portrait acquisition for user-owned game packages.
+"""Best-effort official Steam artwork acquisition for user-owned game packages.
 
 Only a Steam AppID from the game's own metadata is considered a strong match.
 Never search by fuzzy title and silently assign unrelated artwork.
@@ -17,6 +17,15 @@ _STEAM_ASSET_HOSTS = (
     "shared.akamai.steamstatic.com",
     "shared.fastly.steamstatic.com",
 )
+
+# Steam's official store assets mapped onto the generic artwork slots consumed
+# by the Frame installer. Missing individual assets are harmless.
+_STEAM_ARTWORK = {
+    "grid": ("library_600x900.jpg", ".jpg"),
+    "wide": ("header.jpg", ".jpg"),
+    "hero": ("library_hero.jpg", ".jpg"),
+    "logo": ("logo.png", ".png"),
+}
 
 
 def detected_steam_appid(build: Path) -> str | None:
@@ -39,28 +48,28 @@ def detected_steam_appid(build: Path) -> str | None:
     return None
 
 
-def fetch_official_steam_portrait(
-    build: Path,
-    *,
-    progress=None,
-) -> Path | None:
-    """Cache official Steam library art when the source supplies a valid AppID.
+def _valid_image(data: bytes, suffix: str) -> bool:
+    if suffix == ".jpg":
+        return data.startswith(b"\xff\xd8\xff")
+    if suffix == ".png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    return False
 
-    Artwork lookup is best-effort: no network, 404 or bad image must never
-    prevent game conversion. A manual cover always takes precedence.
-    """
-    root = Path(build)
-    appid = detected_steam_appid(root)
-    if not appid:
-        return None
-    target = root / ".megcfbt" / "artwork" / "grid.jpg"
-    if target.is_file():
-        return target
+
+def _expected_mime(suffix: str) -> set[str]:
+    if suffix == ".jpg":
+        return {"image/jpeg", "image/jpg"}
+    if suffix == ".png":
+        return {"image/png"}
+    return set()
+
+
+def _download_asset(appid: str, remote_name: str, suffix: str) -> bytes:
     last_error: Exception | None = None
     for host in _STEAM_ASSET_HOSTS:
         url = (
             f"https://{host}/store_item_assets/"
-            f"steam/apps/{appid}/library_600x900.jpg"
+            f"steam/apps/{appid}/{remote_name}"
         )
         try:
             request = urllib.request.Request(
@@ -69,21 +78,83 @@ def fetch_official_steam_portrait(
             )
             with urllib.request.urlopen(request, timeout=12) as response:
                 mime = response.headers.get("Content-Type", "").split(";")[0].lower()
-                if mime not in {"image/jpeg", "image/jpg"}:
+                if mime not in _expected_mime(suffix):
                     raise ValueError(f"unexpected content type {mime or 'unknown'}")
                 data = response.read(_MAX_IMAGE_BYTES + 1)
-            if not data.startswith(b"\xff\xd8\xff"):
-                raise ValueError("download was not a JPEG")
             if len(data) > _MAX_IMAGE_BYTES:
-                raise ValueError("Steam portrait exceeded 8 MiB limit")
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(data)
-            if progress:
-                progress(f"Matched Steam library portrait using AppID {appid}")
-            return target
+                raise ValueError("Steam artwork exceeded 8 MiB limit")
+            if not _valid_image(data, suffix):
+                raise ValueError(f"download was not a valid {suffix.lstrip('.').upper()} image")
+            return data
         except (OSError, urllib.error.URLError, ValueError) as exc:
             last_error = exc
+    if last_error is None:
+        raise ValueError("no Steam artwork hosts configured")
+    raise last_error
 
-    if progress:
-        progress(f"Steam artwork unavailable for AppID {appid}: {last_error}")
-    return None
+
+def fetch_official_steam_artwork(
+    build: Path,
+    *,
+    progress=None,
+) -> dict[str, Path]:
+    """Cache the available official Steam library artwork for a detected AppID.
+
+    The lookup is best-effort per slot. One missing CDN asset must not prevent
+    conversion or prevent other artwork from being bundled. Existing slot files
+    are preserved, so a manually selected portrait remains authoritative while
+    automatic hero/banner/logo assets can still be added alongside it.
+    """
+    root = Path(build)
+    appid = detected_steam_appid(root)
+    if not appid:
+        return {}
+
+    artwork_dir = root / ".megcfbt" / "artwork"
+    found: dict[str, Path] = {}
+    failures: list[str] = []
+
+    for slot, (remote_name, suffix) in _STEAM_ARTWORK.items():
+        existing = next(
+            (
+                artwork_dir / f"{slot}{candidate}"
+                for candidate in (".png", ".jpg", ".jpeg")
+                if (artwork_dir / f"{slot}{candidate}").is_file()
+            ),
+            None,
+        )
+        if existing is not None:
+            found[slot] = existing
+            continue
+
+        target = artwork_dir / f"{slot}{suffix}"
+        try:
+            data = _download_asset(appid, remote_name, suffix)
+        except (OSError, urllib.error.URLError, ValueError) as exc:
+            failures.append(f"{slot}: {exc}")
+            continue
+
+        artwork_dir.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        found[slot] = target
+        if progress:
+            progress(f"Matched Steam {slot} artwork using AppID {appid}")
+
+    if progress and failures:
+        progress(
+            f"Some Steam artwork was unavailable for AppID {appid}: "
+            + "; ".join(failures)
+        )
+    return found
+
+
+def fetch_official_steam_portrait(
+    build: Path,
+    *,
+    progress=None,
+) -> Path | None:
+    """Backward-compatible portrait helper.
+
+    New callers should use :func:`fetch_official_steam_artwork`.
+    """
+    return fetch_official_steam_artwork(build, progress=progress).get("grid")
