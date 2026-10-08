@@ -161,6 +161,27 @@ A manual custom runtime remains available as an override. See
 `docs/custom-godot-arm64-runtime.md` for the exact recipe and host
 requirements.
 
+## Tested game compatibility
+
+This table tracks **real game tests on Linux ARM64 hardware**, not games that
+merely pass engine detection or produce a build. It is a growing test log,
+not a promise that every game using an engine will work.
+
+| Game | Engine | Tested device | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Brotato | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (tested ~30 min) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
+
+**Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
+but gameplay not yet validated; **Issues** = runs with notable problems;
+**Blocked** = conversion or launch currently fails. Include the game version,
+runtime/backend, device, and any workarounds in the notes whenever known.
+
+A successful conversion build alone is **not** a compatibility pass. Results
+may differ across game versions, ARM64 devices, graphics drivers, and runtime
+versions. To contribute a result, open a GitHub issue or pull request with
+the game name and version, engine, device/distro, status, reproduction steps,
+and relevant logs. **Do not upload or redistribute game files.**
+
 ## Design rule
 
 A game exposing a compatibility problem is a test case, not a product target.
