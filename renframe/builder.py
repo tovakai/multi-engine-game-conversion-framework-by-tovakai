@@ -449,7 +449,7 @@ def _write_grafted_launcher(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-        'export RENPY_PLATFORM="linux-aarch64"\n\n'
+        f'export RENPY_PLATFORM="{platform_name}"\n\n'
         '# Files transferred through Windows may lose executable permissions.\n'
         '# Restore them for the selected ARM64 runtime before launching.\n'
         f'RUNTIME_DIR="$ROOT/lib/{platform_name}"\n'
