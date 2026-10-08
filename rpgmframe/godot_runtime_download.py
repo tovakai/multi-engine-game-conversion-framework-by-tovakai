@@ -138,7 +138,7 @@ def ensure_downloaded_runtime(
                 # Release archive must have flat regular files only. Never
                 # extract symlinks, absolute paths, or parent traversal.
                 if not member.isfile() or member.name not in {
-                    "godot.arm64", "runtime.json", "libsteam_api.so"
+                    "godot.arm64", "runtime.json"
                 }:
                     raise RuntimeDownloadError(
                         f"Unsafe or unexpected runtime archive member: {member.name}"
