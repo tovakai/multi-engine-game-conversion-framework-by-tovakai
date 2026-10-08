@@ -110,8 +110,8 @@ def test_uploader_markers_required_to_exempt_qt_components():
 
 def test_case_insensitive_windows_paths_in_stock_uploader():
     deps = [
-        _dep(r"GAME\\MODS\\es_CONTENT_uploader.EXE"),
-        _dep(r"GAME\\MODS\\QT5CORE.DLL"),
+        _dep(r"GAME\MODS\es_CONTENT_uploader.EXE"),
+        _dep(r"GAME\MODS\QT5CORE.DLL"),
     ]
     assert game_owned_native_problems(deps) == []
 
