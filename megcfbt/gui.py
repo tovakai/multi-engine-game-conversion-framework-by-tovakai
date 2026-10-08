@@ -635,7 +635,7 @@ class ConverterApp:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
             elif legacy_fallback:
                 runtime_text = (
-                    f"RUNTIME // TRY {legacy_fallback} ARM64 (EXPERIMENTAL)…"
+                    f"RUNTIME // {legacy_fallback} EXPERIMENTAL // OVERRIDE…"
                 )
             elif pre_sdkarm:
                 runtime_text = "RUNTIME // MANUAL ARM64 REQUIRED…"
