@@ -314,6 +314,8 @@ def main() -> int:
         print(f'Already in Steam as a non-Steam game: "{name}".')
         print("Non-Steam AppID: " + ", ".join(str(value) for value in appids))
         print(f"Artwork files refreshed: {copied}.")
+        if copied:
+            print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
         return 0
 
     if not steam_running():
@@ -361,6 +363,8 @@ def main() -> int:
             "launcher hash; using Steam's actual AppID for artwork."
         )
     print(f"Artwork files applied: {copied}.")
+    if copied:
+        print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
     print("The game should now be available in the Steam library.")
     return 0
 
@@ -380,7 +384,9 @@ INSTALL_GUIDE = """Steam Frame package
 
 The installer asks the running Steam client to import launch.sh as a normal
 non-Steam game. It then reads back the shortcut Steam created and installs any
-bundled artwork using that shortcut's non-Steam AppID.
+bundled portrait, banner, hero, logo, and icon artwork using that shortcut's
+non-Steam AppID. Steam may require a Steam / SteamVR environment restart before
+new custom artwork becomes visible.
 
 The deterministic AppID calculation and artwork naming convention are adapted
 from Deckport. The installer does not use Steam Devkit Game registration and
