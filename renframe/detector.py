@@ -188,7 +188,13 @@ def strategy_versions_py(root: Path) -> VersionHint | None:
 
 
 def strategy_renpy_init(root: Path) -> VersionHint | None:
-    """Parse version constants from renpy/__init__.py."""
+    """Read assigned Ren'Py version constants without mistaking comments for versions.
+
+    Ren'Py's 7.x/8.x transition sometimes shipped both Python 2 and Python 3
+    version tuples in the same source file, guarded by the PY2 condition.
+    Select the corresponding tuple only if the bundled runtime layout
+    identifies one Python generation; never choose a tuple arbitrarily.
+    """
     candidate = root / "renpy" / "__init__.py"
     if not candidate.is_file():
         return None
@@ -196,31 +202,68 @@ def strategy_renpy_init(root: Path) -> VersionHint | None:
     if not text:
         return None
 
-    match = re.search(
-        r"""(?:version_tuple|version)\s*=\s*\(?(?P<body>[^\n]+)""",
+    assignments = re.findall(
+        r"(?m)^[ \t]*version_tuple[ \t]*=[ \t]*\([ \t]*"
+        r"(\d+)[ \t]*,[ \t]*(\d+)[ \t]*,[ \t]*(\d+)[ \t]*(?:,|\))",
         text,
     )
-    if match:
-        body = match.group("body")
-        nums = re.findall(r"\d+", body)
-        if len(nums) >= 2:
-            version = ".".join(nums[:3]) if len(nums) >= 3 else ".".join(nums[:2])
-            return VersionHint(
-                version=version,
-                generation=_generation_from_version(version),
-                source="renpy/__init__.py",
-                confidence="high",
-            )
+    versions = {".".join(parts) for parts in assignments}
 
-    match = _VERSION_RE.search(text)
-    if match and "renpy" in text.lower():
-        version = match.group("version")
+    lib = root / "lib"
+    python_generations: set[int] = set()
+    if lib.is_dir():
+        for child in lib.iterdir():
+            if not child.is_dir():
+                continue
+            name = child.name.casefold()
+            if name.startswith(("python2.", "py2-")):
+                python_generations.add(7)
+            if name.startswith(("python3.", "py3-")):
+                python_generations.add(8)
+
+    if versions:
+        # When the package contains both Ren'Py 7/8 tuples, disambiguate
+        # using its bundled Python 2/3 runtime. Otherwise do not guess.
+        if len(versions) == 1:
+            version = next(iter(versions))
+            if python_generations and _generation_from_version(version) not in python_generations:
+                return None
+        elif len(python_generations) == 1:
+            generation = next(iter(python_generations))
+            compatible = sorted(
+                v for v in versions if _generation_from_version(v) == generation
+            )
+            if len(compatible) != 1:
+                return None
+            version = compatible[0]
+        else:
+            return None
+
         return VersionHint(
             version=version,
             generation=_generation_from_version(version),
             source="renpy/__init__.py",
-            confidence="low",
-            details="fallback regex match",
+            confidence="high",
+            details="literal version tuple matched to bundled Python runtime",
+        )
+
+    # Some releases use a literal assigned version instead of a tuple.
+    # A comment containing the example 8.0.1.123 is never version evidence.
+    match = re.search(
+        r"""(?m)^[ \t]*(?:version_only|version)[ \t]*=[ \t]*['"]"""
+        r"""(?:Ren'Py[ \t]+)?(?P<version>\d+\.\d+(?:\.\d+){0,2})['"]""",
+        text,
+    )
+    if match:
+        version = match.group("version")
+        if python_generations and _generation_from_version(version) not in python_generations:
+            return None
+        return VersionHint(
+            version=version,
+            generation=_generation_from_version(version),
+            source="renpy/__init__.py",
+            confidence="medium",
+            details="literal assigned version",
         )
     return None
 
