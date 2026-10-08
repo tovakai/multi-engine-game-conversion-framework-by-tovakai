@@ -33,7 +33,9 @@ class BuildError(RuntimeError):
     """Raised when a build cannot proceed."""
 
 
-_COPY_IGNORE_NAMES = frozenset({".git", "__pycache__", ".hg", ".svn", ".DS_Store"})
+# Ren'Py distributions often ship bytecode-only standard libraries and engine modules.
+# Do not exclude .pyc or __pycache__: either may contain required runtime code.
+_COPY_IGNORE_NAMES = frozenset({".git", ".hg", ".svn", ".DS_Store"})
 
 
 def default_output_path(source: Path) -> Path:
@@ -46,8 +48,6 @@ def _ignore_dev_junk(directory: str, contents: list[str]) -> list[str]:
     ignored: list[str] = []
     for name in contents:
         if name in _COPY_IGNORE_NAMES:
-            ignored.append(name)
-        elif name.endswith(".pyc"):
             ignored.append(name)
     return ignored
 
