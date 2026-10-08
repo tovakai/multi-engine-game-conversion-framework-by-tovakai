@@ -1,0 +1,49 @@
+name: build linux arm64
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - "megcfbt/**"
+      - "renframe/**"
+      - "rpgmframe/**"
+      - "build/build_linux_aarch64.sh"
+      - "pyproject.toml"
+      - ".github/workflows/build-linux-arm64.yml"
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tk runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk
+
+      - name: Build native AArch64 app
+        run: |
+          python -m pip install --upgrade pip
+          bash build/build_linux_aarch64.sh
+
+      - name: Smoke-check binary architecture
+        run: |
+          APP="dist/linux-aarch64/Multi-Engine Game Conversion Framework by Tovakai/Multi-Engine Game Conversion Framework by Tovakai"
+          test -x "$APP"
+          file "$APP"
+          file "$APP" | grep -Eq 'ARM aarch64|ARM64|aarch64'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: multi-engine-game-conversion-framework-by-tovakai-linux-aarch64
+          path: dist/linux-aarch64/
+          if-no-files-found: error

@@ -12,12 +12,13 @@ from typing import Any
 
 from megcfbt import APP_NAME
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from megcfbt.steam_install import SteamInstallError, install_build, is_supported_host
 from megcfbt.router import (
     ConversionError,
     automatic_custom_godot_runtime_available,
     build_source,
     inspect_source,
-    output_path_for_source,
+    output_path_for_inspection,
 )
 
 APP_TAG = "CONVERSION DECK // Ren'Py · RPG Maker · Godot → Linux ARM64"
@@ -88,7 +89,10 @@ def _make_root():
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.TkdndVersion = TkinterDnD._require(self)
-        root = CTkDnD()
+        try:
+            root = CTkDnD()
+        except Exception:
+            root = ctk.CTk()
     else:
         root = ctk.CTk()
 
@@ -121,6 +125,9 @@ class ConverterApp:
         self.backend_runtime: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
+        self.last_result: UnifiedBuildResult | None = None
+        self.steam_cover: Path | None = None
+        self._steam_supported = is_supported_host()
         self.output_dir = Path.home() / "Desktop"
         if not self.output_dir.is_dir():
             self.output_dir = Path.home()
@@ -239,6 +246,21 @@ class ConverterApp:
         )
         self.convert_btn.pack(side="left")
 
+        self.steam_btn = ctk.CTkButton(
+            controls,
+            text="ADD TO STEAM",
+            state="disabled",
+            width=140,
+            height=40,
+            fg_color=C_TEAL,
+            hover_color=C_BORDER,
+            text_color="#07111f",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            command=self._start_steam_install,
+        )
+        if self._steam_supported:
+            self.steam_btn.pack(side="left", padx=(10, 0))
+
         ctk.CTkButton(
             controls,
             text="OUTPUT FOLDER",
@@ -266,7 +288,7 @@ class ConverterApp:
         options.pack(fill="x", padx=28, pady=(0, 8))
         ctk.CTkCheckBox(
             options,
-            text="CREATE TRANSFER .TAR.GZ",
+            text="CREATE FRAME-READY .ZIP",
             variable=self.archive_var,
             fg_color=C_TEAL,
             text_color=C_MUTED,
@@ -278,6 +300,19 @@ class ConverterApp:
             fg_color=C_ACCENT,
             text_color=C_MUTED,
         ).pack(side="left", padx=(18, 0))
+
+        self.cover_button = ctk.CTkButton(
+            options,
+            text="ARTWORK // AUTO",
+            width=150,
+            height=30,
+            fg_color="transparent",
+            border_width=1,
+            border_color=C_BORDER,
+            text_color=C_MUTED,
+            command=self._pick_steam_cover,
+        )
+        self.cover_button.pack(side="left", padx=(18, 0))
 
         self.runtime_button = ctk.CTkButton(
             options,
@@ -404,6 +439,20 @@ class ConverterApp:
         )
         self.activity_progress.pack(fill="x", pady=(2, 0))
         self.activity_progress.stop()
+        self.download_label = ctk.CTkLabel(
+            progress_panel,
+            text="RUNTIME DOWNLOAD // WAITING",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+        )
+        self.download_bar = ctk.CTkProgressBar(
+            progress_panel,
+            mode="determinate",
+            fg_color=C_PANEL,
+            progress_color=C_TEAL,
+        )
+        self.download_bar.set(0)
         status_row = ctk.CTkFrame(self.root, fg_color="transparent")
         status_row.pack(fill="x", padx=28, pady=(0, 14))
         self.status = ctk.CTkLabel(
@@ -453,6 +502,27 @@ class ConverterApp:
 
         self._dispatch(update)
 
+    def _download_progress(self, received: int, total: int | None) -> None:
+        def update() -> None:
+            if not self.download_bar.winfo_manager():
+                self.download_label.pack(fill="x", pady=(8, 0))
+                self.download_bar.pack(fill="x", pady=(2, 0))
+            if total and total > 0:
+                self.download_bar.configure(mode="determinate")
+                self.download_bar.set(min(1.0, received / total))
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} / "
+                    f"{total / 1048576:.1f} MiB "
+                    f"({received * 100 // total}%)"
+                )
+            else:
+                self.download_bar.configure(mode="indeterminate")
+                self.download_bar.start()
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} MiB"
+                )
+        self._dispatch(update)
+
     def _progress_log(self, message: str) -> None:
         self._log(message)
         self._dispatch(
@@ -476,14 +546,25 @@ class ConverterApp:
         self._busy = busy
         if busy:
             self.convert_btn.configure(state="disabled", text="WORKING…")
+            self.steam_btn.configure(state="disabled")
             self.overall_progress.set(0.0)
             self.progress_percent_label.configure(text="0%")
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
+            self.download_bar.stop()
+            self.download_bar.configure(mode="determinate")
+            self.download_bar.set(0)
+            self.download_bar.pack_forget()
+            self.download_label.pack_forget()
         else:
             allowed = self._conversion_allowed()
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
+            if self._steam_supported:
+                self.steam_btn.configure(
+                    state="normal" if self.last_result is not None else "disabled"
+                )
             self.activity_progress.stop()
+            self.download_bar.stop()
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -498,6 +579,10 @@ class ConverterApp:
         self.inspection = None
         self.renpy_runtime = None
         self.backend_runtime = None
+        self.last_result = None
+        self.steam_cover = None
+        self.cover_button.configure(text="ARTWORK // AUTO")
+        self.steam_btn.configure(state="disabled")
         self.log_box.delete("1.0", "end")
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
@@ -614,6 +699,20 @@ class ConverterApp:
             self.output_dir = Path(folder)
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
+    def _pick_steam_cover(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Optional Steam portrait artwork override",
+            filetypes=[
+                ("Image", "*.png *.jpg *.jpeg"),
+                ("PNG", "*.png"),
+                ("JPEG", "*.jpg *.jpeg"),
+            ],
+        )
+        if path:
+            self.steam_cover = Path(path)
+            self.cover_button.configure(text=f"ARTWORK // {self.steam_cover.name}")
+            self._set_status(f"Artwork override: {self.steam_cover.name}", C_TEAL)
+
     def _pick_runtime(self) -> None:
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
@@ -682,7 +781,11 @@ class ConverterApp:
                 return
 
         source = self.source
-        output = output_path_for_source(source, self.output_dir)
+        output = output_path_for_inspection(
+            self.inspection,
+            self.output_dir,
+            source,
+        )
         force = bool(self.force_var.get())
         archive = bool(self.archive_var.get())
 
@@ -703,8 +806,10 @@ class ConverterApp:
                     backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,
+                    steam_cover=self.steam_cover,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
+                    download_progress=self._download_progress,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
@@ -718,10 +823,11 @@ class ConverterApp:
         self._set_progress(1.0, "Complete")
         self.last_output = result.output_path
         self.last_archive = result.archive_path
+        self.last_result = result
         self._set_busy(False)
         self._log(f"Built: {result.output_path}")
         if result.archive_path:
-            self._log(f"Archive: {result.archive_path}")
+            self._log(f"Frame package: {result.archive_path}")
         for warning in result.warnings:
             self._log("Warning: " + warning)
         target = result.archive_path or result.output_path
@@ -730,8 +836,51 @@ class ConverterApp:
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
             f"Build directory:\n{result.output_path}\n\n"
-            + (f"Transfer archive:\n{result.archive_path}\n" if result.archive_path else ""),
+            + (f"Frame-ready ZIP:\n{result.archive_path}\n" if result.archive_path else "")
+            + ("\nAdd to Steam is ready." if self._steam_supported else ""),
         )
+
+    def _start_steam_install(self) -> None:
+        if self._busy or not self._steam_supported or self.last_result is None:
+            return
+        result = self.last_result
+        self._set_busy(True)
+        self._set_status("ADDING CONVERTED GAME TO STEAM", C_TEAL)
+        self._log("Steam: preparing local Devkit Game install")
+
+        def worker() -> None:
+            try:
+                installed = install_build(result.output_path, progress=self._progress_log)
+                self._dispatch(lambda: self._steam_done(installed))
+            except SteamInstallError as exc:
+                self._dispatch(lambda: self._steam_failed(str(exc)))
+            except Exception as exc:
+                self._dispatch(
+                    lambda: self._steam_failed(
+                        f"Unexpected Steam install error: {exc}"
+                    )
+                )
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _steam_done(self, installed: dict) -> None:
+        self._set_busy(False)
+        self._log(f"Steam: added {installed['name']} as {installed['id']}")
+        for warning in installed.get("warnings", []):
+            self._log("Steam warning: " + str(warning))
+        self._set_status(f"Added to Steam → {installed['name']}", C_OK)
+        messagebox.showinfo(
+            APP_NAME,
+            f"Added {installed['name']} to Steam.\n\n"
+            f"Runtime: {installed['runtime']}\n"
+            f"Installed at:\n{installed['directory']}",
+        )
+
+    def _steam_failed(self, message: str) -> None:
+        self._set_busy(False)
+        self._log("Steam ERROR: " + message)
+        self._set_status("STEAM INSTALL FAILED", C_ERR)
+        messagebox.showerror(APP_NAME, message)
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)

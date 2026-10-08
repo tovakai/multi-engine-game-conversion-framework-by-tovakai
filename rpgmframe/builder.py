@@ -250,6 +250,7 @@ def build_game(
     force: bool = False,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
+    download_progress: Callable[[int, int | None], None] | None = None,
 ) -> BuildResult:
     """Create a self-contained Linux ARM64 package for a supported game."""
     source_path = _normalize_path(source)
@@ -284,6 +285,7 @@ def build_game(
                     archive_type=prepared.archive_type,
                     progress=progress,
                     stage_progress=stage_progress,
+                    download_progress=download_progress,
                 )
             except GodotBuildError as exc:
                 raise BuildError(str(exc)) from exc
