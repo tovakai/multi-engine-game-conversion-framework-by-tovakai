@@ -682,8 +682,8 @@ class ConverterApp:
                 f"Ren'Py {result.engine_version} predates official ARM64 support. "
                 f"Click CONVERT to approve an experimental official Ren'Py "
                 f"{legacy_fallback} Python 2 runtime download, or use RUNTIME "
-                "to select a manual override. Gameplay is not yet verified."
-                + (" Unofficial personal-use conversion of your own original DDLC files. Story, saves, characters/ and restarts require hardware validation." if result.renpy_ddlc_753_candidate else "")
+                "to select a manual override. Full gameplay compatibility is not yet verified."
+                + (" Unofficial personal-use conversion of your own original DDLC files. Poem game, saves, character-file changes and in-story restarts still need testing." if result.renpy_ddlc_753_candidate else "")
             )
             self._log("Inspect: " + advisory)
             self.notes_box.configure(state="normal")
