@@ -13,6 +13,8 @@ import uuid
 import zipfile
 from pathlib import Path, PurePosixPath
 
+from megcfbt.nonsteam_package import installer_files
+
 
 class FramePackageError(RuntimeError):
     """Raised when a converted build cannot be packaged for Steam Frame."""
@@ -221,11 +223,11 @@ def create_frame_zip(
     output: Path | None = None,
     force: bool = False,
 ) -> Path:
-    """Create a drop-in ZIP with an unambiguous top-level launch.sh.
+    """Create a portable Steam Frame ZIP with a launcher and non-Steam installer.
 
-    The real converted build lives under payload/. Keeping native runtime binaries
-    one level below the trampoline makes generic installers prefer launch.sh while
-    preserving each backend's internal layout unchanged.
+    The real converted build lives under payload/. The wrapper root contains a
+    trampoline launch.sh plus install-to-steam.sh so the package can be copied to
+    the Frame, extracted, and registered as a normal non-Steam game.
     """
 
     source = build_directory.expanduser().resolve()
@@ -304,6 +306,15 @@ def create_frame_zip(
                 data=trampoline,
                 permissions=0o755,
             )
+
+            for relative_name, (data, permissions) in installer_files().items():
+                write_bytes(
+                    zf,
+                    sample=source_launcher,
+                    arcname=f"{root_name}/{relative_name}",
+                    data=data,
+                    permissions=permissions,
+                )
 
             payload_root = f"{root_name}/payload"
             zf.writestr(
