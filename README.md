@@ -161,6 +161,20 @@ A manual custom runtime remains available as an override. See
 `docs/custom-godot-arm64-runtime.md` for the exact recipe and host
 requirements.
 
+## Launching converted games on Linux ARM64
+
+For Windows-to-Linux transfers, prefer extracting the generated `.tar.gz`
+package directly on the target device; its archive metadata restores executable
+permissions. The Ren'Py launch wrapper also attempts to repair executable bits
+on ARM64 runtime files when they were lost in a folder copy.
+
+When launching from **SSH**, no `DISPLAY` is normally set. Start the game from
+the graphical session, or explicitly set the display and matching X11 authority
+file for your own desktop. For example, Frametop uses a session-specific
+Xwayland display and authentication file; **do not hardcode its Xauthority
+filename**, and do not disable X11 authentication. A successful main-menu
+event loop doesn't necessarily mean its window is visible on your headset.
+
 ## Tested game compatibility
 
 This table tracks **real game tests on Linux ARM64 hardware**, not games that
@@ -170,6 +184,7 @@ not a promise that every game using an engine will work.
 | Game | Engine | Tested device | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Brotato | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
+| My Pig Princess 0.10.1 | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
 but gameplay not yet validated; **Issues** = runs with notable problems;
