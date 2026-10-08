@@ -137,6 +137,12 @@ def test_custom_godot_build_requires_runtime_override(
 ) -> None:
     root = tmp_path / "custom-godot"
     _write_custom_godot_export(root)
+    # Simulate a recipe that is neither published nor buildable locally.
+    # Published recipes are intentionally usable on Windows now.
+    monkeypatch.setattr(
+        "megcfbt.router.downloadable",
+        lambda recipe: False,
+    )
     monkeypatch.setattr(
         "megcfbt.router.host_can_build_automatic_runtime",
         lambda: False,
