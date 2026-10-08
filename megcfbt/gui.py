@@ -21,7 +21,6 @@ from megcfbt.frame_control_patch import (
     restore_upload_limit,
 )
 from megcfbt.frame_package import FRAMEDROP_ZIP_UNPACK_LIMIT, zip_unpacked_size
-from megcfbt.steam_install import SteamInstallError, install_build, is_supported_host
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt.router import (
     ConversionError,
@@ -134,7 +133,6 @@ class ConverterApp:
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
         self.steam_cover: Path | None = None
-        self._steam_supported = is_supported_host()
         self.output_dir = Path.home() / "Desktop"
         if not self.output_dir.is_dir():
             self.output_dir = Path.home()
@@ -262,20 +260,6 @@ class ConverterApp:
             text_color=C_MUTED,
             command=self._pick_steam_cover,
         ).pack(side="left", padx=(10, 0))
-        self.steam_btn = ctk.CTkButton(
-            controls,
-            text="ADD TO STEAM",
-            state="disabled",
-            width=140,
-            height=40,
-            fg_color=C_TEAL_SOFT,
-            hover_color=C_BORDER,
-            text_color=C_TEXT,
-            command=self._start_steam_install,
-        )
-        if self._steam_supported:
-            self.steam_btn.pack(side="left", padx=(10, 0))
-
         ctk.CTkButton(
             controls,
             text="OUTPUT FOLDER",
@@ -303,7 +287,7 @@ class ConverterApp:
         options.pack(fill="x", padx=28, pady=(0, 8))
         ctk.CTkCheckBox(
             options,
-            text="CREATE FRAME-READY .ZIP",
+            text="CREATE STEAM FRAME PACKAGE (.ZIP)",
             variable=self.archive_var,
             fg_color=C_TEAL,
             text_color=C_MUTED,
@@ -548,7 +532,6 @@ class ConverterApp:
         self._busy = busy
         if busy:
             self.convert_btn.configure(state="disabled", text="WORKING…")
-            self.steam_btn.configure(state="disabled")
             self.overall_progress.set(0.0)
             self.progress_percent_label.configure(text="0%")
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
@@ -563,8 +546,6 @@ class ConverterApp:
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
             self.download_bar.stop()
-            if self._steam_supported:
-                self.steam_btn.configure(state="normal" if self.last_result is not None else "disabled")
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -743,28 +724,6 @@ class ConverterApp:
         else:
             _open_path(self.output_dir)
 
-    def _start_steam_install(self) -> None:
-        if self._busy or not self._steam_supported or self.last_result is None:
-            return
-        build = self.last_result.output_path
-        self._set_busy(True)
-        self._set_status("INSTALLING TO STEAM", C_TEAL)
-
-        def worker() -> None:
-            try:
-                installed = install_build(build, progress=self._progress_log)
-                def finished() -> None:
-                    self._set_busy(False)
-                    self._log(f"Installed to Steam: {installed['name']}")
-                    for warning in installed["warnings"]:
-                        self._log("Warning: " + warning)
-                    self._set_status("STEAM INSTALL COMPLETE", C_OK)
-                self._dispatch(finished)
-            except (SteamInstallError, Exception) as exc:
-                self._dispatch(lambda error=str(exc): self._fail(error))
-
-        threading.Thread(target=worker, daemon=True).start()
-
     def _pick_steam_cover(self) -> None:
         selected = filedialog.askopenfilename(
             title="Optional Steam portrait artwork",
@@ -838,7 +797,7 @@ class ConverterApp:
         self._set_busy(False)
         self._log(f"Built: {result.output_path}")
         if result.archive_path:
-            self._log(f"Frame package: {result.archive_path}")
+            self._log(f"Steam Frame package: {result.archive_path}")
         for warning in result.warnings:
             self._log("Warning: " + warning)
         target = result.archive_path or result.output_path
@@ -847,7 +806,8 @@ class ConverterApp:
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
             f"Build directory:\n{result.output_path}\n\n"
-            + (f"Frame-ready ZIP:\n{result.archive_path}\n" if result.archive_path else ""),
+            + (f"Steam Frame package:\n{result.archive_path}\n\n"
+              f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else ""),
         )
 
     def _fail(self, message: str) -> None:
