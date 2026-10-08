@@ -38,7 +38,7 @@ def test_rejects_untrusted_host(tmp_path, monkeypatch):
 def test_download_verifies_archive_and_reuses_cache(tmp_path, monkeypatch):
     # Minimal ELF header sufficient for read_elf_architecture.
     elf = bytearray(64)
-    elf[:4] = b"\\x7fELF"
+    elf[:4] = b"\x7fELF"
     elf[4] = 2
     elf[5] = 1
     elf[18:20] = (183).to_bytes(2, "little")
