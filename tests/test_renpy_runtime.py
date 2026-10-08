@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
+import subprocess
 import struct
 import tarfile
 from pathlib import Path
@@ -382,3 +383,61 @@ def test_unified_inspection_preserves_legacy_python_generation_and_fallback_hint
     detected_modern = inspect_source(modern)
     assert detected_modern.renpy_generation == 8
     assert "sdkarm platform (automatic)" in detected_modern.runtime_kind
+
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="Needs Bash for POSIX launch test")
+def test_legacy_generated_launcher_reaches_py2_sdkarm_game_binary(tmp_path: Path):
+    """Regression: the original launcher resolves lib/$RENPY_PLATFORM itself."""
+    source = _legacy_renpy_game(tmp_path / "Legacy")
+    (source / "Game.sh").write_text(
+        '#!/bin/sh\n'
+        'ROOT=$(cd "$(dirname "$0")"; pwd)\n'
+        'if [ -z "$RENPY_PLATFORM" ]; then\n'
+        '    case "$(uname -s)-$(uname -m)" in\n'
+        '        Linux-*) RENPY_PLATFORM="linux-x86_64";;\n'
+        '    esac\n'
+        'fi\n'
+        'LIB="$ROOT/lib/$RENPY_PLATFORM"\n'
+        'if [ ! -d "$LIB" ]; then\n'
+        '    echo "Missing platform: $LIB" >&2\n'
+        '    exit 35\n'
+        'fi\n'
+        'exec "$LIB/Game" "$@"\n',
+        encoding="utf-8",
+    )
+    platform = tmp_path / "cache" / "7.5.0" / "py2-linux-aarch64"
+    _write_elf(platform / "renpy")
+
+    class FakeManager:
+        def platform_path(self, version, tag):
+            assert (version, tag) == ("7.5.0", "py2")
+            return platform
+
+        def ensure_platform(self, version, tag, *, progress=None, force=False):
+            assert (version, tag) == ("7.5.0", "py2")
+            return platform
+
+    out = tmp_path / "out"
+    build_game(
+        source, output=out, runtime_manager=FakeManager(),
+        legacy_arm64_fallback=True,
+    )
+    # Replace the fake ARM ELF at the test-only output path with a shell stub.
+    # This exercises the *real* generated launch chain without an ARM machine.
+    executable = out / "lib/py2-linux-aarch64/Game"
+    executable.write_text(
+        '#!/bin/sh\n'
+        'printf "launched platform=%s\\n" "$RENPY_PLATFORM"\n',
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    completed = subprocess.run(
+        ["bash", str(out / "launch.sh")],
+        cwd=out,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert "launched platform=py2-linux-aarch64" in completed.stdout
