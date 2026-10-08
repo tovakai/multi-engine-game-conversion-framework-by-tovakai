@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ast
 import hashlib
+import subprocess
 import shutil
 import struct
 import tarfile
@@ -211,6 +213,9 @@ def test_automatic_builder_grafts_arm_platform_and_patches_launcher(
     installer = (output / "add-to-steam.sh").read_text(encoding="utf-8")
     assert "steam://addnonsteamgame/" in installer
     assert "python3 -" in installer
+    subprocess.run(["bash", "-n", str(output / "add-to-steam.sh")], check=True)
+    embedded = installer.split("<<'PY_STEAM'\\n", 1)[1].split("\\nPY_STEAM", 1)[0]
+    ast.parse(embedded)
 
     # The distributed engine/game remains the source of truth.
     assert (output / "renpy/versions.py").read_text(encoding="utf-8") == (
