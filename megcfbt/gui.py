@@ -252,6 +252,16 @@ class ConverterApp:
             command=self._start_convert,
         )
         self.convert_btn.pack(side="left")
+        ctk.CTkButton(
+            controls,
+            text="CUSTOM COVER…",
+            width=130,
+            height=40,
+            fg_color=C_PANEL_2,
+            hover_color=C_BORDER,
+            text_color=C_MUTED,
+            command=self._pick_steam_cover,
+        ).pack(side="left", padx=(10, 0))
         self.steam_btn = ctk.CTkButton(
             controls,
             text="ADD TO STEAM",
