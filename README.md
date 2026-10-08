@@ -57,7 +57,7 @@ it pretend it has one?**
 
 | Engine family | Backend | Conversion strategy | Hardware status |
 | --- | --- | --- | --- |
-| Ren'Py | RenFrame | use matching Linux ARM64 Ren'Py runtimes; experimental full-engine migration for legacy 7.4.x | Ren'Py 7.4.11 (via 7.5.0) and Ren'Py 8 games playable on Steam Frame in initial testing |
+| Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12 and legacy 7.4.x | Ren'Py 8, legacy 7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; deeper compatibility varies |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
@@ -221,10 +221,12 @@ ID, never the SteamGridDB game ID. Artwork provenance is recorded in
 ## Ren'Py runtime resolution
 
 Original DDLC 1.1.1 / Ren'Py 6.99.12 has a separate opt-in **experimental**
-full-engine migration to official Ren'Py 7.5.3 Python 2 ARM64. Hardware, story,
-saves and restart compatibility are pending. Other Ren'Py 6 games remain
-unsupported automatically. See [the DDLC migration and Steam Frame test
-procedure](docs/ddlc-111-arm64-migration.md).
+full-engine migration to official Ren'Py 7.5.3 Python 2 ARM64 in the main GUI.
+Steam Frame Stage A launch, menu, audio, controls, exit and graphical relaunch
+were confirmed on real hardware (2026-10-08). Story progression, poem game,
+saves, character-file transitions and in-story restarts still require deeper
+verification. Other Ren'Py 6 games remain unsupported automatically. See
+[the DDLC migration and Steam Frame test procedure](docs/ddlc-111-arm64-migration.md).
 
 Ren'Py now follows the same automatic-runtime philosophy as the other backends.
 When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
@@ -316,6 +318,7 @@ not a promise that every game using an engine will work.
 | [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
 | [Everlasting Summer 1.6](https://store.steampowered.com/app/331470/Everlasting_Summer/) (original release) | Ren'Py 7.4.11 / Python 2; experimental full-engine migration to Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief skip-through; full testing pending) | Game launches, passes splash screen and progresses through dialogue. Requires the opt-in 7.5.0 engine/runtime fallback; the previous 7.4 engine + 7.5 graphics-library hybrid crashed at GL initialization. |
 | Everlasting Summer (author's Ren'Py 8 beta) | Ren'Py 8.x; exact beta/runtime version not recorded | Steam Frame | Playable (initial gameplay confirmed; full testing pending) | Standard conversion ran without observed issues during initial play. Upstream beta status relates to potential mod compatibility; mods were not tested. |
+| [Doki Doki Literature Club! 1.1.1](https://ddlc.moe/) (original, not Plus) | Ren'Py 6.99.12 / Python 2; experimental full-engine migration to official Ren'Py 7.5.3 ARM64 | Steam Frame | Launches (Stage A passed; gameplay verification pending) | Real-device native Steam shortcut: menu, audio, input, exit and relaunch reported working. The user's original files are preserved locally. Poem game, save/load, character-file transitions and later acts remain untested; mods not tested. |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
 but gameplay not yet validated; **Issues** = runs with notable problems;
