@@ -478,7 +478,7 @@ def _write_add_to_steam_script(root: Path, display_name: str) -> Path:
     import shlex
 
     path = root / "add-to-steam.sh"
-    script = """#!/usr/bin/env bash
+    script = r"""#!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if ! command -v python3 >/dev/null 2>&1; then
@@ -527,7 +527,7 @@ PY_STEAM
 """
     # The script takes no user arguments; embed a safely quoted display name.
     script = script.replace('"$1" <<', shlex.quote(display_name) + " <<")
-    path.write_text(script, encoding="utf-8", newline="\\n")
+    path.write_text(script, encoding="utf-8", newline="\n")
     try:
         path.chmod(path.stat().st_mode | 0o755)
     except OSError:
