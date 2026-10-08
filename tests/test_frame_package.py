@@ -147,7 +147,7 @@ def test_bundled_installer_matches_steam_shortcut_appid_formula(tmp_path):
 
     exe = '"/home/steamos/Games/Brotato-frame/launch.sh"'
     assert namespace["shortcut_appid"](exe, "Brotato") == 3929824991
-    assert namespace["to_signed32"](3929824991) == -365142305
+    assert namespace["to_unsigned32"](-365142305) == 3929824991
 
 
 def test_bundled_installer_reads_shortcuts_vdf(tmp_path):
