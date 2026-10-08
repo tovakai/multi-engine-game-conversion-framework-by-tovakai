@@ -39,6 +39,9 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
     with zipfile.ZipFile(archive) as zf:
         names = set(zf.namelist())
         assert "Example-frame/launch.sh" in names
+        assert "Example-frame/install-to-steam.sh" in names
+        assert "Example-frame/INSTALL-ON-FRAME.txt" in names
+        assert "Example-frame/.megcfbt/install-to-steam.py" in names
         assert "Example-frame/payload/launch.sh" in names
         assert "Example-frame/.megcfbt/package.json" in names
         assert "Example-frame/.megcfbt/artwork/grid.png" in names
@@ -49,11 +52,18 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
         assert 'exec "$PAYLOAD/$TARGET" "$@"' in trampoline
 
         launch_mode = zf.getinfo("Example-frame/launch.sh").external_attr >> 16
+        install_mode = zf.getinfo("Example-frame/install-to-steam.sh").external_attr >> 16
         payload_launch_mode = zf.getinfo("Example-frame/payload/launch.sh").external_attr >> 16
         data_mode = zf.getinfo("Example-frame/payload/data.txt").external_attr >> 16
         assert stat.S_IMODE(launch_mode) == 0o755
+        assert stat.S_IMODE(install_mode) == 0o755
         assert stat.S_IMODE(payload_launch_mode) == 0o755
         assert stat.S_IMODE(data_mode) == 0o644
+
+        installer = zf.read("Example-frame/.megcfbt/install-to-steam.py").decode("utf-8")
+        assert "steam://addnonsteamgame/" in installer
+        assert "shortcuts.vdf" in installer
+        assert '"config" / "grid"' in installer
 
         metadata = json.loads(
             zf.read("Example-frame/.megcfbt/package.json").decode("utf-8")
