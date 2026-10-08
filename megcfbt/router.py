@@ -330,7 +330,7 @@ def build_source(
 
         # Artwork is optional enrichment. A Steam App ID is a strong identity
         # signal, so use it to fetch official library assets automatically.
-        app_id = discover_steam_app_id(path)
+        app_id = discover_steam_app_id(output_path)
         if app_id:
             stage(0.84, "Resolving Steam artwork")
             fetch_official_steam_artwork(app_id, output_path, progress=progress)
