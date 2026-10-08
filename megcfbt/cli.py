@@ -20,6 +20,10 @@ def _parser() -> argparse.ArgumentParser:
 
     build_cmd = sub.add_parser("build", help="convert a supported game to Linux ARM64")
     build_cmd.add_argument("source", type=Path)
+    build_cmd.add_argument("--experimental-ddlc-753-migration", action="store_true",
+                           help="opt in: original DDLC 1.1.1 / Ren'Py 6.99.12 only; full 7.5.3 Python 2 engine; hardware unverified")
+    build_cmd.add_argument("--dry-run", action="store_true",
+                           help="Ren'Py only: validate and report without downloads or output")
     build_cmd.add_argument("-o", "--output", type=Path)
     build_cmd.add_argument(
         "--renpy-runtime",
@@ -224,6 +228,8 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             output=args.output,
             renpy_runtime=args.renpy_runtime,
+            renpy_ddlc_753_migration=args.experimental_ddlc_753_migration,
+            dry_run=args.dry_run,
             backend_runtime=args.runtime,
             force=args.force,
             archive=not args.no_archive,
@@ -233,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
             progress=print,
             **kwargs,
         )
-        print(f"Built:   {result.output_path}")
+        print(f"{'Planned' if args.dry_run else 'Built'}:   {result.output_path}")
         if result.archive_path:
             print(f"Package: {result.archive_path}")
         for warning in result.warnings:

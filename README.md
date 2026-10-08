@@ -220,6 +220,12 @@ ID, never the SteamGridDB game ID. Artwork provenance is recorded in
 
 ## Ren'Py runtime resolution
 
+Original DDLC 1.1.1 / Ren'Py 6.99.12 has a separate opt-in **experimental**
+full-engine migration to official Ren'Py 7.5.3 Python 2 ARM64. Hardware, story,
+saves and restart compatibility are pending. Other Ren'Py 6 games remain
+unsupported automatically. See [the DDLC migration and Steam Frame test
+procedure](docs/ddlc-111-arm64-migration.md).
+
 Ren'Py now follows the same automatic-runtime philosophy as the other backends.
 When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
 

@@ -616,6 +616,8 @@ class ConverterApp:
             experimental_arm64_fallback(result.engine_version, result.renpy_generation)
             if result.engine == "renpy" else None
         )
+        if result.engine == "renpy" and result.renpy_ddlc_753_candidate:
+            legacy_fallback = "7.5.3"
         pre_sdkarm = (
             requires_pre_sdkarm_override(result.engine_version, result.renpy_generation)
             if result.engine == "renpy" else False
@@ -681,6 +683,7 @@ class ConverterApp:
                 f"Click CONVERT to approve an experimental official Ren'Py "
                 f"{legacy_fallback} Python 2 runtime download, or use RUNTIME "
                 "to select a manual override. Gameplay is not yet verified."
+                + (" Unofficial personal-use conversion of your own original DDLC files. Story, saves, characters/ and restarts require hardware validation." if result.renpy_ddlc_753_candidate else "")
             )
             self._log("Inspect: " + advisory)
             self.notes_box.configure(state="normal")
@@ -801,10 +804,13 @@ class ConverterApp:
         if self._busy or self.source is None or self.inspection is None:
             return
         legacy_arm64_approved = False
+        ddlc_753_approved = False
         if self.inspection.engine == "renpy" and self.renpy_runtime is None:
             fallback = experimental_arm64_fallback(
                 self.inspection.engine_version, self.inspection.renpy_generation
             )
+            if self.inspection.renpy_ddlc_753_candidate:
+                fallback = "7.5.3"
             if fallback:
                 choice = messagebox.askyesnocancel(
                     APP_NAME,
@@ -817,13 +823,15 @@ class ConverterApp:
                     "NO: Select your own compatible ARM64 Ren'Py runtime folder.\n\n"
                     "CANCEL: Do nothing.\n\n"
                     "This is experimental. The game may not run correctly, "
-                    "even if conversion succeeds. Original game files remain untouched.",
+                    "even if conversion succeeds. Original game files remain untouched."
+                    + ("\n\nYES also confirms this is your own original DDLC 1.1.1 installation, not DDLC Plus or a mod. Layout detection does not authenticate the game release. Unofficial personal-use conversion. Preserves characters/ and game-owned sidecars in the copy. Story, saves, later acts and restart behavior are NOT hardware verified. No DDLC-specific patches are applied." if self.inspection.renpy_ddlc_753_candidate else ""),
                     icon="warning",
                 )
                 if choice is None:
                     return
                 if choice:
-                    legacy_arm64_approved = True
+                    ddlc_753_approved = self.inspection.renpy_ddlc_753_candidate
+                    legacy_arm64_approved = not ddlc_753_approved
                 else:
                     self._pick_renpy_runtime()
                     if self.renpy_runtime is None:
@@ -878,6 +886,7 @@ class ConverterApp:
                     output=output,
                     renpy_runtime=self.renpy_runtime,
                     renpy_legacy_arm64_fallback=legacy_arm64_approved,
+                    renpy_ddlc_753_migration=ddlc_753_approved,
                     backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,

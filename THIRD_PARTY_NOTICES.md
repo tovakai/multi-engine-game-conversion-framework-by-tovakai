@@ -1,5 +1,16 @@
 # Third-party notices
 
+## Official Ren'Py compatibility SDK
+
+The experimental original DDLC 1.1.1 migration downloads the official Ren'Py
+7.5.3 ARM SDK locally from https://www.renpy.org/release/7.5.3 and verifies its
+SHA256 before selecting the matched Python 2 engine and AArch64 runtime.
+Ren'Py's `LICENSE.txt` and `doc/license.html` notices are retained in that
+output. See https://www.renpy.org/doc/html/license.html for component licenses
+and upstream source links. The converter repository does not bundle the SDK
+or any original DDLC assets/scripts. No code from DDLC-ARM-Linux, PortMaster,
+decompiled DDLC repositories or mod templates was copied.
+
 ## Deckport
 
 The Steam Frame non-Steam shortcut installer adapts Deckport's deterministic

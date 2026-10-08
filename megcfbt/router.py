@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 from renframe.runtime import experimental_arm64_fallback, requires_pre_sdkarm_override
+from renframe.ddlc import original_ddlc_candidate
 from renframe.builder import BuildError as RenFrameBuildError
 from renframe.builder import build_game as build_renpy_game
 from renframe.inspect_service import inspect_game as inspect_renpy_game
@@ -98,7 +99,10 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
     ])
 
     fallback = experimental_arm64_fallback(result.renpy_version, result.generation)
-    if fallback:
+    ddlc_candidate = original_ddlc_candidate(result)
+    if ddlc_candidate:
+        runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; hardware unverified)"
+    elif fallback:
         runtime_kind = (
             f"experimental Ren'Py {fallback} Python 2 ARM64 fallback "
             "(requires user approval)"
@@ -124,6 +128,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         warnings=warnings,
         evidence=evidence,
         renpy_generation=result.generation,
+        renpy_ddlc_753_candidate=ddlc_candidate,
     )
 
 
@@ -223,6 +228,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 warnings=result.warnings,
                 evidence=result.evidence,
                 renpy_generation=result.renpy_generation,
+                renpy_ddlc_753_candidate=result.renpy_ddlc_753_candidate,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc
@@ -239,6 +245,8 @@ def build_source(
     archive: bool = True,
     allow_renpy_version_mismatch: bool = False,
     renpy_legacy_arm64_fallback: bool = False,
+    renpy_ddlc_753_migration: bool = False,
+    dry_run: bool = False,
     steam_cover: Path | str | None = None,
     steamgriddb_game_id: int | None = None,
     progress: Callable[[str], None] | None = None,
@@ -252,6 +260,10 @@ def build_source(
     path = Path(source).expanduser().resolve()
     stage(0.03, "Inspecting source")
     inspection = inspect_source(path)
+    if renpy_ddlc_753_migration and (
+        inspection.backend != "renframe" or not inspection.renpy_ddlc_753_candidate
+    ):
+        raise ConversionError("Experimental DDLC 7.5.3 migration requires original DDLC 1.1.1 / Ren'Py 6.99.12 layout evidence.")
     stage(0.12, f"Detected {inspection.engine_label}")
     custom_godot_override = bool(
         inspection.backend == "rpgmframe"
@@ -282,6 +294,8 @@ def build_source(
         if output is not None
         else output_path_for_source(path, path.parent, inspection.game_name)
     )
+    if dry_run and inspection.backend != "renframe":
+        raise ConversionError("--dry-run currently supports Ren'Py builds only.")
 
     try:
         stage(0.20, "Building ARM64 package")
@@ -297,12 +311,22 @@ def build_source(
                     force=force,
                     allow_version_mismatch=allow_renpy_version_mismatch,
                     legacy_arm64_fallback=renpy_legacy_arm64_fallback,
+                    ddlc_753_migration=renpy_ddlc_753_migration,
+                    dry_run=dry_run,
                     progress=progress,
                 )
                 launcher_path = result.launcher_path
                 warnings = tuple(result.warnings)
                 game_name = result.display_name or result.game_name
                 engine_version = result.source_version
+                if dry_run:
+                    return UnifiedBuildResult(
+                        source_path=path, output_path=output_path,
+                        launcher_path=launcher_path, archive_path=None,
+                        backend=inspection.backend, engine=inspection.engine,
+                        engine_version=engine_version, game_name=game_name,
+                        warnings=warnings,
+                    )
         else:
             def backend_stage(value: float, message: str) -> None:
                 stage(0.20 + (0.62 * max(0.0, min(1.0, value))), message)
@@ -329,15 +353,19 @@ def build_source(
             launcher_path=launcher_path,
             engine=inspection.engine,
             engine_version=engine_version,
+            **({"runtime_engine_version": result.runtime_version,
+                "compatibility_profile": "experimental-ddlc-111-renpy-753"}
+               if renpy_ddlc_753_migration else {}),
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)
-        complete_frame_artwork(
-            output_path,
-            game_name=game_name or inspection.game_name or source_base_name(path),
-            progress=progress,
-            steamgriddb_game_id=steamgriddb_game_id,
-        )
+        if not renpy_ddlc_753_migration:
+            complete_frame_artwork(
+                output_path,
+                game_name=game_name or inspection.game_name or source_base_name(path),
+                progress=progress,
+                steamgriddb_game_id=steamgriddb_game_id,
+            )
         if archive:
             stage(0.88, "Creating Frame-ready ZIP")
             archive_path = create_frame_zip(

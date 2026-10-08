@@ -226,7 +226,11 @@ def strategy_renpy_init(root: Path) -> VersionHint | None:
         # using its bundled Python 2/3 runtime. Otherwise do not guess.
         if len(versions) == 1:
             version = next(iter(versions))
-            if python_generations and _generation_from_version(version) not in python_generations:
+            generation = _generation_from_version(version)
+            # A literal 6.x engine version remains generation 6. Python 2
+            # directories do not turn it into a supported Ren'Py 7 engine.
+            compatible_python2_legacy = generation == 6 and python_generations == {7}
+            if python_generations and generation not in python_generations and not compatible_python2_legacy:
                 return None
         elif len(python_generations) == 1:
             generation = next(iter(python_generations))
@@ -256,7 +260,9 @@ def strategy_renpy_init(root: Path) -> VersionHint | None:
     )
     if match:
         version = match.group("version")
-        if python_generations and _generation_from_version(version) not in python_generations:
+        generation = _generation_from_version(version)
+        compatible_python2_legacy = generation == 6 and python_generations == {7}
+        if python_generations and generation not in python_generations and not compatible_python2_legacy:
             return None
         return VersionHint(
             version=version,
