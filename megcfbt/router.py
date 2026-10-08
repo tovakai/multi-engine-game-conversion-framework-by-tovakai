@@ -43,7 +43,7 @@ def source_base_name(source: Path | str) -> str:
     return path.stem if path.suffix.lower() == ".zip" else path.name
 
 
-_INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\\x00-\\x1f]+')
+_INVALID_FILENAME = re.compile(r'[<>:"/\\\\|?*]+')
 
 
 def _safe_game_name(value: str | None, fallback: str) -> str:
@@ -343,6 +343,7 @@ def build_source(
             launcher_path=launcher_path,
             engine=inspection.engine,
             engine_version=engine_version,
+            steam_app_id=app_id,
         )
 
         if archive:
