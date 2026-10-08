@@ -4,26 +4,26 @@ Supported custom Godot games should use the normal **Convert** button. The
 runtime downloader is SHA-256 pinned, caches verified archives and reports
 byte-level progress in the GUI.
 
-## Publishing the first runtime
+## Published Brotato compatibility runtime
 
-The runtime archive **has not been published yet**. The shipped
-`rpgmframe/godot_runtime_index.json` deliberately contains no enabled recipes.
-Do not advertise automatic Windows conversion until the following steps are
-complete:
+The first runtime is published as the prerelease
+`runtime-godot-3.7-dev1-godotsteam-3.30-arm64-v1`.
 
-1. Strip a **copy** of the tested Godot ARM64 executable; keep the working
-   unstripped binary untouched.
-2. Test the stripped executable on Steam Frame with the original Brotato PCK.
-3. Create a flat `tar.gz` containing only `godot.arm64` and `runtime.json`.
-   The generated launcher uses the Frame-installed native Steam API from
-   `/opt/steamvr/bin/linuxarm64`; the release asset must not bundle
-   `libsteam_api.so`.
-4. Upload the archive to a versioned GitHub Release asset.
-5. Compute the archive's SHA-256 and add the pinned GitHub Release URL and hash
-   to the index under
-   `godot-3.7-dev1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1`.
-6. Test download, offline cache reuse, corrupted download rejection and a
-   clean Windows GUI conversion, followed by a fresh Steam Frame launch.
+Its archive contains only `godot.arm64` and `runtime.json`. The generated
+launcher uses the Frame-installed native Steam API from
+`/opt/steamvr/bin/linuxarm64`; the release asset does not bundle
+`libsteam_api.so`.
+
+The archive SHA-256 is pinned in the application:
+
+`f87130aa44fae591a098eb03df8a419f84b47d25100756f04bb645e44102e34a`
+
+The stripped runtime was validated with a complete Brotato 1.1.14.6 gameplay
+run on Steam Frame, including successful native Steam initialization,
+online status and ownership detection.
+
+Before merging this feature, still test a clean Windows GUI download/conversion,
+offline cache reuse and a fresh converted archive on Steam Frame.
 
 No game payloads or proprietary Steamworks SDK headers should be published.
 
