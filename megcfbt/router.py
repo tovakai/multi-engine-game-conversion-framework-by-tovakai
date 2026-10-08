@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 from pathlib import Path
+import re
 
 from renframe.builder import BuildError as RenFrameBuildError
 from renframe.builder import build_game as build_renpy_game
@@ -17,7 +18,16 @@ from rpgmframe.godot_custom_runtime import (
     automatic_recipe_for,
     host_can_build_automatic_runtime,
 )
-from rpgmframe.packaging import PackagingError, create_tar_gz
+from megcfbt.artwork import discover_steam_app_id, fetch_official_steam_artwork
+from megcfbt.frame_package import (
+    FRAMEDROP_ZIP_UNPACK_LIMIT,
+    FramePackageError,
+    create_frame_zip,
+    embed_steam_cover,
+    framedrop_zip_compatible,
+    zip_unpacked_size,
+    write_frame_metadata,
+)
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source
 
@@ -33,8 +43,28 @@ def source_base_name(source: Path | str) -> str:
     return path.stem if path.suffix.lower() == ".zip" else path.name
 
 
+_INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\\x00-\\x1f]+')
+
+
+def _safe_game_name(value: str | None, fallback: str) -> str:
+    candidate = _INVALID_FILENAME.sub("-", (value or "").strip())
+    candidate = re.sub(r"\\s+", " ", candidate).strip(" .-")
+    return candidate or fallback
+
+
 def output_path_for_source(source: Path | str, output_dir: Path | str) -> Path:
+    """Legacy source-name fallback used before inspection is available."""
     return Path(output_dir).expanduser() / f"{source_base_name(source)}-frame"
+
+
+def output_path_for_inspection(
+    inspection: UnifiedInspection,
+    output_dir: Path | str,
+    source: Path | str | None = None,
+) -> Path:
+    fallback = source_base_name(source or inspection.source_path)
+    name = _safe_game_name(inspection.game_name, fallback)
+    return Path(output_dir).expanduser() / f"{name}-frame"
 
 
 def _single_directory_child(root: Path) -> Path | None:
@@ -212,6 +242,7 @@ def build_source(
     runtime_version: str = DEFAULT_NWJS_VERSION,
     force: bool = False,
     archive: bool = True,
+    steam_cover: Path | str | None = None,
     allow_renpy_version_mismatch: bool = False,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
@@ -252,7 +283,7 @@ def build_source(
     output_path = (
         Path(output).expanduser().resolve()
         if output is not None
-        else path.parent / f"{source_base_name(path)}-frame"
+        else output_path_for_inspection(inspection, path.parent, path).resolve()
     )
 
     try:
@@ -294,16 +325,48 @@ def build_source(
             engine_version = result.engine_version
 
         stage(0.82, "Game build complete")
+        if launcher_path is None:
+            raise ConversionError("Converted build has no launcher to register or package.")
+
+        # Artwork is optional enrichment. A Steam App ID is a strong identity
+        # signal, so use it to fetch official library assets automatically.
+        app_id = discover_steam_app_id(path)
+        if app_id:
+            stage(0.84, "Resolving Steam artwork")
+            fetch_official_steam_artwork(app_id, output_path, progress=progress)
+
+        # Manual artwork remains an advanced override, not part of the normal flow.
+        embed_steam_cover(output_path, steam_cover)
+        write_frame_metadata(
+            output_path,
+            name=game_name or output_path.name,
+            launcher_path=launcher_path,
+            engine=inspection.engine,
+            engine_version=engine_version,
+        )
+
         if archive:
-            stage(0.88, "Creating transfer archive")
-            archive_path = create_tar_gz(output_path, force=force)
+            stage(0.88, "Creating Frame-ready ZIP")
+            archive_path = create_frame_zip(
+                output_path,
+                launcher_path=launcher_path,
+                force=force,
+            )
+            if not framedrop_zip_compatible(archive_path):
+                unpacked = zip_unpacked_size(archive_path)
+                warnings += (
+                    "FrameDrop's ZIP extraction path currently rejects packages over "
+                    f"{FRAMEDROP_ZIP_UNPACK_LIMIT / 1024**3:.0f} GiB unpacked "
+                    f"(this package is {unpacked / 1024**3:.2f} GiB unpacked). "
+                    f"Drag the converted build folder into FrameDrop instead: {output_path}",
+                )
         else:
             archive_path = None
         stage(1.0, "Complete")
     except (
         RenFrameBuildError,
         RPGMFrameBuildError,
-        PackagingError,
+        FramePackageError,
         SourceError,
     ) as exc:
         raise ConversionError(str(exc)) from exc
