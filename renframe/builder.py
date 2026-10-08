@@ -495,7 +495,7 @@ import urllib.parse
 
 root = pathlib.Path(sys.argv[1]).resolve()
 name = sys.argv[2]
-launcher = root / "launch.sh"
+launcher = root / sys.argv[3]
 if not launcher.is_file():
     raise SystemExit(f"Missing game launcher: {launcher}")
 if not shutil.which("steam"):
@@ -509,13 +509,13 @@ entry_dir.mkdir(parents=True, exist_ok=True)
 key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:12]
 entry = entry_dir / f"tovakai-{key}.desktop"
 entry.write_text(
-    "[Desktop Entry]\\n"
-    "Type=Application\\n"
-    "Name=" + name.replace("\\n", " ").replace("\\r", " ") + "\\n"
-    "Exec=/usr/bin/env bash " + desktop_quote(str(launcher)) + "\\n"
-    "Path=" + str(root).replace("\\n", " ") + "\\n"
-    "Terminal=false\\n"
-    "Categories=Game;\\n",
+    "[Desktop Entry]\n"
+    "Type=Application\n"
+    "Name=" + name.replace("\n", " ").replace("\r", " ") + "\n"
+    "Exec=/usr/bin/env bash " + desktop_quote(str(launcher)) + "\n"
+    "Path=" + str(root).replace("\n", " ") + "\n"
+    "Terminal=false\n"
+    "Categories=Game;\n",
     encoding="utf-8",
 )
 entry.chmod(0o755)
