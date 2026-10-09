@@ -96,7 +96,7 @@ func _initialize():
 
     def run_conversion(self, **kwargs):
         return converter.convert(self.source, kwargs.pop("output", self.output), self.native, self.archives,
-                                 authorized=kwargs.pop("authorized", True), _profile=self.profile,
+                                 _profile=self.profile,
                                  _pack_transform=adapt, **kwargs)
 
     def snapshot(self, root):
@@ -148,10 +148,10 @@ func _initialize():
         (self.output / "native-build.json").write_text("tampered build evidence")
         self.assertTrue(verify(self.output)["errors"])
 
-    def test_authorization_required(self):
-        with self.assertRaisesRegex(ValueError, "Acknowledge"):
-            self.run_conversion(authorized=False)
-        self.assertFalse(self.output.exists())
+    def test_conversion_requires_no_ownership_declaration(self):
+        result = self.run_conversion()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(verify(self.output)["errors"], [])
 
     def test_source_copy_managed_native_and_archive_corruption_refused(self):
         paths = [self.source / self.profile["copy_files"][0]["source"],
@@ -237,7 +237,7 @@ func _initialize():
         link = self.root / "linked"
         link.symlink_to(self.source, target_is_directory=True)
         with self.assertRaisesRegex(ValueError, "Symbolic"):
-            converter.convert(link, self.output, self.native, self.archives, authorized=True, _profile=self.profile)
+            converter.convert(link, self.output, self.native, self.archives, _profile=self.profile)
         self.output.symlink_to(self.root / "missing")
         with self.assertRaisesRegex(ValueError, "Symbolic"):
             self.run_conversion()
@@ -284,7 +284,7 @@ func _initialize():
 
     def test_json_cli_complete_workflow_and_bad_inputs(self):
         args = [str(self.source), str(self.output), "--native-dir", str(self.native), "--godot-templates", str(self.archives["godot"]),
-                "--dotnet-runtime", str(self.archives["dotnet"]), "--sentry-archive", str(self.archives["sentry"]), "--acknowledge-licenses", "--tar", str(self.root / "transfer.tar")]
+                "--dotnet-runtime", str(self.archives["dotnet"]), "--sentry-archive", str(self.archives["sentry"]), "--tar", str(self.root / "transfer.tar")]
         real_rewrite = converter.rewrite_pack
         def synthetic_rewrite(*args, **kwargs):
             return real_rewrite(*args, **kwargs, transform=adapt)
@@ -419,7 +419,7 @@ class OfficialArtifactPipelineTests(unittest.TestCase):
         result = subprocess.run([sys.executable, "-S", str(software / "convert_sts2.py"),
                                  str(self.source), str(self.output), "--native-dir", str(self.native),
                                  "--godot-templates", str(self.archives["godot"]), "--dotnet-runtime", str(self.archives["dotnet"]),
-                                 "--sentry-archive", str(self.archives["sentry"]), "--acknowledge-licenses"],
+                                 "--sentry-archive", str(self.archives["sentry"])],
                                 cwd=self.root, env=environment, capture_output=True, text=True, timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = json.loads(result.stdout)
