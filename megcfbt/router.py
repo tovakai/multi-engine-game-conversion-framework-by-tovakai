@@ -221,7 +221,6 @@ def build_source(
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     sts2_sdk: Path | str | None = None,
-    acknowledge_licenses: bool = False,
     sts2_frame=None,
     sts2_retry: bool = False,
 ) -> UnifiedBuildResult:
@@ -282,7 +281,7 @@ def build_source(
                     return UnifiedBuildResult(source_path=path,output_path=output_path,
                         launcher_path=None,archive_path=Path(report['local_archive']) if report.get('local_archive') else None,
                         backend='sts2',engine='godot',engine_version=inspection.engine_version,game_name=inspection.game_name,
-                        warnings=('STS2 remote conversion is experimental; retail/owned-Steam gameplay acceptance is required.',),
+                        warnings=('STS2 remote conversion is experimental; Steam launch and gameplay acceptance are required.',),
                         remote_output=report['output'],steam_launch_command=report['launch_command'],remote_job=report['job'])
                 except (RemoteError,OSError,ValueError) as e: raise ConversionError(str(e)) from e
             with prepare_source(path) as prepared:
@@ -292,7 +291,7 @@ def build_source(
                 try:
                     report = sts2.build(selected.source_path, output_path,
                                         sdk=sts2_sdk or backend_runtime,
-                                        authorized=acknowledge_licenses, progress=progress)
+                                        progress=progress)
                 except (OSError, RuntimeError) as exc:
                     raise ConversionError(str(exc)) from exc
             launcher_path = output_path / "launch.sh"
