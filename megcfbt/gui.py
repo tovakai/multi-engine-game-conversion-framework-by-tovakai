@@ -483,7 +483,7 @@ class ConverterApp:
         if self.inspection.buildable:
             return True
         if self.inspection.backend == "sts2":
-            return self.inspection.compatibility == "needs_testing" and (self.frame_settings.authorized or sts2.available(self.backend_runtime))
+            return self.inspection.compatibility == "needs_testing" and (bool(self.frame_settings.sdk_file or self.frame_settings.remote_sdk) or sts2.available(self.backend_runtime))
         if automatic_custom_godot_runtime_available(self.inspection):
             return True
         return bool(
@@ -692,12 +692,6 @@ class ConverterApp:
     def _start_convert(self, retry=False) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
-        sts2_authorized = False
-        if self.inspection.backend == "sts2":
-            sts2_authorized = messagebox.askyesno(
-                APP_NAME, "Confirm that you own this game and have the applicable FMOD and Spine permissions for this personal conversion. No game or vendor binaries will be redistributed.")
-            if not sts2_authorized:
-                return
         if (
             self.inspection.engine == "renpy"
             and self.renpy_runtime is None
@@ -740,8 +734,7 @@ class ConverterApp:
                     archive=archive,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
-                    acknowledge_licenses=sts2_authorized,
-                    sts2_frame=self.frame_settings if self.inspection.backend=='sts2' and self.frame_settings.authorized else None,
+                    sts2_frame=self.frame_settings if self.inspection.backend=='sts2' and (self.frame_settings.sdk_file or self.frame_settings.remote_sdk) else None,
                     sts2_retry=retry,
                 )
                 self._dispatch(lambda: self._done(result))
@@ -771,7 +764,7 @@ class ConverterApp:
             directory=settings_directory();directory.mkdir(parents=True,exist_ok=True)
             (directory/'steam-output.json').write_text(json.dumps({'host':self.frame_settings.host,'job':result.remote_job}))
             self.steam_configure_btn.configure(state='normal')
-            if messagebox.askyesno(APP_NAME, 'Experimental STS2 conversion verified and deployed.\n\nConfigure the owned Steam entry to launch this conversion?\n\nThe application will back up the current per-game launch setting and offer Restore. Game files, ownership, saves and Cloud settings are unchanged. Steam must be running on the Frame.'):
+            if messagebox.askyesno(APP_NAME, 'Experimental STS2 conversion verified and deployed.\n\nConfigure the STS2 Steam entry to launch this conversion?\n\nThe application will back up the current per-game launch setting and offer Restore. Game files, saves and Cloud settings are unchanged. Steam must be running on the Frame.'):
                 self._configure_sts2_steam()
             return
         messagebox.showinfo(
@@ -782,7 +775,7 @@ class ConverterApp:
         )
 
     def _request_sts2_steam(self):
-        if messagebox.askyesno(APP_NAME,'Connect this conversion to the owned STS2 entry? The current launch setting will be backed up. Restore will recover it.'):
+        if messagebox.askyesno(APP_NAME,'Connect this conversion to the STS2 Steam entry? The current launch setting will be backed up. Restore will recover it.'):
             self._configure_sts2_steam()
 
     def _configure_sts2_steam(self,restore=False,isolated=False):
