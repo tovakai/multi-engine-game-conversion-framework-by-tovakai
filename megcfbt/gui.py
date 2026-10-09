@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import queue
 import subprocess
 import sys
@@ -243,6 +244,18 @@ class ConverterApp:
         self.convert_btn.pack(side="left")
         self.retry_btn=ctk.CTkButton(controls,text='RETRY STS2 JOB',state='disabled',width=135,command=lambda:self._start_convert(retry=True))
         self.retry_btn.pack(side='left',padx=8)
+        self.steam_restore_btn=ctk.CTkButton(controls,text='RESTORE STEAM',state='disabled',width=130,command=lambda:self._configure_sts2_steam(restore=True))
+        self.steam_restore_btn.pack(side='left',padx=8)
+        self.steam_configure_btn=ctk.CTkButton(controls,text='CONNECT STEAM',state='disabled',width=130,command=self._request_sts2_steam)
+        self.steam_configure_btn.pack(side='left',padx=8)
+        from .sts2_remote import settings_directory
+        try:
+            record=json.loads((settings_directory()/'steam-output.json').read_bytes())
+            if record['host']==self.frame_settings.host:
+                self.sts2_completed_job=record['job']
+                self.steam_configure_btn.configure(state='normal')
+                self.steam_restore_btn.configure(state='normal')
+        except (OSError,ValueError,KeyError): pass
 
         ctk.CTkButton(
             controls,
@@ -753,9 +766,13 @@ class ConverterApp:
         self._set_status(f"Done → {target}", C_OK)
         if result.remote_output:
             self._log('Frame output: '+result.remote_output)
-            self._log('Steam Launch Options: '+result.steam_launch_command)
-            self.root.clipboard_clear();self.root.clipboard_append(result.steam_launch_command)
-            messagebox.showinfo(APP_NAME,'Experimental STS2 conversion verified and deployed.\n\nFrame game folder:\n'+result.remote_output+'\n\nSteam Launch Options (copied to clipboard):\n'+result.steam_launch_command+'\n\nPaste this into the owned STS2 entry. Existing Steam settings were not changed.')
+            self.sts2_completed_job = result.remote_job
+            from .sts2_remote import settings_directory
+            directory=settings_directory();directory.mkdir(parents=True,exist_ok=True)
+            (directory/'steam-output.json').write_text(json.dumps({'host':self.frame_settings.host,'job':result.remote_job}))
+            self.steam_configure_btn.configure(state='normal')
+            if messagebox.askyesno(APP_NAME, 'Experimental STS2 conversion verified and deployed.\n\nConfigure the owned Steam entry to launch this conversion?\n\nThe application will back up the current per-game launch setting and offer Restore. Game files, ownership, saves and Cloud settings are unchanged. Steam must be running on the Frame.'):
+                self._configure_sts2_steam()
             return
         messagebox.showinfo(
             APP_NAME,
@@ -763,6 +780,32 @@ class ConverterApp:
             f"Build directory:\n{result.output_path}\n\n"
             + (f"Transfer archive:\n{result.archive_path}\n" if result.archive_path else ""),
         )
+
+    def _request_sts2_steam(self):
+        if messagebox.askyesno(APP_NAME,'Connect this conversion to the owned STS2 entry? The current launch setting will be backed up. Restore will recover it.'):
+            self._configure_sts2_steam()
+
+    def _configure_sts2_steam(self,restore=False,isolated=False):
+        from .sts2_remote import RemoteBuild
+        job=getattr(self,'sts2_completed_job',None)
+        if not job: return
+        if restore and not messagebox.askyesno(APP_NAME,'Restore the backed-up Steam launch setting? Later manual edits will be preserved.'):
+            return
+        self._set_busy(True)
+        self._set_status('Configuring Steam launch…',C_MUTED)
+        def worker():
+            try:
+                RemoteBuild(self.frame_settings).steam_entry(job,'restore' if restore else 'configure',consent=True,isolated=isolated)
+                self._dispatch(lambda:self._steam_configured(restore))
+            except Exception as exc:
+                self._dispatch(lambda error=str(exc):self._fail(error))
+        threading.Thread(target=worker,daemon=True).start()
+
+    def _steam_configured(self,restored):
+        self._set_busy(False)
+        self.steam_restore_btn.configure(state='normal')
+        self._set_status('Steam launch restored' if restored else 'Ready to play through Steam',C_OK)
+        messagebox.showinfo(APP_NAME,'Previous Steam launch setting restored.' if restored else 'Steam launch configured. On the Frame, open the owned Slay the Spire 2 entry and press Play. STS2 remains experimental pending gameplay acceptance.')
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)

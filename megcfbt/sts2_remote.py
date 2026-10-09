@@ -72,6 +72,10 @@ def ssh_program():
     return result
 
 
+def process_options():
+    return {'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+
+
 class FrameTransport:
     def __init__(self,settings): self.settings=settings;settings.validate()
 
@@ -88,7 +92,7 @@ class FrameTransport:
         return args+[s.user+'@'+s.host,command]
 
     def run(self,command,*,data=None,timeout=60):
-        result=subprocess.run(self.arguments(command),input=data,capture_output=True,timeout=timeout)
+        result=subprocess.run(self.arguments(command),input=data,capture_output=True,timeout=timeout,**process_options())
         if result.returncode:
             error=result.stderr.decode('utf-8',errors='replace')[-4000:]
             raise RemoteError('Secure Frame connection failed: '+error)
@@ -96,7 +100,7 @@ class FrameTransport:
 
     def host_fingerprint(self):
         scan=shutil.which('ssh-keyscan') or str(Path(ssh_program()).with_name('ssh-keyscan.exe' if os.name=='nt' else 'ssh-keyscan'))
-        result=subprocess.run([scan,'-T','10','-p',str(self.settings.port),'-t','ed25519',self.settings.host],capture_output=True,timeout=20)
+        result=subprocess.run([scan,'-T','10','-p',str(self.settings.port),'-t','ed25519',self.settings.host],capture_output=True,timeout=20,**process_options())
         lines=[l for l in result.stdout.decode().splitlines() if l and not l.startswith('#')]
         if len(lines)!=1: raise RemoteError('Unable to read a unique Frame host identity.')
         fields=lines[0].split()
@@ -109,7 +113,7 @@ class FrameTransport:
         host=self.settings.host if self.settings.port==22 else f'[{self.settings.host}]:{self.settings.port}'
         for known in (Path.home()/'.ssh/known_hosts',settings_directory()/'known_hosts'):
             if known.exists():
-                result=subprocess.run([keygen,'-F',host,'-f',str(known)],capture_output=True)
+                result=subprocess.run([keygen,'-F',host,'-f',str(known)],capture_output=True,**process_options())
                 if result.returncode==0 and result.stdout.strip():
                     raise RemoteError('This host already has a trusted identity. A changed key needs independent verification; it will not be replaced automatically.')
         root=settings_directory();root.mkdir(parents=True,exist_ok=True)
@@ -186,6 +190,21 @@ class RemoteBuild:
         if problems: raise RemoteError(' '.join(problems))
         return report
 
+    def steam_entry(self,job,action,*,consent=False,isolated=False):
+        if action not in {'inspect','configure','restore'}:
+            raise RemoteError('Unknown Steam integration action')
+        if not job.startswith(self.settings.remote_root+'/jobs/job-'):
+            raise RemoteError('Steam output is outside the configured application workspace')
+        # Use current application software even when configuring an older retained output.
+        probe=self.probe()
+        extra=['--name',job]
+        if consent: extra.append('--consent')
+        if isolated: extra.append('--isolated')
+        report=json.loads(self.transport.run(self.worker(probe['probe_job'],'steam-'+action,extra)))
+        if report.get('event')=='error' or report.get('type')=='error':
+            raise RemoteError(report.get('message','Steam configuration failed'))
+        return report
+
     def upload(self,job,path,name,value):
         size=Path(path).stat().st_size;digest=digest_file(path)
         status=json.loads(self.transport.run(self.worker(job,'status',['--name',name])))
@@ -196,7 +215,7 @@ class RemoteBuild:
         if offset>size or digest_file(path,offset)!=status['prefix_sha256']: raise RemoteError('Partial transfer differs from local input; choose a new job.')
         command=self.worker(job,'upload',['--name',name,'--size',size,'--sha256',digest,'--offset',offset])
         with tempfile.TemporaryFile() as error:
-            process=subprocess.Popen(self.transport.arguments(command),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=error)
+            process=subprocess.Popen(self.transport.arguments(command),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=error,**process_options())
             try:
                 with Path(path).open('rb') as source:
                     source.seek(offset)
@@ -257,7 +276,7 @@ class RemoteBuild:
         if archive and s.download_archive: args+=['--archive']
         self.stage(.40,'Building on Frame')
         with tempfile.TemporaryFile() as errors:
-            process=subprocess.Popen(self.transport.arguments(self.worker(job,'build',args)),stdout=subprocess.PIPE,stderr=errors,text=True)
+            process=subprocess.Popen(self.transport.arguments(self.worker(job,'build',args)),stdout=subprocess.PIPE,stderr=errors,text=True,**process_options())
             result=None;last_error=''
             for line in process.stdout:
                 event=json.loads(line)
@@ -278,7 +297,7 @@ class RemoteBuild:
             remote_path=result['archive']
             expected=json.loads(self.transport.run(shlex.join(['python3','-c',"import hashlib,json,sys;from pathlib import Path;p=Path(sys.argv[1]);print(json.dumps({'sha256':hashlib.file_digest(p.open('rb'),'sha256').hexdigest(),'size':p.stat().st_size}))",remote_path])))
             with partial.open('xb') as output:
-                process=subprocess.Popen(self.transport.arguments('cat -- '+shlex.quote(remote_path)),stdout=output,stderr=subprocess.PIPE)
+                process=subprocess.Popen(self.transport.arguments('cat -- '+shlex.quote(remote_path)),stdout=output,stderr=subprocess.PIPE,**process_options())
                 _,error=process.communicate()
                 if process.returncode: raise RemoteError('Archive download interrupted: '+error.decode(errors='replace'))
             if partial.stat().st_size!=expected['size'] or digest_file(partial)!=expected['sha256']: raise RemoteError('Downloaded archive checksum mismatch')

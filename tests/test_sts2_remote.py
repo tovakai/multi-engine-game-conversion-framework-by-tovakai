@@ -78,7 +78,11 @@ def test_worker_rejects_unowned_job_and_symlink_escape(tmp_path):
     root=tmp_path/'other-directory';root.mkdir()
     (root/'job.json').write_text(json.dumps({'kind':'megcfbt-sts2-job-v1','id':'test'}))
     with pytest.raises(ValueError,match='application-owned'): worker.job_root(root)
-    link=tmp_path/'job-test';link.symlink_to(root,target_is_directory=True)
+    link=tmp_path/'job-test'
+    try: link.symlink_to(root,target_is_directory=True)
+    except OSError as exc:
+        if getattr(exc,'winerror',None)==1314: pytest.skip('Windows symlink privilege unavailable; escape guard tested on Linux')
+        raise
     with pytest.raises(ValueError,match='Symbolic link'): worker.job_root(link)
 
 

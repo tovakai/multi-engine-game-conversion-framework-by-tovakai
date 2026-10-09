@@ -60,6 +60,7 @@ include = ["megcfbt*", "renframe*", "rpgmframe*"]
     "experiments/sts2-steamworks/fmod_sdk_headers_v1.json",
     "experiments/sts2-steamworks/sdk_archive.py",
     "experiments/sts2-steamworks/steam_launch.py",
+    "experiments/sts2-steamworks/steam_entry.py",
     "experiments/sts2-steamworks/retail_107.py",
     "experiments/sts2-steamworks/retail_107_managed_recipe.json",
     "experiments/sts2-steamworks/retail_107_pack_recipe.json",

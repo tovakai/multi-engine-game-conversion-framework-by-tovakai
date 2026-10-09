@@ -18,3 +18,18 @@ jobs:
       - run: pytest -q
       - name: STS2 standalone and native-build regression tests
         run: python -m unittest discover -s experiments/sts2-steamworks -p 'test_*.py'
+
+  windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[dev,gui,build]"
+      - run: python -m pytest -q
+      - name: Create real Windows application window
+        run: python -c "from megcfbt.gui import ConverterApp; app=ConverterApp(); app.root.update(); app.root.destroy()"
+      - name: Build software-only Windows desktop package
+        shell: pwsh
+        run: ./build/build_windows.ps1

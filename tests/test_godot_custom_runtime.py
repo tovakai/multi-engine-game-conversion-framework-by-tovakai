@@ -112,7 +112,6 @@ def test_worker_script_has_valid_bash_syntax() -> None:
         return
     subprocess.run(
         [bash, "-n"],
-        input=_WORKER_SCRIPT,
-        text=True,
+        input=_WORKER_SCRIPT.encode(),
         check=True,
     )

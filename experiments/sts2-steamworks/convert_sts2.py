@@ -227,7 +227,7 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
             for name, raw in {"launch.sh": LAUNCH, "collect-startup.sh": COLLECT, "play-steam.sh": PLAY_STEAM,
                               "verify_output.py": (HERE / "verify_output.py").read_bytes(),
                               "steam_launch.py": (HERE / "steam_launch.py").read_bytes(),
-                              "CONVERSION-NOTICES.txt": NOTICES}.items():
+                              "CONVERSION-NOTICES.txt": NOTICES.replace(b"v0.98.2 / f4eeecc6", (profile["release"] + " / " + profile["commit"]).encode())}.items():
                 write_new(stage / name, raw, 0o755 if executable(name) else 0o644)
             if _native_build is not None:
                 write_new(stage / "native-build.json",

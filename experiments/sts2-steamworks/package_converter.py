@@ -20,7 +20,7 @@ FILES = (
     "inventory_package.py", "STANDALONE.md", "HANDOFF.md",
     "pipeline.py", "preflight.py", "build_native.py", "adapt_fmod_build_sources.py",
     "fmod_sdk_headers_v1.json", "sdk_archive.py", "SOURCE_PIPELINE.md", "RELEASE_BLOCKERS.md",
-    "steam_launch.py",
+    "steam_launch.py", "steam_entry.py",
     "native_cache.py",
     "remote_worker.py",
     "retail_107.py", "retail_107_managed_recipe.json", "retail_107_pack_recipe.json", "converter_profile_v107.json",

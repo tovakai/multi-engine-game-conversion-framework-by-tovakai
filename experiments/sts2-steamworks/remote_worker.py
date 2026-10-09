@@ -205,13 +205,21 @@ def build(root, sdk, archive):
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument('action',choices=['probe','status','upload','build','result','cleanup'])
+    parser.add_argument('action',choices=['probe','status','upload','build','result','cleanup','steam-inspect','steam-configure','steam-restore'])
     parser.add_argument('root')
     parser.add_argument('--name');parser.add_argument('--size',type=int);parser.add_argument('--sha256')
     parser.add_argument('--offset',type=int,default=0);parser.add_argument('--sdk',default='');parser.add_argument('--archive',action='store_true')
+    parser.add_argument('--consent',action='store_true');parser.add_argument('--isolated',action='store_true')
     args=parser.parse_args()
     try:
-        if args.action=='probe': probe(args.root)
+        if args.action.startswith('steam-'):
+            import steam_entry
+            root=job_root(args.name or args.root)
+            if root.parent != job_root(args.root).parent: raise ValueError('Steam target must belong to the configured workspace')
+            action=args.action
+            result=steam_entry.inspect() if action=='steam-inspect' else (steam_entry.configure(root/'native-output',consent=args.consent,isolated=args.isolated) if action=='steam-configure' else steam_entry.restore(root/'native-output',consent=args.consent))
+            emit('result',**result)
+        elif args.action=='probe': probe(args.root)
         elif args.action=='status': transfer_status(args.root,args.name)
         elif args.action=='upload': upload(args.root,args.name,args.size,args.sha256,args.offset)
         elif args.action=='build': build(args.root,args.sdk,args.archive)

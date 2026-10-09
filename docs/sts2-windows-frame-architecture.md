@@ -66,3 +66,17 @@ Validate unit/failure-path tests, actual Windows development GUI, packaged Windo
 GUI and real automated remote conversion. Use original supported retail bytes
 when available; any old-version comparison fixture is labeled separately.
 Game/SDK/native outputs, private settings and logs remain outside Git publication.
+
+## Owned Steam integration revision
+
+The success screen offers a consent-gated **Connect Steam** action. This uses
+Steam's local SharedJSContext `SteamClient.Apps.SetAppLaunchOptions` API for the
+real owned STS2 entry. It neither creates a shortcut nor edits live VDF files.
+The selected output is verified before any change. A private, durable backup of
+the previous per-game launch setting is saved next to the job. Restore refuses
+to overwrite intervening user edits. Connection and Restore are asynchronous;
+the last output association is remembered across application restarts.
+
+The local Steam UI endpoint must already be available. The application does not
+change SteamOS configuration to enable it. Unsupported clients fail with a
+clear diagnostic and retain their existing launch configuration.
