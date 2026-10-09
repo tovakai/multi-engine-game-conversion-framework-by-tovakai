@@ -1,4 +1,4 @@
-"""Consent-gated owned Steam entry integration; never changes ownership or AppIDs."""
+"""Consent-gated Steam entry configuration; never changes game identity or AppIDs."""
 import base64, hashlib, json, os, socket, struct, urllib.request
 from pathlib import Path
 
@@ -119,7 +119,7 @@ def _evaluate(javascript: str):
 
 
 
-APP_ID = 2868840  # Publisher's real owned Steam entry; never synthesized.
+APP_ID = 2868840  # Publisher's real Steam AppID; never synthesized.
 
 
 def inspect():
@@ -131,7 +131,7 @@ def inspect():
         launch_options: details ? details.strLaunchOptions : null};
     })()""")
     if not isinstance(state, dict) or not state.get('present') or not state.get('installed'):
-        raise RuntimeError('Open Steam with the owned, installed Slay the Spire 2 entry available.')
+        raise RuntimeError('Open Steam with the installed Slay the Spire 2 entry available.')
     if not state.get('setter') or not isinstance(state.get('launch_options'), str):
         raise RuntimeError('This Steam client does not expose supported launch configuration. No settings changed.')
     return state
@@ -157,7 +157,7 @@ def set_options(expected, replacement):
 
 def configure(root, *, isolated=False, consent=False):
     if not consent:
-        raise RuntimeError('Explicit consent is required to configure the owned Steam entry')
+        raise RuntimeError('Explicit consent is required to change Steam launch options')
     from verify_output import verify
     root = Path(root).resolve()
     report = verify(root, check_modes=True)
