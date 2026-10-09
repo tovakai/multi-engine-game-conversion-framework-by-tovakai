@@ -22,16 +22,19 @@ See [official FMOD downloads](https://www.fmod.com/download),
 
 ## 2. Clean retail source verification
 
-The supported profile is only v0.98.2 / f4eeecc6. The matching testgames fixture
-was authorized for comparison, and its selected inputs match the preserved
-profile, but publisher-pristine provenance is unverified. Replacement Windows
-Steam DLLs and settings are excluded from conversion. The observed retail Steam
-installations on Windows and the Frame are v0.107.1 / 59260271 and remain
-unsupported by this recipe.
+A separate v0.107.1 / 59260271 recipe now exists. It was derived from the supplied
+legitimate Windows Steam installation, with exact selected-input hashes,
+version-specific guarded managed IL edits, dependency-graph and packed-manifest
+checks. Both development and packaged Windows GUIs have performed real remote
+conversions from that installation. Publisher/depot provenance beyond the
+supplied installation is not independently attested by these local hashes.
+The old v0.98.2 testgames fixture still has unresolved pristine-source provenance.
+Unsupported versions remain refused; no future offsets or hashes are guessed.
 
-Next step: verify a legitimate untouched retail/depot copy of the supported
-build, or derive and independently validate a separate recipe for a retail build.
-Neither relaxed hashes nor guessed patch offsets satisfy this gate.
+The first retail menu test exposed a Spine manifest-relative path mismatch.
+The corrected retail recipe and staged native-binding validation prevent that
+placement error. Fresh Frame smoke tests of corrected development and packaged
+outputs pass. Full retail gameplay acceptance remains a separate gate.
 
 ## 3. Owned-Steam gameplay acceptance
 
@@ -40,8 +43,11 @@ Steam initialization or gameplay. No AppID environment variable or appid file is
 manufactured to make that test pass. An isolated development output has now
 reached the graphical main menu through the owned Steam entry: genuine Steam
 initialization, native Vulkan, .NET and FMOD initialization were observed, and
-the user reported that it boots and appears to work. This validates startup,
-not extended gameplay, audio/input behavior, save/reload or cloud synchronization.
+the earlier user report confirmed booting. A fresh retail conversion produced
+through the packaged Windows GUI has now reached the owned-Steam menu, with
+audio and controller navigation confirmed by the user and Spine/native subsystem
+loading verified in fresh logs/process mappings. This validates menu startup,
+not extended gameplay, save/reload or cloud synchronization.
 
 Next step: validate audio, controls, extended gameplay, save/reload and normal
 shutdown with the generated directory when normal user-data writes are authorized.
@@ -50,15 +56,25 @@ Preserve prior launch options and all existing installations for rollback.
 
 ## 4. Windows/x86-64 build hosts
 
-The current source compilation path requires a Linux AArch64 host and its native
-toolchain. The Windows/x86-64 application detects STS2 and explains prerequisites,
-but cannot yet perform the complete source build from that host.
+The Windows desktop application now manages remote builds on the Frame through
+verified OpenSSH, using the same source pipeline. Actual development and packaged
+GUI tests selected retail source, transferred verified inputs, compiled pinned
+extensions (then reused a verified application cache), deployed and verified
+native output. SCons is provisioned privately from a pinned wheel. No root,
+system partition change, cross toolchain or manually assembled game binary is
+required. Host/key/destination/authorized SDK setup is persistent and reusable.
 
-Next step: add a framework-managed remote AArch64 builder (including SSH host
-verification, isolated workspaces, progress, pinned tool setup, dependency
-acquisition, output verification/transfer and failure recovery), or a validated
-cross-compilation toolchain. Remote execution must use the same backend and
-source guards; it must not fetch extension binaries from a prior conversion.
+The packaged GUI can configure the real owned Steam entry after explicit consent
+and back up its previous launch setting. Restore preserves intervening user
+edits. Users do not need to edit Launch Options. This currently depends on the
+Frame's already available local Steam UI API; unsupported clients fail safely.
+Read [current validation](../../docs/sts2-gui-validation.md) for exact evidence
+and the distinction between packaged conversion, native startup and gameplay.
+
+Remaining usability/reliability gates include extended interrupted-job/recovery
+coverage, optional archive-download recovery, broader clean-machine setup and
+normal gameplay acceptance. Passing this host milestone does not resolve vendor
+rights or establish official compatibility.
 
 These gates are separate from the SDK-loop regression and from static output
 integrity. Passing unit tests or producing a valid directory does not close them.

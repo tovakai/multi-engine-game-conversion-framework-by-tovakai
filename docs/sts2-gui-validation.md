@@ -91,3 +91,26 @@ with the same full size and SHA256. Extraction still checks every original file
 against the version profile. Prepared native outputs are never input-cache
 candidates. This avoids repeated multi-gigabyte transfers while preserving the
 original-source boundary.
+
+## Corrected packaged application milestone
+
+The Windows package built from 99eebac completed retail selection and conversion
+through its real Browse, Output Folder and Convert controls. It deployed a new
+229-file output, with all native bindings verified and manifest SHA256
+`3a0d92cfc2d9129521f5ace52b73fea43d6403e980395e6132df284b53773101`.
+A fresh isolated Frame smoke test exited 0 and initialized .NET/FMOD without
+missing Spine libraries or Spine resource-loader errors.
+
+After explicit approval, the actual packaged GUI Connect Steam button configured
+that output in the owned entry and confirmed success. Local/cached Steam game
+data was backed up privately before the normal-launch menu-only test; Steam
+Cloud settings were not changed. CI for 99eebac passed both jobs.
+
+The corrected packaged output has now launched through the real owned Steam
+entry. Fresh logs confirm Steamworks, hostfxr/GodotPlugins and FMOD initialization,
+with no missing Spine library or Spine resource-loader errors. The running game
+is ELF machine 183 (AArch64), with Spine, FMOD, Steam API and hostfxr mapped.
+The user confirms the menu, controller navigation and audio work. This evidence
+is specific to the new packaged-GUI conversion, not the older prototype. Full
+combat/gameplay, save/reload, achievements and Cloud synchronization remain
+unverified; STS2 stays experimental.

@@ -5,7 +5,15 @@ The four remaining release gates are tracked separately in
 Fresh validation of the committed SDK-loop fix is documented separately in
 [VALIDATION_49d5a88.md](VALIDATION_49d5a88.md).
 
-Continuation: `feat/sts2-reproducible-pipeline`, based on handoff `3747037`.
+Current continuation: `feat/sts2-windows-frame-workflow`. See
+[Windows GUI architecture](../../docs/sts2-windows-frame-architecture.md) and
+[fresh validation](../../docs/sts2-gui-validation.md). The Windows application
+selects original retail v0.107.1 / 59260271, manages a remote Frame build using
+this backend and can configure the owned Steam entry after consent. No user
+launch-option editing is required. STS2 remains experimental.
+
+Historical source-pipeline continuation: `feat/sts2-reproducible-pipeline`, based
+on handoff `3747037`.
 The original dirty checkout was left intact; development uses
 `/tmp/sts2-converter-continuation`. Earlier hardware experiments use
 `/run/media/steamos/SD512/sts2-pipeline-dev-20261008`; fresh regression validation
@@ -28,7 +36,7 @@ prerequisites. Publisher-pristine input and gameplay acceptance remain open.
 | FMOD extension | Fresh exact extension/godot-cpp checkouts, guarded source edits, compilation | Vendor SDK headers and libraries |
 | FMOD core/studio 2.03.15 | Import original SDK ARM64 runtimes; known hashes | Closed source, authenticated vendor downloads |
 | Steam API | Checksum installed Valve SteamVR ARM64 API | Exact known platform binary required |
-| Game/wrapper, deps and PCK | Existing guarded original-source transformations | Only v0.98.2 / f4eeecc6 hashes accepted |
+| Game/wrapper, deps and PCK | Existing guarded original-source transformations | Separate v0.98.2 / f4eeecc6 and retail v0.107.1 / 59260271 profiles |
 
 Direct Frame inspection confirmed `/opt/steamvr/bin/linuxarm64/libsteam_api.so`
 matches the genuine API pin, SHA-256
@@ -54,7 +62,10 @@ limitation, not a hidden packaging dependency.
 
 Build host: Linux AArch64, Python 3.10+, Git, GCC C++, readelf, SCons (tested
 4.11.1). Tools may live in an isolated environment; no SteamOS system changes
-are performed. Cross-compilation/remote Windows builds are not enabled yet.
+are performed. The Windows desktop now manages this build remotely on the Frame;
+its one-time setup selects the trusted host, authorized SDK and writable
+application workspace. Cross-compilation is not required. The commands below
+remain available for a standalone Linux AArch64 build.
 
 ```bash
 python3 experiments/sts2-steamworks/preflight.py /path/to/original-game
