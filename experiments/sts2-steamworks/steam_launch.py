@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Preserve Steam's Frame launch chain and use Valve's native host runtime.
 
-Receives the genuine expanded %command% from the owned game entry. Never sets
+Receives the genuine expanded %command% from the existing game entry. Never sets
 SteamAppId/SteamGameId, creates an appid file, or substitutes authentication.
 """
 
@@ -26,7 +26,7 @@ def arm64_program(path):
 def launch_plan(root, arguments, environment):
     args = list(arguments)
     if environment.get("STEAM_COMPAT_APP_ID") != APPID and environment.get("SteamAppId") != APPID:
-        raise ValueError("Steam did not supply STS2 launch context. Run this through the owned game's Steam launch options with %command%.")
+        raise ValueError("Steam did not supply STS2 launch context. Run this through the game's Steam launch options with %command%.")
     if not args or not Path(args[0]).is_absolute():
         raise ValueError("Missing the expanded Steam %command%")
     wrapper = Path(args[0]).resolve(strict=True)
