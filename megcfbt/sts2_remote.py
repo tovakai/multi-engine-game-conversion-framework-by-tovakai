@@ -35,7 +35,6 @@ class FrameSettings:
     sdk_file: str = ''
     remote_sdk: str = ''
     download_archive: bool = True
-    authorized: bool = False
 
     def validate(self):
         if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9.:-]*',self.host): raise RemoteError('Enter a Frame hostname or IP address.')
@@ -240,14 +239,13 @@ class RemoteBuild:
 
     def build(self,source,local_output,archive=True,resume_job=None):
         s=self.settings
-        if not s.authorized: raise RemoteError('Acknowledge game ownership and applicable vendor permissions in Frame setup.')
         self.stage(.03,'Checking source files')
         report=module('preflight').inspect_source(source)
         if report['errors']: raise RemoteError('Unsupported or altered source: '+str(report['errors']))
         self.stage(.07,'Checking Frame and build requirements')
         preflight=self.probe()
         sdk=s.remote_sdk or (preflight['sdk_candidates'][0] if preflight['sdk_candidates'] and not s.sdk_file else '')
-        if not sdk and not s.sdk_file: raise RemoteError('Select the authorized FMOD 2.03.15 Linux SDK archive in Frame setup.')
+        if not sdk and not s.sdk_file: raise RemoteError('Select the FMOD 2.03.15 Linux SDK archive in Frame setup.')
         if s.sdk_file:
             pin=module('sdk_archive').PIN
             with module('converter_io').verified_stream(Path(s.sdk_file),pin): pass
