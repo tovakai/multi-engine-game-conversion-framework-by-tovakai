@@ -111,10 +111,14 @@ device reboot, that prevents attributing the recovery to any one action.
 **No engine/cache optimization has been demonstrated or shipped.** The
 current evidence favors transient I/O/cache/system state over an inherent
 ARM64 capability limit, but does not prove the original cause.
-The user accepted the original package as working well after these checks.
-Further experiments were stopped. A final archive-local advisory eviction
-was prepared and performed after the game closed, but its gameplay retest was
-not completed; it must not be reported as a passed cold-storage acceptance test.
+The final original-shortcut retest followed archive-local advisory eviction
+after the game closed. The user again reported **no delays** on the first area
+transitions. This passes the user-driven cold-archive acceptance check; it is
+not an OS-wide cold boot or a numeric transition benchmark. The user accepted
+the original package as working well, and further experiments were stopped.
+The read-only observer sampled that launch 57 times, recorded approximately
+16.45 MiB of physical reads and a 473.77 MiB peak RSS, and observed one disk-wait
+sample. This confirms that physical storage reads occurred during the retest.
 
 Before reboot, an asset-header scan encountered a process in `D` state with
 `folio_wait_bit_common`, near-zero CPU usage, and substantial system I/O
