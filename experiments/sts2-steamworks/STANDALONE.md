@@ -113,7 +113,7 @@ python .\convert_sts2.py $Source $Output `
   --godot-templates (Join-Path $Cache 'Godot_v4.5.1-stable_mono_export_templates.tpz') `
   --dotnet-runtime (Join-Path $Cache 'microsoft.netcore.app.runtime.linux-arm64.9.0.7.nupkg') `
   --sentry-archive (Join-Path $Cache 'sentry-godot-1.5.0+6c4d74e.zip') `
-  --acknowledge-licenses --tar $Tar | Tee-Object -FilePath (Join-Path $Work 'conversion.json')
+  --tar $Tar | Tee-Object -FilePath (Join-Path $Work 'conversion.json')
 if ($LASTEXITCODE -ne 0) { throw 'Conversion refused/failed. Keep conversion.json; do not alter expected hashes.' }
 python (Join-Path $Output 'verify_output.py') $Output
 if ($LASTEXITCODE -ne 0) { throw 'Final local output validation failed.' }
