@@ -15,6 +15,22 @@ def test_settings_reject_shell_injection_and_original_installation_paths():
         with pytest.raises(RemoteError): FrameSettings(remote_root=path).validate()
 
 
+def test_legacy_settings_do_not_require_ownership_attestation(tmp_path):
+    with mock.patch('megcfbt.sts2_remote.settings_directory', return_value=tmp_path):
+        (tmp_path / 'connection.json').write_text(json.dumps({
+            'host': 'frame',
+            'remote_sdk': '/home/steamos/Downloads/fmodstudioapi20315linux.tar.gz',
+            'authorized': False,  # Legacy persisted UI field, intentionally ignored.
+        }))
+        settings = FrameSettings.load()
+        assert settings.host == 'frame'
+        assert settings.remote_sdk.endswith('fmodstudioapi20315linux.tar.gz')
+        assert 'authorized' not in FrameSettings.__dataclass_fields__
+        settings.validate()
+        settings.save()
+        assert 'authorized' not in json.loads((tmp_path / 'connection.json').read_text())
+
+
 def test_transport_enforces_host_verification_and_noninteractive_key_authentication(tmp_path):
     settings=FrameSettings(host='192.168.0.102')
     with mock.patch('megcfbt.sts2_remote.ssh_program',return_value='ssh'), \
