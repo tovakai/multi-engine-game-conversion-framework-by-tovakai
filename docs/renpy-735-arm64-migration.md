@@ -2,7 +2,9 @@
 
 Exact Ren'Py 7.3.5 Python 2 distributions can opt into the existing complete
 official Ren'Py 7.5.0 engine migration. This is engine-generic and experimental.
-Pesterquest passed Stage A on Steam Frame; gameplay has **not** been verified. A successful
+Pesterquest passed Stages A/B on Steam Frame, including brief gameplay and
+save/load across a native Steam relaunch. Full multi-volume gameplay remains
+unverified. A successful
 conversion or title screen is not a Playable result. Do not merge before hardware verification.
 
 ## Eligibility and packaging
@@ -80,8 +82,14 @@ the menu reopened. The engine reported 7.5.0.22062402 with the GL renderer,
 and no exception appeared in the inspected startup diagnostics. The runtime's
 direct dynamic-library dependencies resolved on the Frame.
 
-**Status: Launches, Stage A passed.** Routes, dialogue/choices, save/load,
-several volumes, persistence, and Steam achievements/hooks remain unverified.
+The user then confirmed route selection, dialogue/choices, save/load, and normal
+quit during brief gameplay. A further native Steam relaunch restored the earlier
+save at the correct progress, confirmed by the user. The Frame had three save
+files and persistence data; their contents were not read or exported.
+
+**Status: Playable during brief gameplay, Stages A/B passed; full testing pending.**
+Several volumes, unusual transitions, deeper persistence, and Steam
+achievements/hooks remain unverified.
 No original game content, screenshot, or full game log was uploaded. The
 converted package stays on the user's computer and Frame. Keep the PR unmerged
 while the remaining hardware tests are pending.
