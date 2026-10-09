@@ -55,24 +55,27 @@ Multi-Engine Game Conversion Framework by tovakai
 =================================================
 
 1. Run the application.
-2. Drop a Ren'Py, RPG Maker, or Godot game folder / ZIP.
+2. Drop a supported Ren'Py, RPG Maker, or Godot game folder / ZIP.
 3. Let the framework detect the engine.
 4. Convert.
-5. Copy the generated *-linux-aarch64.tar.gz to the target Linux ARM64 device.
+5. Transfer the generated Linux AArch64 package to your device.
 
-RPG Maker and Godot runtimes are resolved automatically.
-Ren'Py currently requires a matching ARM64 Ren'Py runtime folder.
+Matching Ren'Py 7/8 ARM64 runtimes can be resolved automatically.
+Legacy Ren'Py migration can require explicit approval; other backends
+select compatible runtimes where available.
 
 Experimental Slay the Spire 2 (v0.107.1 / 59260271):
-1. Drop your original supported Steam installation folder.
+1. Select a compatible STS2 game installation.
 2. Complete Frame Setup once: trusted Frame connection, writable destination,
-   and an authorized FMOD 2.03.15 Linux SDK. Applicable FMOD/Spine permissions
-   are required; ownership alone does not grant middleware rights.
+   and a compatible FMOD 2.03.15 Linux SDK.
 3. Click Convert. The application builds and deploys native ARM64 output on Frame.
-4. Accept Connect Steam, then press Play in your owned STS2 Steam entry.
+4. Accept Connect Steam, then press Play in the STS2 Steam entry.
    You do not need to edit Launch Options. Restore Steam recovers the saved setting.
 
-STS2 remains experimental. Retail menu, audio and controller navigation have
+The converter does not ask for proof or a declaration of game ownership.
+STS2 requires genuine Steam launch context; this workflow does not alter
+Steam authentication or grant middleware redistribution permissions.
+STS2 remains experimental. Menu, audio and controller navigation have
 been checked through the packaged Windows application and genuine Steam launch.
 Extended gameplay, save/reload, achievements and Cloud behavior remain unverified.
 The application does not distribute game files or proprietary SDK/native inputs.
