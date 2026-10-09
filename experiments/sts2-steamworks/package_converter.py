@@ -19,6 +19,7 @@ FILES = (
     "inventory_package.py", "STANDALONE.md", "HANDOFF.md",
     "pipeline.py", "preflight.py", "build_native.py", "adapt_fmod_build_sources.py",
     "fmod_sdk_headers_v1.json", "sdk_archive.py", "SOURCE_PIPELINE.md", "RELEASE_BLOCKERS.md",
+    "steam_launch.py",
     "licenses/GODOT-LICENSE.txt", "licenses/GODOT-COPYRIGHT.txt",
     "licenses/SENTRY-LICENSE.md", "licenses/SPINE-LICENSE.txt",
 )

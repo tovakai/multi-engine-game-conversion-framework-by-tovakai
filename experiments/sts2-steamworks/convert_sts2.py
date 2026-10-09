@@ -209,7 +209,9 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
             pack_report = rewrite_pack(pack, stage / "SlayTheSpire2.pck", expected_sha256=profile["pack"]["sha256"],
                                        expected_size=profile["pack"]["size_bytes"], atomic_publication=False, **kwargs)
             for name, raw in {"launch.sh": LAUNCH, "collect-startup.sh": COLLECT,
-                              "verify_output.py": (HERE / "verify_output.py").read_bytes(), "CONVERSION-NOTICES.txt": NOTICES}.items():
+                              "verify_output.py": (HERE / "verify_output.py").read_bytes(),
+                              "steam_launch.py": (HERE / "steam_launch.py").read_bytes(),
+                              "CONVERSION-NOTICES.txt": NOTICES}.items():
                 write_new(stage / name, raw, 0o755 if executable(name) else 0o644)
             if _native_build is not None:
                 write_new(stage / "native-build.json",

@@ -186,16 +186,27 @@ Record the existing Slay the Spire 2 launch options first. In Steam properties
 for **Slay the Spire 2, AppID 2868840**, temporarily replace them with:
 
 ```text
-bash -c 'exec "/run/media/steamos/SD512/sts2-clean-acceptance-01/sts2-arm64/collect-startup.sh"' -- %command%
+python3 "/run/media/steamos/SD512/sts2-clean-acceptance-01/sts2-arm64/steam_launch.py" --isolated-user-data %command%
 ```
 
-This replaces the executable command while retaining the real Steam launch
-context; the original command is passed as unused positional arguments to
-`bash`, not to the ARM64 game. Do not use a non-Steam shortcut or override
-`SteamAppId` to pass the launcher check. Do not edit the original game files.
-Launch the owned game normally from the Frame UI. Preserve your original Steam
-compatibility setting for rollback; this wrapper itself runs native ARM64,
-not the original Windows executable or Proton command.
+Pass the actual expanded command to `steam_launch.py`; do not discard it as unused
+shell arguments. The helper preserves the Frame's native Steam wrapper/reaper
+chain and uses Valve's installed ARM64 host-runtime launcher instead of the
+foreign-architecture compatibility suffix. It never assigns Steam identities
+or creates an appid file. Game authentication remains genuine. Unsupported
+context/wrappers are refused. Installed `SteamLinuxRuntime_4/pressure-vessel-arm64`
+tools are required.
+
+The isolated test uses private data/config/cache paths and binds the existing
+local STS2 save directory read-only. Do not start/load a run during a startup-only
+investigation. Remove `--isolated-user-data` only when deliberately accepting
+normal user-data writes for gameplay/save tests. Do not use a non-Steam shortcut
+or override `SteamAppId`. Preserve previous launch options for rollback.
+
+The earlier `bash -c 'exec ...' -- %command%` recommendation was incorrect for
+this Frame path: it discarded Steam's wrapper/runtime setup. The script path
+must include the generated output directory, not its parent. Newly generated
+outputs include the helper; previous outputs are not modified.
 
 For this acceptance run:
 

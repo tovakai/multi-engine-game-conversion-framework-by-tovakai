@@ -37,11 +37,14 @@ Neither relaxed hashes nor guessed patch offsets satisfy this gate.
 
 Headless SSH startup can establish native subsystem initialization, not owned
 Steam initialization or gameplay. No AppID environment variable or appid file is
-manufactured to make that test pass. The Frame now has an STS2 appmanifest;
-acceptance still needs the generated output launched through that owned entry.
+manufactured to make that test pass. An isolated development output has now
+reached the graphical main menu through the owned Steam entry: genuine Steam
+initialization, native Vulkan, .NET and FMOD initialization were observed, and
+the user reported that it boots and appears to work. This validates startup,
+not extended gameplay, audio/input behavior, save/reload or cloud synchronization.
 
-Next step: validate real Steam initialization, main menu, rendering, audio,
-controls, save/reload and normal shutdown with the newly generated directory.
+Next step: validate audio, controls, extended gameplay, save/reload and normal
+shutdown with the generated directory when normal user-data writes are authorized.
 Achievements and cloud synchronization require separate observed evidence.
 Preserve prior launch options and all existing installations for rollback.
 

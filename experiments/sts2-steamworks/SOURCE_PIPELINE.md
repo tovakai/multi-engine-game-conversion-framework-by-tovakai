@@ -137,7 +137,7 @@ with the exact tested commit.
   installing/launching the owned game entry with the temporary launch option:
 
   ```text
-  bash -c 'exec "/run/media/steamos/SD512/sts2-pipeline-dev-20261008/native-output-01/collect-startup.sh"' -- %command%
+  python3 "/path/to/newly-generated-output/steam_launch.py" --isolated-user-data %command%
   ```
 
   Preserve previous launch options for rollback. Confirm Steam initialization,

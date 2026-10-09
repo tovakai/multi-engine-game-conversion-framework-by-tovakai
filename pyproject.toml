@@ -59,6 +59,7 @@ include = ["megcfbt*", "renframe*", "rpgmframe*"]
     "experiments/sts2-steamworks/adapt_fmod_build_sources.py",
     "experiments/sts2-steamworks/fmod_sdk_headers_v1.json",
     "experiments/sts2-steamworks/sdk_archive.py",
+    "experiments/sts2-steamworks/steam_launch.py",
     "LICENSE",
 ]
 "share/megcfbt/sts2/licenses" = ["experiments/sts2-steamworks/licenses/*"]
