@@ -9,7 +9,7 @@ Current continuation: `feat/sts2-windows-frame-workflow`. See
 [Windows GUI architecture](../../docs/sts2-windows-frame-architecture.md) and
 [fresh validation](../../docs/sts2-gui-validation.md). The Windows application
 selects original retail v0.107.1 / 59260271, manages a remote Frame build using
-this backend and can configure the owned Steam entry after consent. No user
+this backend and can configure the STS2 Steam entry after consent. No user
 launch-option editing is required. STS2 remains experimental.
 
 Historical source-pipeline continuation: `feat/sts2-reproducible-pipeline`, based
@@ -45,8 +45,8 @@ The pipeline never searches the prototype for dependencies. Existing Steam
 patches and launch safeguards remain: no invented AppID, ownership result,
 authentication result, callback, achievement or stat.
 
-[FMOD downloads](https://www.fmod.com/download) require sign-in. Supply an
-authorized original `fmodstudioapi20315linux.tar.gz` or extracted SDK. The
+[FMOD downloads](https://www.fmod.com/download) require sign-in. Supply a
+compatible `fmodstudioapi20315linux.tar.gz` or extracted SDK. The
 archive's recorded local full-file pin is not a vendor signature. Only bounded
 build headers and ARM64 runtime members are imported; tar symlinks are not
 extracted. Runtime and selected header pins are independently checked before
@@ -72,11 +72,11 @@ python3 experiments/sts2-steamworks/preflight.py /path/to/original-game
 python3 experiments/sts2-steamworks/pipeline.py \
   /path/to/original-game /path/to/new-output \
   --fmod-sdk /path/to/authorized/fmodstudioapi20315linux.tar.gz \
-  --cache /path/to/separate-cache --acknowledge-licenses
+  --cache /path/to/separate-cache
 
 python3 -m megcfbt inspect /path/to/game --json
 python3 -m megcfbt build /path/to/game -o /path/to/new-output \
-  --fmod-sdk /path/to/authorized/vendor-sdk --acknowledge-licenses
+  --fmod-sdk /path/to/vendor-sdk
 ```
 
 Source validation precedes downloads/builds. Unsupported v0.107.1 / 59260271 is
@@ -94,16 +94,16 @@ restores original Steam launch options/executable; no output or cache directorie
 are automatically deleted. Generated game output must not be redistributed.
 
 STS2 detection precedes generic Godot. CLI/desktop share this backend. On an
-equipped Linux AArch64 host, select the authorized SDK archive using the runtime
-button, then Convert. The desktop retains the standalone permissions
-acknowledgment. `MEGCFBT_STS2_FMOD_SDK` and `MEGCFBT_STS2_SCONS` configure paths.
+equipped Linux AArch64 host, select the required SDK archive using the runtime
+button, then Convert. The converter does not ask for proof or a declaration
+of game ownership. `MEGCFBT_STS2_FMOD_SDK` and `MEGCFBT_STS2_SCONS` configure paths.
 Other hosts display unmet requirements instead of copying prepared libraries.
 Wheels and desktop bundles include a software-only backend allowlist.
 `convert_sts2.py` preserves the baseline; `pipeline.py` builds from source.
 
 ## Acceptance boundary
 
-The installed Steam game is v0.107.1. The user authorized using the prior
+The installed Steam game is v0.107.1. The earlier testing used the prior
 v0.98.2 testgames tree for comparison. Its 21 selected original inputs match
 all profile hashes locally; replaced Windows Steam DLL/settings are excluded.
 This fixture does not prove publisher-pristine provenance.
@@ -117,7 +117,7 @@ the file-copy and missing-file checks without changing GodotSteam behavior.
 Hardware and current regression results are recorded as they complete.
 Native inspection/headless startup do not prove Steam ownership, graphics,
 controls, audio, saves, achievements or cloud sync; those need separate
-acceptance through the owned Steam library entry.
+acceptance through the STS2 Steam library entry.
 
 ## Hardware results, 2026-10-08
 
@@ -144,8 +144,8 @@ with the exact tested commit.
   not an owned Steam launch. Exit code zero is **not** Steam acceptance.
   No synthetic AppID or `steam_appid.txt` was provided. User-data directories were
   isolated using XDG paths under the test workspace.
-- The owned STS2 appmanifest is absent on the Frame. Manual acceptance requires
-  installing/launching the owned game entry with the temporary launch option:
+- The STS2 appmanifest is absent on the Frame. Manual acceptance requires
+  installing/launching the STS2 Steam entry with the temporary launch option:
 
   ```text
   python3 "/path/to/newly-generated-output/steam_launch.py" --isolated-user-data %command%
