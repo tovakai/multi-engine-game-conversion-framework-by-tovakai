@@ -54,7 +54,7 @@ def summary(root: Path) -> UnifiedInspection | None:
     warnings = tuple(str(e) for e in report.get("errors", []))
     if supported:
         warnings += ("Source hashes will be verified before building. Device acceptance is still required.",
-                     "Requires Linux AArch64 build tools, licensed FMOD 2.03.15 SDK, applicable Spine permissions and Valve's installed ARM64 Steam API.")
+                     "Requires Linux AArch64 build tools, FMOD 2.03.15 SDK, applicable middleware licensing and Valve's installed ARM64 Steam API.")
     return UnifiedInspection(
         source_path=root, backend="sts2", engine="godot", engine_label="Slay the Spire 2 (Godot .NET)",
         engine_version="4.5.1" if supported else None, game_name="Slay the Spire 2",
