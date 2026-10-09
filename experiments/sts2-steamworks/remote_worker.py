@@ -201,7 +201,7 @@ def build(root, sdk, archive):
         def progress(message):
             value=next((v for prefix,v in stages if message.startswith(prefix)),.43)
             emit('progress',value=value,message=message)
-        result=run(source,output,sdk=sdk,cache=base/'cache',scons=str(scons),authorized=True,progress=progress)
+        result=run(source,output,sdk=sdk,cache=base/'cache',scons=str(scons),progress=progress)
         report=verify(output,check_modes=True)
         if report['errors']: raise ValueError('Native output verification failed')
     # Persist a short, quoted, reproducible Steam entry point in every output.
