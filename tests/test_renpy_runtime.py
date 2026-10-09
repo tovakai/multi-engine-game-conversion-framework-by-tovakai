@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from renframe.builder import BuildError, build_game
+from renframe.builder import BuildError, build_game, _write_grafted_launcher
 from renframe.inspect_service import inspect_game
 from renframe.runtime import (
     RuntimeDownloadError,
@@ -81,6 +81,22 @@ def test_normalizes_exact_release_versions() -> None:
     assert normalize_release_version("8.5.3.26051504") == "8.5.3"
     with pytest.raises(RuntimeDownloadError):
         normalize_release_version("8.5")
+
+
+@pytest.mark.parametrize("tag", ["py2", "py3"])
+@pytest.mark.parametrize("braced", [False, True])
+def test_grafted_launcher_does_not_double_python_prefix(tmp_path: Path, tag: str, braced: bool) -> None:
+    source = tmp_path / "Game.sh"
+    lib = 'lib/${PYTHON}-${RENPY_PLATFORM}' if braced else 'lib/$PYTHON-$RENPY_PLATFORM'
+    source.write_text(
+        f'#!/bin/sh\nPYTHON="{tag}"\nLIB="$ROOT/{lib}"\n'
+        'RENPY_PLATFORM="linux-aarch64"\n', encoding="utf-8"
+    )
+    launcher = _write_grafted_launcher(
+        tmp_path, source_launcher=source, platform_name=f"{tag}-linux-aarch64"
+    ).read_text(encoding="utf-8")
+    assert 'export RENPY_PLATFORM="linux-aarch64"' in launcher
+    assert f'RUNTIME_DIR="$ROOT/lib/{tag}-linux-aarch64"' in launcher
 
 
 def test_python_tag_tracks_renpy_generation() -> None:

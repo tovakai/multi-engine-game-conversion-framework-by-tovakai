@@ -451,7 +451,14 @@ def _write_grafted_launcher(
     platform_name: str,
 ) -> Path:
     launcher = root / "launch.sh"
+    launcher_platform = platform_name
     if source_launcher is not None and _patch_source_launcher_for_arm(source_launcher):
+        # Distributed launchers may prepend their Python tag to RENPY_PLATFORM.
+        # Keep the full directory name for runtime paths, but pass only the
+        # platform suffix to these launchers so the tag is not added twice.
+        source_text = source_launcher.read_text(encoding="utf-8", errors="replace")
+        if re.search(r'lib/\$(?:PYTHON|\{PYTHON\})-\$(?:RENPY_PLATFORM|\{RENPY_PLATFORM\})', source_text):
+            launcher_platform = re.sub(r"^py[23]-", "", platform_name)
         relative = source_launcher.relative_to(root).as_posix()
         command = f'exec bash "$ROOT/{relative}" "$ROOT" "$@"'
     else:
@@ -470,7 +477,7 @@ def _write_grafted_launcher(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-        f'export RENPY_PLATFORM="{platform_name}"\n\n'
+        f'export RENPY_PLATFORM="{launcher_platform}"\n\n'
         '# Files transferred through Windows may lose executable permissions.\n'
         '# Restore them for the selected ARM64 runtime before launching.\n'
         f'RUNTIME_DIR="$ROOT/lib/{platform_name}"\n'
