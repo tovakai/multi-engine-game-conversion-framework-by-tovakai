@@ -36,10 +36,11 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 - Maintain RPG Maker XP/VX/VX Ace (mkxp-z), MV/MZ (NW.js), and compatible Godot runtime replacement.
 - Standardize inspection, GUI/CLI behavior, build output, errors and diagnostics.
 - Keep official runtime downloads validated and cached; preserve original game files.
-- Stabilize Linux AArch64 packaging, Steam Frame installation and native launching.
-- Add representative automated regression tests for every supported backend.
+- Stabilize existing Linux AArch64 packaging, Steam Frame installation instructions, and native launching.
+- Add representative automated regression tests for every advertised stable backend.
+- Keep experimental or manually provisioned backends clearly labeled; they do not block 0.1.0.
 
-**Release gate:** Each supported backend has an end-to-end GUI conversion, regression coverage, and at least one real-hardware gameplay check. A successful build alone does not count as playable.
+**Release gate:** Each advertised stable backend has an end-to-end GUI conversion, regression coverage, and at least one real-hardware gameplay check. A successful build alone does not count as playable. **Portable device-side finishing for STS2, automatic on-device compilation and zero-SSH installation are explicitly out of scope for 0.1.0.**
 
 ## v0.2.0 — GameMakerFrame + coverage baseline
 
@@ -92,19 +93,21 @@ For each title, record the game version, detected engine/runtime, conversion out
 
 **Release gate:** Previously manual conversions work through reviewed profiles without editing package contents by hand or adding per-game branches to the application's core routing logic.
 
-## v0.5.0 — Device Integration
+## v0.5.0 — Device Integration & Device-Side Finalization
 
-**Goal:** Convert and install on a Steam Frame without relying on a terminal.
+**Goal:** Support a portable, offline-first "Convert on PC → copy ZIP → finish on ARM64 device → play" experience, without requiring remote access to the device during conversion.
 
-- Discover or manually configure target devices over SSH.
-- Transfer generated game packages directly to the Frame.
-- Register and update non-Steam shortcuts through supported installation paths.
-- Preserve native launch configuration, artwork and Proton-disabled execution.
-- Support clean installation, repair, update and uninstall.
-- Provide device diagnostics for missing libraries, graphics/session issues and incompatible binaries.
-- Retain offline archive export and general Linux AArch64 output as first-class options.
+- Introduce a reusable **Device-Side Finalization** contract for backends whose final ARM64 dependencies or builds must be completed on the target device.
+- **STS2 reference workflow:** On Windows, identify and validate a supported game version, perform platform-independent transformations, and produce a self-contained **software-only installer + user-supplied game-data ZIP**, without requiring a Frame IP address, SSH, Steam settings changes or FMOD SDK at this PC preparation stage.
+- After the user manually copies and extracts the ZIP on Steam Frame, provide an obvious graphical/desktop installer (and CLI fallback) that performs remaining native ARM64 build work, validates hashes/architectures and reports actionable failures.
+- Find and reuse previously supplied/cached FMOD 2.03.15 Linux SDK inputs; if missing, link to the [official FMOD download page](https://www.fmod.com/download) and guide the user through providing the exact compatible archive. Do not redistribute proprietary SDK files or assume unattended downloads behind sign-in.
+- Build/install required native libraries on-device only when toolchain and permissions allow; provide transparent prerequisite diagnostics and resumable work rather than modifying system partitions.
+- Offer explicit, reversible **Connect Steam / Restore Steam** where a game technically depends on an existing Steam launch context; never demand a purchase declaration, spoof Steam identity or alter Steam settings without consent.
+- Preserve the current STS2 Windows-to-Frame remote-build workflow as an optional advanced/developer path during migration.
+- Optionally discover/configure devices over SSH and transfer packages directly; direct device access is an enhancement, not a requirement for ZIP creation.
+- Support repair, updates, uninstall, source protection, package manifests, output verification, and portable Linux AArch64 output beyond Steam Frame.
 
-**Release gate:** A user can select a supported game on their PC, convert it, transfer/install it and launch it from Steam on Frame without shell commands.
+**Release gate:** A user can select supported STS2 source files on Windows and create a transferable ZIP **without a Frame connection**. On a compatible Frame with necessary build prerequisites, the extracted installer finishes and verifies a native build, then offers reversible Steam integration. At least one clean-device install and one cached reinstall pass gameplay/save-relaunch testing. Missing vendor SDK or unsupported toolchain produces a specific, recoverable diagnostic. Existing simple-engine ZIP conversions remain unchanged.
 
 ## v0.6.0 — Mods & Saves
 
