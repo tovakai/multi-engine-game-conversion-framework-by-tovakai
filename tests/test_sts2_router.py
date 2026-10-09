@@ -13,7 +13,7 @@ def source(root):
     (root / "data_sts2_windows_x86_64").mkdir()
     (root / "data_sts2_windows_x86_64/sts2.dll").write_bytes(b"synthetic detection marker")
     (root / "SlayTheSpire2.pck").write_bytes(b"synthetic detection marker")
-    (root / "release_info.json").write_text(json.dumps({"version": "v0.107.1", "commit": "59260271"}))
+    (root / "release_info.json").write_text(json.dumps({"version": "v0.999.0", "commit": "unsupported"}))
 
 
 def test_sts2_unsupported_build_has_dedicated_diagnostics(tmp_path):

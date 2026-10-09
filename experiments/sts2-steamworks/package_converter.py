@@ -13,6 +13,7 @@ from verify_output import inspect
 
 
 FILES = (
+    "package_converter.py",
     "convert_sts2.py", "converter_io.py", "converter_profile_v1.json", "fetch_converter_runtimes.py",
     "verify_output.py", "prepare_managed.py", "patch_accessors.py", "patch_stats.py", "patch_pack.py",
     "adapt_packed_manifests.py", "adapt_deployment_graph.py", "inspect_dependency_graph.py",
@@ -20,6 +21,9 @@ FILES = (
     "pipeline.py", "preflight.py", "build_native.py", "adapt_fmod_build_sources.py",
     "fmod_sdk_headers_v1.json", "sdk_archive.py", "SOURCE_PIPELINE.md", "RELEASE_BLOCKERS.md",
     "steam_launch.py",
+    "native_cache.py",
+    "remote_worker.py",
+    "retail_107.py", "retail_107_managed_recipe.json", "retail_107_pack_recipe.json", "converter_profile_v107.json",
     "licenses/GODOT-LICENSE.txt", "licenses/GODOT-COPYRIGHT.txt",
     "licenses/SENTRY-LICENSE.md", "licenses/SPINE-LICENSE.txt",
 )

@@ -120,6 +120,8 @@ class ConverterApp:
         self.inspection: UnifiedInspection | None = None
         self.renpy_runtime: Path | None = None
         self.backend_runtime: Path | None = None
+        from megcfbt.sts2_remote import FrameSettings
+        self.frame_settings=FrameSettings.load()
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.output_dir = Path.home() / "Desktop"
@@ -239,6 +241,8 @@ class ConverterApp:
             command=self._start_convert,
         )
         self.convert_btn.pack(side="left")
+        self.retry_btn=ctk.CTkButton(controls,text='RETRY STS2 JOB',state='disabled',width=135,command=lambda:self._start_convert(retry=True))
+        self.retry_btn.pack(side='left',padx=8)
 
         ctk.CTkButton(
             controls,
@@ -466,7 +470,7 @@ class ConverterApp:
         if self.inspection.buildable:
             return True
         if self.inspection.backend == "sts2":
-            return self.inspection.compatibility == "needs_testing" and sts2.available(self.backend_runtime)
+            return self.inspection.compatibility == "needs_testing" and (self.frame_settings.authorized or sts2.available(self.backend_runtime))
         if automatic_custom_godot_runtime_available(self.inspection):
             return True
         return bool(
@@ -521,7 +525,7 @@ class ConverterApp:
                 result = inspect_source(source)
                 self._dispatch(lambda: self._show_inspection(result) if generation == self._generation else None)
             except Exception as exc:
-                self._dispatch(lambda: self._inspection_failed(str(exc)) if generation == self._generation else None)
+                self._dispatch(lambda error=str(exc): self._inspection_failed(error) if generation == self._generation else None)
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -552,7 +556,8 @@ class ConverterApp:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
         elif result.backend == "sts2":
-            self.runtime_button.configure(state="normal", text="FMOD SDK // SELECT AUTHORIZED 2.03.15 SDK…")
+            self.runtime_button.configure(state="normal", text="FRAME SETUP • EXPERIMENTAL STS2")
+            self.compat_label.configure(text='Compatibility: EXPERIMENTAL • '+result.evidence[0],text_color=C_WARN)
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
@@ -567,7 +572,9 @@ class ConverterApp:
         self.convert_btn.configure(
             state="normal" if self._conversion_allowed() else "disabled"
         )
-        if result.buildable:
+        if result.backend=='sts2' and result.compatibility=='needs_testing':
+            drop_text='STS2 • EXPERIMENTAL FRAME CONVERSION'
+        elif result.buildable:
             drop_text = "PAYLOAD LOCKED"
         elif auto_custom_runtime:
             drop_text = "PAYLOAD LOCKED // AUTO COMPAT RUNTIME"
@@ -621,12 +628,8 @@ class ConverterApp:
 
     def _pick_runtime(self) -> None:
         if self.inspection is not None and self.inspection.backend == "sts2":
-            sdk = filedialog.askopenfilename(title="Select authorized fmodstudioapi20315linux.tar.gz",
-                                            filetypes=[("FMOD Linux SDK archive", "*.tar.gz")])
-            if sdk:
-                self.backend_runtime = Path(sdk)
-                self.runtime_button.configure(text=f"FMOD SDK // {self.backend_runtime.name}")
-                self.convert_btn.configure(state="normal" if self._conversion_allowed() else "disabled")
+            from megcfbt.sts2_setup import FrameSetupDialog
+            self.frame_setup_dialog=FrameSetupDialog(self)
             return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
@@ -673,7 +676,7 @@ class ConverterApp:
         else:
             _open_path(self.output_dir)
 
-    def _start_convert(self) -> None:
+    def _start_convert(self, retry=False) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
         sts2_authorized = False
@@ -725,12 +728,14 @@ class ConverterApp:
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
                     acknowledge_licenses=sts2_authorized,
+                    sts2_frame=self.frame_settings if self.inspection.backend=='sts2' and self.frame_settings.authorized else None,
+                    sts2_retry=retry,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
-                self._dispatch(lambda: self._fail(str(exc)))
+                self._dispatch(lambda error=str(exc): self._fail(error))
             except Exception as exc:
-                self._dispatch(lambda: self._fail(f"Unexpected error: {exc}"))
+                self._dispatch(lambda error=str(exc): self._fail(f"Unexpected error: {error}"))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -746,6 +751,12 @@ class ConverterApp:
             self._log("Warning: " + warning)
         target = result.archive_path or result.output_path
         self._set_status(f"Done → {target}", C_OK)
+        if result.remote_output:
+            self._log('Frame output: '+result.remote_output)
+            self._log('Steam Launch Options: '+result.steam_launch_command)
+            self.root.clipboard_clear();self.root.clipboard_append(result.steam_launch_command)
+            messagebox.showinfo(APP_NAME,'Experimental STS2 conversion verified and deployed.\n\nFrame game folder:\n'+result.remote_output+'\n\nSteam Launch Options (copied to clipboard):\n'+result.steam_launch_command+'\n\nPaste this into the owned STS2 entry. Existing Steam settings were not changed.')
+            return
         messagebox.showinfo(
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
@@ -755,6 +766,7 @@ class ConverterApp:
 
     def _fail(self, message: str) -> None:
         self._set_busy(False)
+        if self.inspection and self.inspection.backend=='sts2': self.retry_btn.configure(state='normal')
         self.activity_label.configure(text="CURRENT OPERATION // FAILED")
         self._log("ERROR: " + message)
         self._set_status("CONVERSION FAILED", C_ERR)

@@ -133,7 +133,7 @@ class SourcePipelineTests(unittest.TestCase):
             root = Path(directory)
             source = root / "source"
             source.mkdir()
-            (source / "release_info.json").write_text('{"version":"v0.107.1","commit":"59260271"}')
+            (source / "release_info.json").write_text('{"version":"v0.999.0","commit":"unsupported"}')
             with mock.patch.object(pipeline, "fetch") as fetch, mock.patch.object(pipeline, "build") as build:
                 with self.assertRaisesRegex(ValueError, "Unsupported STS2 build"):
                     pipeline.run(source, root / "output", sdk=root / "sdk", cache=root / "cache", authorized=True)

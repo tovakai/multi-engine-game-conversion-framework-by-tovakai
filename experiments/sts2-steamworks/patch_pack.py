@@ -80,7 +80,7 @@ def _table(stream, size):
     return base, directory, raw, entries
 
 
-def rewrite_pack(source, destination, *, expected_sha256, expected_size, transform=adapt_bundle, atomic_publication=True):
+def rewrite_pack(source, destination, *, expected_sha256, expected_size, transform=adapt_bundle, atomic_publication=True, preserved_paths=None):
     """Publish a new pack only after source identity/hash and all edits validate.
 
     `transform` operates on the four verified extension resources in memory.
@@ -107,7 +107,8 @@ def rewrite_pack(source, destination, *, expected_sha256, expected_size, transfo
             if not stat.S_ISREG(before.st_mode) or before.st_size != expected_size:
                 raise ValueError("Source changed before opening")
             base, old_directory, table, entries = _table(stream, before.st_size)
-            required = RECIPES.keys() | UNCHANGED.keys()
+            preserved=UNCHANGED if preserved_paths is None else preserved_paths
+            required = RECIPES.keys() | preserved.keys()
             if required - entries.keys():
                 raise ValueError("Required extension resources missing")
             resources = {}
@@ -123,7 +124,7 @@ def rewrite_pack(source, destination, *, expected_sha256, expected_size, transfo
             adapted, adaptation = transform(dict(resources))
             if adapted.keys() != resources.keys() or any(not isinstance(raw, bytes) or len(raw) > 65536 for raw in adapted.values()):
                 raise ValueError("Unexpected transformed resource set")
-            if any(adapted[name] != resources[name] for name in UNCHANGED):
+            if any(adapted[name] != resources[name] for name in preserved):
                 raise ValueError("Preserved extension configuration changed")
             changes = sorted(name for name in resources if adapted[name] != resources[name])
             cursor, additions = before.st_size, []

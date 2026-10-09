@@ -115,7 +115,7 @@ func _initialize():
         self.assertEqual(report["validation"]["errors"], [])
         self.assertEqual(self.snapshot(self.source), before)
         manifest = json.loads((self.output / "conversion-manifest.json").read_bytes())
-        expected = len(self.profile["copy_files"]) + len(self.profile["native_files"]) + len(self.profile["legal_files"]) + 3 + 1 + 5 + sum(len(v["members"]) for v in self.profile["archives"].values())
+        expected = len(self.profile["copy_files"]) + len(self.profile["native_files"]) + len(self.profile["legal_files"]) + 3 + 1 + 6 + sum(len(v["members"]) for v in self.profile["archives"].values())
         self.assertEqual(len(manifest["files"]), expected)
         self.assertEqual(verify(self.output, check_modes=True)["errors"], [])
         for path in before:

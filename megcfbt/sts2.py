@@ -46,9 +46,8 @@ def summary(root: Path) -> UnifiedInspection | None:
     if not (root / "SlayTheSpire2.pck").is_file() or not (root / "data_sts2_windows_x86_64/sts2.dll").is_file():
         return None
     try:
-        result = subprocess.run([python_command(), str(tools_directory() / "preflight.py"),
-                                 str(root), "--metadata-only"], capture_output=True, text=True, timeout=15)
-        report = json.loads(result.stdout)
+        from megcfbt.sts2_backend import module
+        report = module("preflight").inspect_source(root, full=False)
     except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as error:
         report = {"supported": False, "errors": [str(error)]}
     supported = bool(report.get("supported"))

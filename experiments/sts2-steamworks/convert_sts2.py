@@ -89,14 +89,22 @@ No saves, Steam credentials, or user data are copied by the converter.
 Output integrity verification does not establish gameplay, auth, cloud sync,
 achievement support or actual-device compatibility. Validate these separately.
 '''
+PLAY_STEAM = b'#!/bin/sh\nROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"\nexec /usr/bin/python3 "$ROOT/steam_launch.py" "$@"\n'
 
 
-def load_profile():
-    return json.loads(PROFILE.read_bytes())
+def load_profile(source=None):
+    path=PROFILE
+    if source is not None:
+        metadata=safe(Path(source)/'release_info.json')
+        if metadata.stat().st_size>4096: raise ValueError('Release metadata exceeds limit')
+        info=json.loads(metadata.read_bytes())
+        if isinstance(info,dict) and (info.get('version'),info.get('commit'))==('v0.107.1','59260271'):
+            path=HERE/'converter_profile_v107.json'
+    return json.loads(path.read_bytes())
 
 
 def executable(path):
-    return path in {"SlayTheSpire2", "launch.sh", "collect-startup.sh"} or path.endswith(("/crashpad_handler", "/createdump"))
+    return path in {"SlayTheSpire2", "launch.sh", "collect-startup.sh", "play-steam.sh"} or path.endswith(("/crashpad_handler", "/createdump"))
 
 
 def require_elf(raw, label):
@@ -158,7 +166,7 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
             _native_build=None):
     if not authorized:
         raise ValueError("Acknowledge legitimate game ownership and dependency permissions with --acknowledge-licenses")
-    profile = load_profile() if _profile is None else _profile
+    profile = load_profile(source) if _profile is None else _profile
     source, output, native_dir = safe(source), safe(output), safe(native_dir)
     if not source.is_dir() or not native_dir.is_dir() or not output.parent.is_dir():
         raise ValueError("Source/native directory and output parent must exist")
@@ -171,7 +179,12 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
               for item in profile["copy_files"]}
     original = {name: read_verified(source / SOURCE_DATA / relative(name), pin)
                 for name, pin in profile["managed_inputs"].items()}
-    managed = prepare_pair(original["sts2.dll"], original["Steamworks.NET.dll"])
+    retail=profile.get('managed_recipe')=='sts2-retail-107-stats-v1'
+    if retail:
+        from retail_107 import managed as prepare_retail
+        managed=prepare_retail(original['sts2.dll'],original['Steamworks.NET.dll'])
+    else:
+        managed = prepare_pair(original["sts2.dll"], original["Steamworks.NET.dll"])
     deps = adapt_deps(original["sts2.deps.json"], mode=profile["deps_mode"])
     deps_report = {"mode": profile["deps_mode"], "sha256": hashlib.sha256(deps).hexdigest()}
     natives = {}
@@ -206,9 +219,12 @@ def convert(source, output, native_dir, archives, *, authorized=False, _profile=
             for key, archive in opened.items():
                 extract_members(archive, profile["archives"][key]["members"], stage)
             kwargs = {"transform": _pack_transform} if _pack_transform is not None else {}
+            if retail and _pack_transform is None:
+                from retail_107 import pack as retail_pack, preserved_paths
+                kwargs={'transform':retail_pack,'preserved_paths':preserved_paths()}
             pack_report = rewrite_pack(pack, stage / "SlayTheSpire2.pck", expected_sha256=profile["pack"]["sha256"],
                                        expected_size=profile["pack"]["size_bytes"], atomic_publication=False, **kwargs)
-            for name, raw in {"launch.sh": LAUNCH, "collect-startup.sh": COLLECT,
+            for name, raw in {"launch.sh": LAUNCH, "collect-startup.sh": COLLECT, "play-steam.sh": PLAY_STEAM,
                               "verify_output.py": (HERE / "verify_output.py").read_bytes(),
                               "steam_launch.py": (HERE / "steam_launch.py").read_bytes(),
                               "CONVERSION-NOTICES.txt": NOTICES}.items():

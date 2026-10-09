@@ -44,12 +44,14 @@ public static class Program
         if (!condition) throw new Exception(message);
     }
 
-    private static Action BindCandidate(string path)
+    private static Action BindCandidate(string path, string? recipePath)
     {
         byte[] assembly = File.ReadAllBytes(path);
-        Check(Convert.ToHexString(SHA256.HashData(assembly)).ToLowerInvariant() ==
-            "c27aedddd408500ab05ac3c045f41c3f224e3db19c4a6904b5581cc4f588351c", "Wrong candidate hash");
-        byte[] code = assembly.AsSpan(356168 + 12, 82).ToArray();
+        using var recipe = recipePath == null ? null : System.Text.Json.JsonDocument.Parse(File.ReadAllText(recipePath));
+        string expected = recipe?.RootElement.GetProperty("target_sha256").GetString() ?? "c27aedddd408500ab05ac3c045f41c3f224e3db19c4a6904b5581cc4f588351c";
+        int location = recipe?.RootElement.GetProperty("offset").GetInt32() ?? 356168;
+        Check(Convert.ToHexString(SHA256.HashData(assembly)).ToLowerInvariant() == expected, "Wrong candidate hash");
+        byte[] code = assembly.AsSpan(location + 12, 82).ToArray();
         var method = new DynamicMethod("CandidateInitialize", typeof(void), Type.EmptyTypes, typeof(Program).Module, true);
         DynamicILInfo info = method.GetDynamicILInfo();
         int Method(string name) => info.GetTokenFor(typeof(Program).GetMethod(name)!.MethodHandle);
@@ -69,6 +71,17 @@ public static class Program
             [0x06000f7d] = Method(nameof(RefreshGlobal)),
             [0x060077b9] = Method(nameof(RunSafely)),
         };
+        if (recipe != null)
+        {
+            var original = new Dictionary<int, int>(tokens);
+            tokens.Clear();
+            foreach (var mapping in recipe.RootElement.GetProperty("token_map").EnumerateObject())
+            {
+                int oldToken = Convert.ToInt32(mapping.Name[2..], 16);
+                int newToken = Convert.ToInt32(mapping.Value.GetString()![2..], 16);
+                if (original.TryGetValue(oldToken, out int rebound)) tokens[newToken] = rebound;
+            }
+        }
         var opcodes = typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.FieldType == typeof(OpCode)).Select(f => (OpCode)f.GetValue(null)!)
             .ToDictionary(op => unchecked((ushort)op.Value));
@@ -112,7 +125,7 @@ public static class Program
 
     public static void Main(string[] args)
     {
-        Action initialize = BindCandidate(args[0]);
+        Action initialize = BindCandidate(args[0], args.Length > 1 ? args[1] : null);
         int tests = 0;
         Reset(); Initialized = false; initialize();
         Check(Reads == 0 && Registrations == 0 && Refreshes == 0 && UserReady && GlobalReady && GlobalDamage == 99,

@@ -33,3 +33,6 @@ class UnifiedBuildResult:
     engine_version: str | None
     game_name: str | None
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    remote_output: str | None = None
+    steam_launch_command: str | None = None
+    remote_job: str | None = None

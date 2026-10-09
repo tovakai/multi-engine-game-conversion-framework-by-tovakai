@@ -11,7 +11,7 @@ import tempfile
 
 from build_native import build, STEAM_API
 from converter_io import safe
-from convert_sts2 import convert, create_tar
+from convert_sts2 import convert, create_tar, load_profile
 from fetch_converter_runtimes import fetch
 from preflight import inspect_source
 from sdk_archive import prepare_sdk
@@ -39,7 +39,13 @@ def run(source, output, *, sdk, cache, scons="scons", steam_api=STEAM_API,
     parent = Path(tempfile.mkdtemp(prefix="sts2-build-", dir=cache))
     sdk = prepare_sdk(sdk, parent / "vendor-sdk")
     progress("Compiling pinned ARM64 Spine and FMOD sources; logs: " + str(parent / "work/build.log"))
-    native, profile, evidence = build(parent / "work", sdk, steam_api=steam_api, scons=scons)
+    from native_cache import cached_build
+    native, profile, evidence = cached_build(cache/'compiled',sdk,steam_api=steam_api,scons=scons)
+    selected=load_profile(source)
+    for item in selected['native_files']:
+        generated=next(row for row in profile['native_files'] if row['provider_name']==item['provider_name'])
+        item.update(sha256=generated['sha256'],size_bytes=generated['size_bytes'])
+    profile=selected
     progress("Downloading and verifying official Godot, .NET and Sentry runtimes")
     archives = fetch(cache / "runtimes")
     progress("Transforming managed code and pack; validating native output")

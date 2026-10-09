@@ -222,6 +222,8 @@ def build_source(
     stage_progress: Callable[[float, str], None] | None = None,
     sts2_sdk: Path | str | None = None,
     acknowledge_licenses: bool = False,
+    sts2_frame=None,
+    sts2_retry: bool = False,
 ) -> UnifiedBuildResult:
     def stage(value: float, message: str) -> None:
         if stage_progress:
@@ -240,7 +242,7 @@ def build_source(
     custom_godot_auto = automatic_custom_godot_runtime_available(inspection)
     sts2_ready = bool(inspection.backend == "sts2"
                       and inspection.compatibility == "needs_testing"
-                      and sts2.available(sts2_sdk or backend_runtime))
+                      and (sts2_frame is not None or sts2.available(sts2_sdk or backend_runtime)))
     if (
         not inspection.buildable
         and not custom_godot_override
@@ -269,6 +271,20 @@ def build_source(
     try:
         stage(0.20, "Building ARM64 package")
         if inspection.backend == "sts2":
+            if sts2_frame is not None:
+                from megcfbt.sts2_remote import RemoteBuild, RemoteError
+                try:
+                    with prepare_source(path) as prepared:
+                        selected=_inspect_prepared(prepared.root)
+                        service=RemoteBuild(sts2_frame,progress,stage)
+                        retry=service.last_retry_job(output_path,selected.source_path) if sts2_retry else None
+                        report=service.build(selected.source_path,output_path,archive=archive,resume_job=retry)
+                    return UnifiedBuildResult(source_path=path,output_path=output_path,
+                        launcher_path=None,archive_path=Path(report['local_archive']) if report.get('local_archive') else None,
+                        backend='sts2',engine='godot',engine_version=inspection.engine_version,game_name=inspection.game_name,
+                        warnings=('STS2 remote conversion is experimental; retail/owned-Steam gameplay acceptance is required.',),
+                        remote_output=report['output'],steam_launch_command=report['launch_command'],remote_job=report['job'])
+                except (RemoteError,OSError,ValueError) as e: raise ConversionError(str(e)) from e
             with prepare_source(path) as prepared:
                 selected = _inspect_prepared(prepared.root)
                 if selected.backend != "sts2":

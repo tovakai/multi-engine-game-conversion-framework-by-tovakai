@@ -6,16 +6,18 @@ from pathlib import Path
 import sys
 
 from converter_io import safe, relative, read_verified, verified_stream
+from convert_sts2 import load_profile
 
 HERE = Path(__file__).resolve().parent
 
 
 def inspect_source(source, *, full=True, profile=None):
-    profile = profile or json.loads((HERE / "converter_profile_v1.json").read_bytes())
     source = safe(source)
     report = {"release": None, "commit": None, "supported": False,
               "source_verified": False, "errors": [], "files_checked": 0}
     try:
+        if profile is None:
+            profile=load_profile(source)
         metadata = source / "release_info.json"
         if metadata.stat().st_size > 4096:
             raise ValueError("Release metadata exceeds limit")

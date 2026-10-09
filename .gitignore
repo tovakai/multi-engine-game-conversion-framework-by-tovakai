@@ -8,3 +8,6 @@ build/
 *.spec
 .DS_Store
 *.egg-info/
+.private/
+.retail-probe.py
+.private-retail-recipe.py
