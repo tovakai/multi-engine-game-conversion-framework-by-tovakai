@@ -26,7 +26,7 @@ Why bother?
   original Windows or x86 Linux builds struggle through compatibility layers.
 - **More than one device:** the goal is portable ARM64 Linux output, whether
   you're using a Steam Frame, a Raspberry Pi, an ARM handheld, or a laptop.
-- **Your games, your setup:** convert games you already own for your own device;
+- **Your games, your setup:** convert game files you provide for your own device;
   no bundled game downloads, mandatory storefront, or prescribed launcher.
 
 **Native does not automatically mean faster or more compatible.** Results
@@ -45,15 +45,18 @@ it pretend it has one?**
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
-| Slay the Spire 2 v0.107.1 / 59260271 (experimental; legacy v0.98.2 recipe retained) | STS2 source pipeline | Windows GUI manages a verified remote Frame source build, authorized FMOD SDK, official runtimes and guarded original-file transformations | Packaged Windows GUI retail conversion and owned-Steam menu/audio/controller navigation verified; extended gameplay and save/reload pending |
+| Slay the Spire 2 v0.107.1 / 59260271 (experimental; legacy v0.98.2 recipe retained) | STS2 source pipeline | Windows GUI manages a verified remote Frame source build, supplied FMOD SDK, official runtimes and guarded original-file transformations | Packaged Windows GUI retail conversion and Steam menu/audio/controller navigation verified; extended gameplay and save/reload pending |
 
-For experimental STS2 conversion, drop the original supported retail installation
+For experimental STS2 conversion, drop a supported STS2 game installation
 into the Windows application, complete **Frame Setup** once with a trusted
-connection and authorized FMOD 2.03.15 Linux SDK, then click **Convert**. The Frame
+connection and a locally supplied FMOD 2.03.15 Linux SDK, then click **Convert**. The Frame
 performs the native source build in an isolated workspace. After verification,
-accept **Connect Steam** and press Play in the owned Steam entry. No manual
+accept **Connect Steam** and press Play in the existing STS2 Steam entry. No manual
 launch-option editing is required. **Restore Steam** recovers the backed-up
 per-game launch setting if it has not subsequently been edited.
+
+No purchase verification or ownership declaration is required by the converter.
+Steam's normal launch context remains required by the current STS2 runtime path.
 
 The application grants no FMOD/Spine rights and distributes no proprietary SDK,
 game files or prepared game-specific binaries. Exact supported input hashes are
