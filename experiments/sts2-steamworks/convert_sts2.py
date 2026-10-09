@@ -60,7 +60,7 @@ printf 'Game exit code: %s; log writer exit code: %s\\n' "${STATUSES[0]}" "${STA
 if [[ "${STATUSES[0]}" != 0 ]]; then exit "${STATUSES[0]}"; fi
 exit "${STATUSES[1]}"
 '''
-NOTICES = b'''STS2 ARM64 personal conversion: v0.98.2 / f4eeecc6
+NOTICES = b'''STS2 ARM64 local conversion: v0.98.2 / f4eeecc6
 
 This output contains your game and explicitly supplied dependencies. Do not
 redistribute it as a game package. The converter distributes no game binaries,
@@ -260,7 +260,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path, help="Clean matching-build game directory")
     parser.add_argument("output", type=Path, help="New directory, outside all input trees")
-    parser.add_argument("--native-dir", type=Path, required=True, help="Flat directory containing the five authorized native dependencies")
+    parser.add_argument("--native-dir", type=Path, required=True, help="Flat directory containing the five required native dependencies")
     parser.add_argument("--godot-templates", type=Path, required=True)
     parser.add_argument("--dotnet-runtime", type=Path, required=True)
     parser.add_argument("--sentry-archive", type=Path, required=True)
@@ -276,8 +276,7 @@ def main(argv=None):
                 if root == tar_path or root in tar_path.parents:
                     raise ValueError("Transfer archive must be outside all input trees")
         result = convert(args.source, args.output, args.native_dir,
-                         {"godot": args.godot_templates, "dotnet": args.dotnet_runtime, "sentry": args.sentry_archive},
-                         )
+                         {"godot": args.godot_templates, "dotnet": args.dotnet_runtime, "sentry": args.sentry_archive})
         if args.tar:
             result["transfer_archive"] = create_tar(args.output, args.tar)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, RuntimeError) as error:
