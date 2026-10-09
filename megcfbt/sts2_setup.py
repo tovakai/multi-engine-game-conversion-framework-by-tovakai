@@ -12,9 +12,9 @@ class FrameSetupDialog:
         self.window=ctk.CTkToplevel(app.root);self.window.title('STS2 • Frame setup (experimental)')
         self.window.geometry('720x660');self.window.transient(app.root)
         ctk.CTkLabel(self.window,text='One-time Steam Frame setup',font=ctk.CTkFont(size=23,weight='bold')).pack(pady=(18,5))
-        ctk.CTkLabel(self.window,text='Connect securely, select authorized dependencies, and choose Frame storage.\nYour original game and Steam settings remain unchanged.',wraplength=650).pack(pady=8)
+        ctk.CTkLabel(self.window,text='Connect securely, select required dependencies, and choose Frame storage.\nYour original game and Steam settings remain unchanged.',wraplength=650).pack(pady=8)
         fields=(('host','Frame address'),('user','Frame account'),('key_file','Existing connection key (optional)'),
-                ('remote_root','Build / deployment folder on Frame'),('sdk_file','Authorized FMOD Linux SDK archive on this computer'),
+                ('remote_root','Build / deployment folder on Frame'),('sdk_file','FMOD Linux SDK archive on this computer'),
                 ('remote_sdk','Or use the verified SDK found on the Frame'))
         for key,label in fields:
             row=ctk.CTkFrame(self.window);row.pack(fill='x',padx=22,pady=5)
@@ -23,11 +23,9 @@ class FrameSetupDialog:
             entry.insert(0,getattr(self.settings,key));self.entries[key]=entry
             if key in ('sdk_file','key_file'):
                 def browse(field=key):
-                    path=filedialog.askopenfilename(parent=self.window,title='Choose authorized FMOD SDK archive' if field=='sdk_file' else 'Choose existing private connection key')
+                    path=filedialog.askopenfilename(parent=self.window,title='Choose FMOD SDK archive' if field=='sdk_file' else 'Choose existing private connection key')
                     if path: self.entries[field].delete(0,'end');self.entries[field].insert(0,path)
                 ctk.CTkButton(row,text='Browse',width=65,command=browse).pack(side='right',padx=5)
-        self.authorization=tk.BooleanVar(value=self.settings.authorized)
-        ctk.CTkCheckBox(self.window,text='I own the game and have applicable FMOD / Spine permissions.\nThe application grants no vendor rights or redistribution permission.',variable=self.authorization).pack(padx=24,pady=12)
         self.download=tk.BooleanVar(value=self.settings.download_archive)
         ctk.CTkCheckBox(self.window,text='Also download a verified transfer archive to my output folder',variable=self.download).pack(padx=24,pady=4)
         self.status=ctk.CTkLabel(self.window,text='Existing keys and trusted host identities are used automatically.',wraplength=660)
@@ -39,7 +37,7 @@ class FrameSetupDialog:
 
     def values(self):
         s=FrameSettings(**{key:entry.get().strip() for key,entry in self.entries.items()})
-        s.authorized=self.authorization.get();s.download_archive=self.download.get();s.validate();return s
+        s.download_archive=self.download.get();s.validate();return s
 
     def probe(self):
         from megcfbt.gui import messagebox
@@ -82,8 +80,7 @@ class FrameSetupDialog:
         from megcfbt.gui import messagebox
         try:
             settings=self.values()
-            if not settings.authorized: raise ValueError('Confirm the game and vendor dependency permissions first.')
-            if not settings.sdk_file and not settings.remote_sdk: raise ValueError('Select the authorized FMOD 2.03.15 Linux SDK archive.')
+            if not settings.sdk_file and not settings.remote_sdk: raise ValueError('Select the FMOD 2.03.15 Linux SDK archive.')
             settings.save();self.app.frame_settings=settings
             self.app.convert_btn.configure(state='normal' if self.app._conversion_allowed() else 'disabled')
             self.app.runtime_button.configure(text='FRAME SETUP • READY (EXPERIMENTAL)')
