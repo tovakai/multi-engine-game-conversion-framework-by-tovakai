@@ -18,10 +18,8 @@ from sdk_archive import prepare_sdk
 
 
 def run(source, output, *, sdk, cache, scons="scons", steam_api=STEAM_API,
-        authorized=False, progress=None):
+        progress=None):
     progress = progress or (lambda message: None)
-    if not authorized:
-        raise ValueError("Game ownership and vendor dependency permissions must be acknowledged")
     source, output, cache, sdk = map(safe, (source, output, cache, sdk))
     if output.exists() or not output.parent.is_dir():
         raise ValueError("Output must be new with an existing parent")
@@ -49,7 +47,7 @@ def run(source, output, *, sdk, cache, scons="scons", steam_api=STEAM_API,
     progress("Downloading and verifying official Godot, .NET and Sentry runtimes")
     archives = fetch(cache / "runtimes")
     progress("Transforming managed code and pack; validating native output")
-    result = convert(source, output, native, archives, authorized=True,
+    result = convert(source, output, native, archives,
                      _profile=profile, _native_build=evidence)
     result["source_validation"] = report
     result["build_workspace"] = str(parent)
@@ -66,7 +64,6 @@ def main(argv=None):
     parser.add_argument("--cache", type=Path, default=Path.home() / ".cache/megcfbt/sts2")
     parser.add_argument("--scons", default=os.environ.get("MEGCFBT_STS2_SCONS", "scons"))
     parser.add_argument("--steam-api", type=Path, default=STEAM_API)
-    parser.add_argument("--acknowledge-licenses", action="store_true")
     parser.add_argument("--tar", type=Path)
     args = parser.parse_args(argv)
     try:
@@ -80,7 +77,7 @@ def main(argv=None):
                 if target == root or root in target.parents:
                     raise ValueError("Transfer archive must be outside all inputs and cache")
         result = run(args.source, args.output, sdk=args.fmod_sdk, cache=args.cache,
-                     scons=args.scons, steam_api=args.steam_api, authorized=args.acknowledge_licenses,
+                     scons=args.scons, steam_api=args.steam_api,
                      progress=lambda message: print(message, file=sys.stderr, flush=True))
         if args.tar:
             result["transfer_archive"] = create_tar(args.output, args.tar)
