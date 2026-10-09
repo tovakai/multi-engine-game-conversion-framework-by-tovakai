@@ -20,6 +20,8 @@ def _parser() -> argparse.ArgumentParser:
 
     build_cmd = sub.add_parser("build", help="convert a supported game to Linux ARM64")
     build_cmd.add_argument("source", type=Path)
+    build_cmd.add_argument("--experimental-legacy-arm64-fallback", action="store_true",
+                           help="opt in: authoritative 7.3.5 or 7.4.x Python 2; matched full 7.5.0 ARM64 engine; experimental")
     build_cmd.add_argument("--experimental-ddlc-753-migration", action="store_true",
                            help="opt in: original DDLC 1.1.1 / Ren'Py 6.99.12 only; full 7.5.3 Python 2 engine; hardware unverified")
     build_cmd.add_argument("--dry-run", action="store_true",
@@ -229,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
             output=args.output,
             renpy_runtime=args.renpy_runtime,
             renpy_ddlc_753_migration=args.experimental_ddlc_753_migration,
+            renpy_legacy_arm64_fallback=args.experimental_legacy_arm64_fallback,
             dry_run=args.dry_run,
             backend_runtime=args.runtime,
             force=args.force,

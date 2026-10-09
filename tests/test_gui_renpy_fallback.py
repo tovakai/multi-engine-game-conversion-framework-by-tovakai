@@ -100,7 +100,7 @@ def test_legacy_gui_displays_experimental_option_and_warning(tmp_path):
 
 def test_legacy_gui_requires_manual_runtime_if_no_verified_fallback(tmp_path):
     app = app_for_inspection(tmp_path)
-    app._show_inspection(inspection(app.source, version="7.3.5"))
+    app._show_inspection(inspection(app.source, version="7.3.4"))
     assert app.runtime_button.values["text"] == "RUNTIME // MANUAL ARM64 REQUIRED…"
     assert "MANUAL ARM64 REQUIRED" in app.drop_label.values["text"]
 
@@ -173,7 +173,7 @@ def test_gui_renpy8_never_prompts_for_legacy_fallback(tmp_path, monkeypatch):
 
 def test_gui_unsupported_7_3_requires_manual_runtime(tmp_path, monkeypatch):
     app = app_for_inspection(tmp_path)
-    app.inspection = inspection(app.source, version="7.3.5")
+    app.inspection = inspection(app.source, version="7.3.4")
     events = []
     monkeypatch.setattr(gui, "messagebox", SimpleNamespace(
         showinfo=lambda *a, **kw: events.append("needs manual"),

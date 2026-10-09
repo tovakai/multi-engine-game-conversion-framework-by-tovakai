@@ -98,13 +98,13 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         issue for issue in result.potential_issues if issue != "none"
     ])
 
-    fallback = experimental_arm64_fallback(result.renpy_version, result.generation)
+    fallback = experimental_arm64_fallback(result.renpy_version, result.generation, inspection=result)
     ddlc_candidate = original_ddlc_candidate(result)
     if ddlc_candidate:
         runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; menu/launch tested on Frame; story unverified)"
     elif fallback:
         runtime_kind = (
-            f"experimental Ren'Py {fallback} Python 2 ARM64 fallback "
+            f"experimental Ren'Py {fallback} Python 2 ARM64 full-engine migration "
             "(requires user approval)"
         )
     elif requires_pre_sdkarm_override(result.renpy_version, result.generation):
@@ -129,6 +129,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         evidence=evidence,
         renpy_generation=result.generation,
         renpy_ddlc_753_candidate=ddlc_candidate,
+        renpy_legacy_arm64_candidate=bool(fallback),
     )
 
 
@@ -229,6 +230,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 evidence=result.evidence,
                 renpy_generation=result.renpy_generation,
                 renpy_ddlc_753_candidate=result.renpy_ddlc_753_candidate,
+                renpy_legacy_arm64_candidate=result.renpy_legacy_arm64_candidate,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc
@@ -355,7 +357,10 @@ def build_source(
             engine_version=engine_version,
             **({"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "experimental-ddlc-111-renpy-753"}
-               if renpy_ddlc_753_migration else {}),
+               if renpy_ddlc_753_migration else
+               {"runtime_engine_version": result.runtime_version,
+                "compatibility_profile": "experimental-renpy-legacy-750"}
+               if renpy_legacy_arm64_fallback else {}),
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)

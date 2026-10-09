@@ -21,7 +21,7 @@ from renframe.detector import (
     select_best_version,
 )
 from renframe.elf import is_elf_file, read_elf_architecture
-from renframe.models import RuntimeInspection
+from renframe.models import GameInspection, RuntimeInspection
 from renframe.utils import normalize_path
 
 _X86_ARCHES = frozenset({"x86_64", "x86", "amd64", "i386", "i686"})
@@ -29,6 +29,10 @@ _ARM_ARCHES = frozenset({"aarch64", "arm64", "arm"})
 _RELEASE_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.\d+)?$")
 _DEFAULT_BASE_URL = "https://www.renpy.org/dl"
 _SDK_753_SHA256 = "6e5da3388b083d05f9d43991310776ff394b04bbb5541ee6216484ebd3d5a567"
+_SDK_SHA256 = {
+    "7.5.0": "33e1fcab5a9c80c0850a245e0ce634c098dcea27d8f58a523c80014ed27b94d0",
+    "7.5.3": _SDK_753_SHA256,
+}
 
 
 class RuntimeDownloadError(RuntimeError):
@@ -59,8 +63,9 @@ def requires_pre_sdkarm_override(version: str | None, generation: int | None) ->
     return major == 7 and minor < 5
 
 
-def experimental_arm64_fallback(version: str | None, generation: int | None) -> str | None:
-    """Offer a deliberately narrow Python 2 fallback for Ren'Py 7.4.x.
+def experimental_arm64_fallback(version: str | None, generation: int | None,
+                                *, inspection: GameInspection | None = None) -> str | None:
+    """Offer Python 2 fallback for 7.4.x and authoritative exact 7.3.5.
 
     Ren'Py 7.5.0 is the first official sdkarm release. This is an opt-in,
     cross-minor experiment, not evidence that every 7.4 game will run.
@@ -72,7 +77,30 @@ def experimental_arm64_fallback(version: str | None, generation: int | None) -> 
         release = normalize_release_version(version)
     except RuntimeDownloadError:
         return None
-    return "7.5.0" if release.startswith("7.4.") else None
+    if release.startswith("7.4."):
+        return "7.5.0"
+    if release != "7.3.5" or inspection is None:
+        return None
+    root = inspection.source_path
+    hints = [h for h in inspection.version_hints
+             if h.version and h.source in {"renpy/__init__.py", "renpy/vc_version.py", "renpy/versions.py"}]
+    if (not inspection.is_renpy or inspection.renpy_version != release
+            or inspection.generation != 7 or not hints
+            or not any(h.confidence == "high" and h.generation == 7 for h in hints)
+            or any(h.version != release or h.generation != 7 for h in hints)
+            or not (root / "game").is_dir()
+            or not (root / "renpy/__init__.py").is_file()):
+        return None
+    # A renamed/fake engine directory, or a Python 3 distribution with a
+    # stale version marker, must not enable the new migration.
+    lib = root / "lib"
+    if not lib.is_dir():
+        return None
+    names = [p.name.casefold() for p in lib.iterdir() if p.is_dir()]
+    if (not any(n.startswith(("py2-", "python2.", "pythonlib2.")) for n in names)
+            or any(n.startswith(("py3-", "python3.", "pythonlib3.")) for n in names)):
+        return None
+    return "7.5.0"
 
 
 def python_tag_for_generation(generation: int | None) -> str:
@@ -440,11 +468,11 @@ def _sdk_manifest(path: Path) -> dict[str, str]:
     return manifest
 
 
-def _validate_753_sdk(path: Path) -> None:
+def _validate_matched_py2_sdk(path: Path, release: str) -> None:
     _validate_full_sdk(path, "py2-linux-aarch64")
     inspection = inspect_runtime(path)
-    if inspection.version != "7.5.3" or inspection.generation != 7:
-        raise RuntimeDownloadError("Official SDK engine must identify as Ren'Py 7.5.3 Python 2")
+    if inspection.version != release or inspection.generation != 7:
+        raise RuntimeDownloadError(f"Official SDK engine must identify as Ren'Py {release} Python 2")
     if not (path / "lib/python2.7").is_dir() or not any((path / "lib/python2.7").rglob("*.py*")):
         raise RuntimeDownloadError("Official SDK is missing the Python 2.7 standard library")
     if not (path / "LICENSE.txt").is_file():
@@ -559,15 +587,15 @@ class RuntimeManager:
         destination = self.full_sdk_path(release, python_tag)
         try:
             _validate_full_sdk(destination, "py2-linux-aarch64")
-            if release == "7.5.3":
-                _validate_753_sdk(destination)
+            if release in {"7.5.0", "7.5.3"}:
+                _validate_matched_py2_sdk(destination, release)
                 try:
                     manifest = json.loads((destination / ".verified-sdk.json").read_text(encoding="utf-8"))
                 except (OSError, ValueError) as exc:
                     raise RuntimeDownloadError("Missing verified SDK cache manifest") from exc
                 if not isinstance(manifest, dict) or manifest.get("files") != _sdk_manifest(destination):
                     raise RuntimeDownloadError("SDK cache content changed since checksum verification")
-                if self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_753_SHA256:
+                if self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_SHA256[release]:
                     raise RuntimeDownloadError("SDK cache provenance does not match the official archive")
             if progress:
                 progress(f"Using cached complete Ren'Py {release} Python 2 ARM64 engine")
@@ -582,8 +610,8 @@ class RuntimeManager:
         expected = _parse_sha256(
             self._read_url(f"{url}/checksums.txt"), filename
         )
-        if release == "7.5.3" and self.base_url == _DEFAULT_BASE_URL and expected != _SDK_753_SHA256:
-            raise RuntimeDownloadError("Official 7.5.3 checksum differs from independently verified SHA256")
+        if self.base_url == _DEFAULT_BASE_URL and expected != _SDK_SHA256[release]:
+            raise RuntimeDownloadError(f"Official {release} checksum differs from independently verified SHA256")
         archive_path = self.cache_dir / "downloads" / filename
         if not archive_path.is_file() or _sha256(archive_path) != expected:
             self._download(f"{url}/{filename}", archive_path, progress=progress)
@@ -609,8 +637,8 @@ class RuntimeManager:
                 _extract_selected_members(archive, members, extracted)
             staged = extracted / prefix
             _validate_full_sdk(staged, "py2-linux-aarch64")
-            if release == "7.5.3":
-                _validate_753_sdk(staged)
+            if release in {"7.5.0", "7.5.3"}:
+                _validate_matched_py2_sdk(staged, release)
                 (staged / ".verified-sdk.json").write_text(json.dumps({
                     "archive_sha256": expected, "files": _sdk_manifest(staged),
                 }, sort_keys=True), encoding="utf-8")

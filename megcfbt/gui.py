@@ -613,7 +613,8 @@ class ConverterApp:
         self.backend_label.configure(text=f"Backend: {result.backend or 'none'}", text_color=C_MUTED)
         auto_custom_runtime = automatic_custom_godot_runtime_available(result)
         legacy_fallback = (
-            experimental_arm64_fallback(result.engine_version, result.renpy_generation)
+            ("7.5.0" if result.renpy_legacy_arm64_candidate else
+             experimental_arm64_fallback(result.engine_version, result.renpy_generation))
             if result.engine == "renpy" else None
         )
         if result.engine == "renpy" and result.renpy_ddlc_753_candidate:
@@ -681,7 +682,7 @@ class ConverterApp:
             advisory = (
                 f"Ren'Py {result.engine_version} predates official ARM64 support. "
                 f"Click CONVERT to approve an experimental official Ren'Py "
-                f"{legacy_fallback} Python 2 runtime download, or use RUNTIME "
+                f"{legacy_fallback} Python 2 full-engine migration (requires approval), or use RUNTIME "
                 "to select a manual override. Full gameplay compatibility is not yet verified."
                 + (" Unofficial personal-use conversion of your own original DDLC files. Poem game, saves, character-file changes and in-story restarts still need testing." if result.renpy_ddlc_753_candidate else "")
             )
@@ -809,6 +810,8 @@ class ConverterApp:
             fallback = experimental_arm64_fallback(
                 self.inspection.engine_version, self.inspection.renpy_generation
             )
+            if self.inspection.renpy_legacy_arm64_candidate:
+                fallback = "7.5.0"
             if self.inspection.renpy_ddlc_753_candidate:
                 fallback = "7.5.3"
             if fallback:
@@ -822,7 +825,7 @@ class ConverterApp:
                     "converted copy.\n\n"
                     "NO: Select your own compatible ARM64 Ren'Py runtime folder.\n\n"
                     "CANCEL: Do nothing.\n\n"
-                    "This is experimental. The game may not run correctly, "
+                    "This is an experimental cross-minor full-engine migration. The game may not run correctly, "
                     "even if conversion succeeds. Original game files remain untouched."
                     + ("\n\nYES also confirms this is your own original DDLC 1.1.1 installation, not DDLC Plus or a mod. Layout detection does not authenticate the game release. Unofficial personal-use conversion. Preserves characters/ and game-owned sidecars in the copy. Story, saves, later acts and restart behavior are NOT hardware verified. No DDLC-specific patches are applied." if self.inspection.renpy_ddlc_753_candidate else ""),
                     icon="warning",

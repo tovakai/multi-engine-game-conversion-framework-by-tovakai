@@ -568,7 +568,7 @@ def build_game(
     Create a self-contained Linux ARM64 Ren'Py game directory.
 
     Normal automatic mode grafts the exact official sdkarm ARM64 platform slice
-    into the original engine. The opt-in Ren'Py 7.4 compatibility mode instead
+    into the original engine. The opt-in Ren'Py 7.3.5/7.4 compatibility mode instead
     uses a matched official 7.5 engine AND ARM64 runtime, retaining game assets.
     A manually supplied runtime uses the full-runtime replacement path.
     """
@@ -596,12 +596,13 @@ def build_game(
             raise BuildError("Choose DDLC 7.5.3 migration or a manual runtime/7.4 fallback, not both.")
         if not ddlc_candidate:
             raise BuildError("Experimental DDLC 7.5.3 migration requires original DDLC 1.1.1 layout and Ren'Py 6.99.12 engine evidence.")
-    if ddlc_753_migration or (runtime is not None and ddlc_candidate):
+    if legacy_arm64_fallback or ddlc_753_migration or (runtime is not None and ddlc_candidate):
         # Reject links anywhere in local game data before copying: even an
         # internal link can expose the original to in-game writes/deletes.
         for path in source_path.rglob("*"):
             if path.is_symlink() or getattr(path, "is_junction", lambda: False)():
-                raise BuildError("DDLC migration refuses source symlinks/junctions; use a separate regular-file copy.")
+                profile = "DDLC" if ddlc_candidate else "Legacy Ren'Py"
+                raise BuildError(f"{profile} migration refuses source symlinks/junctions; use a separate regular-file copy.")
 
     full_engine_migration = legacy_arm64_fallback or ddlc_753_migration
     if legacy_arm64_fallback and runtime is not None:
@@ -627,12 +628,13 @@ def build_game(
                 warnings.append("EXPERIMENTAL unofficial personal-use DDLC 1.1.1 conversion: source Ren'Py 6.99.12 -> matched official 7.5.3 Python 2 engine/ARM64 runtime. Story, saves, character transitions and restart behavior require Steam Frame verification. No game scripts or filesystem patches are applied.")
             if legacy_arm64_fallback:
                 fallback_release = experimental_arm64_fallback(
-                    game_inspection.renpy_version, game_inspection.generation
+                    game_inspection.renpy_version, game_inspection.generation,
+                    inspection=game_inspection,
                 )
                 if fallback_release is None:
                     raise BuildError(
                         "Experimental Ren'Py 7.5.0 ARM64 fallback is only "
-                        "available for identified Ren'Py 7.4.x Python 2 games."
+                        "available for identified Ren'Py 7.4.x or authoritative exact 7.3.5 Python 2 games."
                     )
                 release = fallback_release
                 warnings.append(
@@ -642,7 +644,7 @@ def build_game(
                 )
                 if progress:
                     progress(
-                        f"Experimental Ren'Py 7.4 to {release} ARM64 fallback "
+                        f"Experimental Ren'Py {game_inspection.renpy_version} to {release} ARM64 fallback "
                         "(explicitly approved)"
                     )
             manager = runtime_manager or RuntimeManager()
