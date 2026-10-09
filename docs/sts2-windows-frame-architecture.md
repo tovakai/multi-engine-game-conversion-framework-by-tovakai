@@ -57,7 +57,7 @@ continue through their current paths.
 
 ## Retail and validation gates
 
-Inspect the legitimate Windows v0.107.1 assemblies, graph and pack without
+Inspect the supported Windows v0.107.1 assemblies, graph and pack without
 executing them. Derive a separate recipe from semantic/IL evidence, source pins
 and native ABI compatibility, not old offsets. Keep unsupported inputs refused
 if this cannot be proven. GUI/transport work proceeds independently of that gate.
@@ -71,7 +71,7 @@ Game/SDK/native outputs, private settings and logs remain outside Git publicatio
 
 The success screen offers a consent-gated **Connect Steam** action. This uses
 Steam's local SharedJSContext `SteamClient.Apps.SetAppLaunchOptions` API for the
-real owned STS2 entry. It neither creates a shortcut nor edits live VDF files.
+existing STS2 Steam entry. It neither creates a shortcut nor edits live VDF files.
 The selected output is verified before any change. A private, durable backup of
 the previous per-game launch setting is saved next to the job. Restore refuses
 to overwrite intervening user edits. Connection and Restore are asynchronous;
