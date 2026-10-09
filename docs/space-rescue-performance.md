@@ -95,7 +95,26 @@ relocation alone is not a demonstrated fix**. Both copies were directly
 launched on the desktop with isolated saves. A battery shutdown/reboot also
 occurred before the gameplay captures. Launch environment, process history,
 preferences, page-cache state, and transient storage contention remain
-confounders until the original launch reproduces the symptom.
+confounders until the original launch reproduces the symptom. The subsequent
+original `SRCP` shortcut test was also reported to have **no delays**. Its
+unchanged runtime was verified as native ARM64 GL2, with
+`MESA_GL_VERSION_OVERRIDE=4.3` and the Frame desktop display. At that point,
+system I/O pressure was approximately zero. The responsive original window
+was 1304×978, compared with 1920×1042 at the end of the historical slow-session
+log. Window size is another comparison variable.
+The user also maximized the original game and still reported no delays, so
+the larger window did not reproduce the symptom in this session.
+
+The original archive was read in full for hash verification before that
+original-shortcut retest, so this retest is storage-warm. Together with the
+device reboot, that prevents attributing the recovery to any one action.
+**No engine/cache optimization has been demonstrated or shipped.** The
+current evidence favors transient I/O/cache/system state over an inherent
+ARM64 capability limit, but does not prove the original cause.
+The user accepted the original package as working well after these checks.
+Further experiments were stopped. A final archive-local advisory eviction
+was prepared and performed after the game closed, but its gameplay retest was
+not completed; it must not be reported as a passed cold-storage acceptance test.
 
 Before reboot, an asset-header scan encountered a process in `D` state with
 `folio_wait_bit_common`, near-zero CPU usage, and substantial system I/O
@@ -111,8 +130,9 @@ error in the inspected entries.
 
 Priorities:
 
-1. Compare the original shortcut against the test copies in the same device
-   session. Preserve the actual launch environment and window dimensions.
+1. If the delays recur, capture the original shortcut's slow session before
+   rebooting, copying packages, or warming the archive. Preserve the actual
+   launch environment and window dimensions.
 2. Keep the confirmed responsive test copies available for acceptance testing.
 3. Test storage relocation only with controlled cold/warm runs and matching
    launch conditions; internal storage improves measured physical asset reads.
@@ -200,6 +220,8 @@ strace for native reads; GPU fence waits in process samples indicate waiting,
 but do not by themselves distinguish ordinary vsync from an abnormal stall.
 This is not a GPU timestamp profiler. `cProfile` samples the main Python
 thread, not the prediction thread.
+With `--strace`, the process sampler follows the tracer supervisor; use the
+separate normal profiling run for the game's RSS and physical-read counters.
 
 For static inventory (potentially many small reads) and a bounded decoder test:
 
