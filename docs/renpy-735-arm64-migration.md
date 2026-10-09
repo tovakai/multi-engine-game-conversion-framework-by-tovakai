@@ -2,7 +2,7 @@
 
 Exact Ren'Py 7.3.5 Python 2 distributions can opt into the existing complete
 official Ren'Py 7.5.0 engine migration. This is engine-generic and experimental.
-Pesterquest gameplay has **not** been verified on Steam Frame. A successful
+Pesterquest passed Stage A on Steam Frame; gameplay has **not** been verified. A successful
 conversion or title screen is not a Playable result. Do not merge before hardware verification.
 
 ## Eligibility and packaging
@@ -63,6 +63,28 @@ time remained unchanged, every copied `game/` file matched, and ZIP CRC and
 launcher permission checks passed. No Windows binaries, macOS bundle, or source
 x86 libraries were present in the migrated output. This verifies packaging,
 not execution of the game on ARM64 hardware.
+
+## Steam Frame Stage A result (2026-10-09)
+
+The local ZIP was transferred privately over `ssh frame`/SCP and its SHA256
+matched before extraction into a fresh test directory. A direct launch in the
+authenticated Frametop session created a Pesterquest window and an active
+audio stream. The user confirmed the visible menu, audible music, and working
+menu controls. After the user confirmed the game's Quit prompt, the process,
+window, and audio stream all disappeared normally.
+
+The bundled installer added a non-Steam shortcut. Its settings did not force
+Proton. Relaunch through Steam created a new native AArch64 Ren'Py process,
+window in Steam's display session, and active audio stream; the user confirmed
+the menu reopened. The engine reported 7.5.0.22062402 with the GL renderer,
+and no exception appeared in the inspected startup diagnostics. The runtime's
+direct dynamic-library dependencies resolved on the Frame.
+
+**Status: Launches, Stage A passed.** Routes, dialogue/choices, save/load,
+several volumes, persistence, and Steam achievements/hooks remain unverified.
+No original game content, screenshot, or full game log was uploaded. The
+converted package stays on the user's computer and Frame. Keep the PR unmerged
+while the remaining hardware tests are pending.
 
 ## Windows GUI conversion
 
