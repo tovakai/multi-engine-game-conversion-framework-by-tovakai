@@ -10,6 +10,7 @@ There is no short public product name. You have to say the whole thing.
 
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
+- [Roadmap](#roadmap)
 - [Architecture](#architecture)
 - [Install for development](#install-for-development)
 - [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
@@ -65,6 +66,10 @@ it pretend it has one?**
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
 turning the umbrella router into a giant conditional swamp.
+
+## Roadmap
+
+See [the release roadmap](docs/ROADMAP.md) for milestones from **v0.1.0 through v1.0.0**, including the **v0.2.0** GameMakerFrame and 35-title compatibility-testing target.
 
 ## Architecture
 
