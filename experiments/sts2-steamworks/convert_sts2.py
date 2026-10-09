@@ -78,8 +78,8 @@ Godot third-party copyrights, .NET license/notices and the converter's AGPL.
 These notices do not grant FMOD or Spine permissions or establish that all
 proprietary/game/native dependency notice obligations have been satisfied.
 
-Steam authentication/ownership checks are not bypassed. Launch using your owned
-Steam AppID 2868840 entry. The launcher checks its context, not ownership itself.
+Steam authentication behavior is unchanged. Launch using the game's Steam
+AppID 2868840 entry. The launcher validates runtime context, not purchase history.
 Original stats/achievement code is preserved except the verified initialization
 adaptation to a real GetStat read; no successful callbacks or stats are invented.
 The observed input contains NullAchievementStrategy; achievement behavior is not
@@ -162,10 +162,8 @@ def create_tar(root, destination):
         temporary.unlink(missing_ok=True)
 
 
-def convert(source, output, native_dir, archives, *, authorized=False, _profile=None, _pack_transform=None,
+def convert(source, output, native_dir, archives, *, _profile=None, _pack_transform=None,
             _native_build=None):
-    if not authorized:
-        raise ValueError("Acknowledge legitimate game ownership and dependency permissions with --acknowledge-licenses")
     profile = load_profile(source) if _profile is None else _profile
     source, output, native_dir = safe(source), safe(output), safe(native_dir)
     if not source.is_dir() or not native_dir.is_dir() or not output.parent.is_dir():
@@ -266,7 +264,6 @@ def main(argv=None):
     parser.add_argument("--godot-templates", type=Path, required=True)
     parser.add_argument("--dotnet-runtime", type=Path, required=True)
     parser.add_argument("--sentry-archive", type=Path, required=True)
-    parser.add_argument("--acknowledge-licenses", action="store_true")
     parser.add_argument("--tar", type=Path, help="Optional new, uncompressed transfer archive with Linux permissions")
     args = parser.parse_args(argv)
     try:
@@ -280,7 +277,7 @@ def main(argv=None):
                     raise ValueError("Transfer archive must be outside all input trees")
         result = convert(args.source, args.output, args.native_dir,
                          {"godot": args.godot_templates, "dotnet": args.dotnet_runtime, "sentry": args.sentry_archive},
-                         authorized=args.acknowledge_licenses)
+                         )
         if args.tar:
             result["transfer_archive"] = create_tar(args.output, args.tar)
     except (OSError, ValueError, KeyError, zipfile.BadZipFile, RuntimeError) as error:
