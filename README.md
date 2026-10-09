@@ -45,13 +45,22 @@ it pretend it has one?**
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
-| Slay the Spire 2 v0.98.2 / f4eeecc6 | STS2 source pipeline | build pinned Spine/FMOD extensions, import authorized FMOD SDK and installed Valve ARM64 API, acquire official runtimes, transform original managed code/PCK | Full conversion and native subsystem startup checked on Steam Frame; owned-Steam graphical acceptance pending |
+| Slay the Spire 2 v0.107.1 / 59260271 (experimental; legacy v0.98.2 recipe retained) | STS2 source pipeline | Windows GUI manages a verified remote Frame source build, authorized FMOD SDK, official runtimes and guarded original-file transformations | Packaged Windows GUI retail conversion and owned-Steam menu/audio/controller navigation verified; extended gameplay and save/reload pending |
 
-The STS2 backend currently builds on Linux AArch64 and requires the authorized
-FMOD 2.03.15 Linux SDK and applicable vendor permissions. It does not ship
-prepared game-specific binaries. Newer game builds are rejected. See the
-[source pipeline guide](experiments/sts2-steamworks/SOURCE_PIPELINE.md) for
-CLI/desktop setup, dependency provenance and the remaining release limitations.
+For experimental STS2 conversion, drop the original supported retail installation
+into the Windows application, complete **Frame Setup** once with a trusted
+connection and authorized FMOD 2.03.15 Linux SDK, then click **Convert**. The Frame
+performs the native source build in an isolated workspace. After verification,
+accept **Connect Steam** and press Play in the owned Steam entry. No manual
+launch-option editing is required. **Restore Steam** recovers the backed-up
+per-game launch setting if it has not subsequently been edited.
+
+The application grants no FMOD/Spine rights and distributes no proprietary SDK,
+game files or prepared game-specific binaries. Exact supported input hashes are
+required; other builds are rejected. STS2 remains experimental. See the
+[source pipeline guide](experiments/sts2-steamworks/SOURCE_PIPELINE.md) and
+[fresh GUI/hardware evidence](docs/sts2-gui-validation.md) for requirements,
+version-specific validation and remaining release gates.
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
