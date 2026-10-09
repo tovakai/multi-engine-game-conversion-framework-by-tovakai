@@ -136,7 +136,7 @@ class SourcePipelineTests(unittest.TestCase):
             (source / "release_info.json").write_text('{"version":"v0.999.0","commit":"unsupported"}')
             with mock.patch.object(pipeline, "fetch") as fetch, mock.patch.object(pipeline, "build") as build:
                 with self.assertRaisesRegex(ValueError, "Unsupported STS2 build"):
-                    pipeline.run(source, root / "output", sdk=root / "sdk", cache=root / "cache", authorized=True)
+                    pipeline.run(source, root / "output", sdk=root / "sdk", cache=root / "cache")
                 fetch.assert_not_called()
                 build.assert_not_called()
             self.assertFalse((root / "cache").exists())
@@ -191,7 +191,7 @@ class SourcePipelineTests(unittest.TestCase):
             source = root / "source"
             source.mkdir()
             with self.assertRaisesRegex(ValueError, "Cache must be separate"):
-                pipeline.run(source, root / "output", sdk=root / "sdk", cache=source / "cache", authorized=True)
+                pipeline.run(source, root / "output", sdk=root / "sdk", cache=source / "cache")
 
     def test_vendor_archive_selects_headers_and_arm64_only(self):
         with tempfile.TemporaryDirectory() as directory:
