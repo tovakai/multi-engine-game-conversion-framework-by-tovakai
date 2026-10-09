@@ -102,6 +102,28 @@ def upload(root, name, size, digest, offset):
     emit("result", verified=True, bytes=size)
 
 
+def reuse_input(root,name,size,digest):
+    root=job_root(root)
+    if name not in {'source.tar','sdk.tar.gz'} or size < 0 or size > 8*1024**3:
+        raise ValueError('Invalid reusable input')
+    destination=root/name
+    if destination.exists() or (root/(name+'.part')).exists():
+        emit('result',reused=False);return
+    # Only application-owned original-input transfers are eligible. Never inspect
+    # converted outputs, prototypes or unrelated installations.
+    for candidate in sorted(root.parent.glob('job-*')):
+        if candidate==root: continue
+        try:
+            candidate=job_root(candidate)
+            source=safe(candidate/name)
+            if not source.is_file() or source.stat().st_size!=size: continue
+            with verified_stream(source,{'size_bytes':size,'sha256':digest}): pass
+            os.link(source,destination) # no overwrite; extraction revalidates every input
+            emit('result',reused=True);return
+        except (OSError,ValueError,KeyError): continue
+    emit('result',reused=False)
+
+
 def extract_source(root):
     destination = root/'source'
     if destination.exists(): return destination
@@ -205,7 +227,7 @@ def build(root, sdk, archive):
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument('action',choices=['probe','status','upload','build','result','cleanup','steam-inspect','steam-configure','steam-restore'])
+    parser.add_argument('action',choices=['probe','status','upload','build','result','cleanup','steam-inspect','steam-configure','steam-restore','reuse-input'])
     parser.add_argument('root')
     parser.add_argument('--name');parser.add_argument('--size',type=int);parser.add_argument('--sha256')
     parser.add_argument('--offset',type=int,default=0);parser.add_argument('--sdk',default='');parser.add_argument('--archive',action='store_true')
@@ -221,6 +243,7 @@ def main():
             emit('result',**result)
         elif args.action=='probe': probe(args.root)
         elif args.action=='status': transfer_status(args.root,args.name)
+        elif args.action=='reuse-input': reuse_input(args.root,args.name,args.size,args.sha256)
         elif args.action=='upload': upload(args.root,args.name,args.size,args.sha256,args.offset)
         elif args.action=='build': build(args.root,args.sdk,args.archive)
         elif args.action=='cleanup':

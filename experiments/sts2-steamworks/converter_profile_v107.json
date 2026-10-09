@@ -1334,7 +1334,7 @@
   "managed_recipe": "sts2-retail-107-stats-v1",
   "native_files": [
     {
-      "destination": "bin/linux/libspine_godot.linux.template_release.arm64.so",
+      "destination": "addons/spine/linux/libspine_godot.linux.template_release.arm64.so",
       "provider_name": "libspine_godot.linux.template_release.arm64.so",
       "sha256": "5af1a01af371ee9469021705ac6de8fc3cf7aa642362b1b4ea461adb2cbb3a3a",
       "size_bytes": 4328984

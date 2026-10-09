@@ -288,7 +288,7 @@ func _initialize():
         real_rewrite = converter.rewrite_pack
         def synthetic_rewrite(*args, **kwargs):
             return real_rewrite(*args, **kwargs, transform=adapt)
-        with mock.patch.object(converter, "load_profile", return_value=self.profile), mock.patch.object(converter, "rewrite_pack", side_effect=synthetic_rewrite), mock.patch("sys.stdout", new_callable=io.StringIO) as output:
+        with mock.patch.object(patch_pack, "validate_native_bindings", return_value=[]), mock.patch.object(converter, "load_profile", return_value=self.profile), mock.patch.object(converter, "rewrite_pack", side_effect=synthetic_rewrite), mock.patch("sys.stdout", new_callable=io.StringIO) as output:
             self.assertEqual(converter.main(args), 0)
             result = json.loads(output.getvalue())
         self.assertEqual(result["errors"], [])

@@ -213,3 +213,32 @@ def main(argv=None):
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def validate_native_binding(root, manifest_path, raw):
+    """Resolve Godot-relative library paths against the actual manifest location."""
+    import re
+    from converter_io import relative
+    from verify_output import inspect
+    choices=re.findall(rb'^\s*linux\.release\.arm64\s*=\s*"([^"\r\n]+)"\s*$',raw,re.M)
+    if len(choices)!=1: raise ValueError('Missing or ambiguous ARM64 release binding: '+manifest_path)
+    value=choices[0].decode('utf-8')
+    name=value[6:] if value.startswith('res://') else (PurePosixPath(manifest_path).parent/value).as_posix()
+    target=Path(root)/relative(name)
+    if inspect(target).get('elf_machine')!=183:
+        raise ValueError('Extension binding is not AArch64: '+name)
+    return {'manifest':manifest_path,'library':name}
+
+
+def validate_native_bindings(pack,root):
+    with Path(pack).open('rb') as stream:
+        entries=_table(stream,Path(pack).stat().st_size)[3]
+        names=[n for n in entries if n.endswith('.gdextension')]
+        result=[]
+        # Only the three pinned game extensions are part of this conversion recipe.
+        for name in names:
+            if name not in {'bin/spine_godot_extension.gdextension','addons/spine/spine_godot_extension.gdextension','addons/fmod/fmod.gdextension','addons/sentry/sentry.gdextension'}: continue
+            item=entries[name];stream.seek(item['offset']);raw=stream.read(item['size'])
+            result.append(validate_native_binding(root,name,raw))
+        if len(result)!=3: raise ValueError('Expected three native game extension bindings')
+        return result

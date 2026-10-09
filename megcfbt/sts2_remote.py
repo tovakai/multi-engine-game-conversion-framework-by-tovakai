@@ -41,6 +41,8 @@ class FrameSettings:
         if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9.:-]*',self.host): raise RemoteError('Enter a Frame hostname or IP address.')
         if not re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_-]*',self.user): raise RemoteError('Invalid Frame user name.')
         if not 1<=int(self.port)<=65535: raise RemoteError('Invalid connection port.')
+        if not re.fullmatch(r'[A-Za-z0-9_./ -]+',self.remote_root):
+            raise RemoteError('Frame destination contains unsupported shell characters.')
         path=PurePosixPath(self.remote_root)
         if not path.is_absolute() or '..' in path.parts or '\\' in self.remote_root: raise RemoteError('Invalid Frame destination.')
         if not (self.remote_root.startswith('/run/media/'+self.user+'/') or self.remote_root.startswith('/home/'+self.user+'/')):
@@ -270,6 +272,8 @@ class RemoteBuild:
                     with module('converter_io').verified_stream(Path(source)/module('converter_io').relative(name),pin) as stream:
                         item=tarfile.TarInfo(name);item.size=pin['size_bytes'];item.mode=0o644
                         output.addfile(item,stream)
+            self.stage(.20,'Checking previously verified original-input transfers')
+            self.transport.run(self.worker(job,'reuse-input',['--name','source.tar','--size',package.stat().st_size,'--sha256',digest_file(package)]))
             self.upload(job,package,'source.tar',.22)
             if s.sdk_file: self.upload(job,Path(s.sdk_file),'sdk.tar.gz',.32)
         args=['--sdk',sdk] if sdk else []

@@ -76,6 +76,11 @@ def verify(root, *, check_modes=False):
             verified += 1
         except (OSError, ValueError) as error:
             errors.append({"path": name, "error": str(error)})
+    bindings=manifest.get('native_bindings',[])
+    if not isinstance(bindings,list): raise ValueError('Malformed native binding report')
+    for binding in bindings:
+        if not isinstance(binding,dict) or binding.get('library') not in names:
+            errors.append({'path':str(binding),'error':'Packed extension refers to an untracked native library'})
     # Extra runtime files are excluded from the converter; flag additions too.
     for folder, dirs, files in os.walk(root, followlinks=False):
         for name in dirs + files:

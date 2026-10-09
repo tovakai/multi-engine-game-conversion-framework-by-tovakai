@@ -11,7 +11,7 @@ from megcfbt.sts2_remote import FrameSettings, FrameTransport, RemoteError, back
 def test_settings_reject_shell_injection_and_original_installation_paths():
     for host in ('-oProxyCommand=bad','frame;command','$(command)'):
         with pytest.raises(RemoteError): FrameSettings(host=host).validate()
-    for path in ('/usr/local/app','/opt/app','/home/steamos/Steam/steamapps/common/Game','/run/media/steamos/SD512/../Game'):
+    for path in ('/usr/local/app','/opt/app','/home/steamos/Steam/steamapps/common/Game','/run/media/steamos/SD512/../Game','/run/media/steamos/SD512/$(command)','/run/media/steamos/SD512/quote"'):
         with pytest.raises(RemoteError): FrameSettings(remote_root=path).validate()
 
 
@@ -95,3 +95,19 @@ def test_changed_existing_host_identity_cannot_be_overwritten(tmp_path):
         with pytest.raises(RemoteError,match='already has a trusted identity'):
             FrameTransport(settings).trust_new_host('new identity')
     assert (tmp_path/'known_hosts').read_text()=='existing identity\n'
+
+
+def test_original_input_reuse_requires_full_hash_and_owned_job(tmp_path,capsys):
+    from megcfbt.sts2_backend import module
+    worker=module('remote_worker')
+    def job(identity):
+        root=tmp_path/('job-'+identity);root.mkdir()
+        (root/'job.json').write_text(json.dumps({'kind':'megcfbt-sts2-job-v1','id':identity}))
+        return root
+    original=job('original');new=job('new')
+    raw=b'untouched input archive';(original/'source.tar').write_bytes(raw)
+    worker.reuse_input(new,'source.tar',len(raw),'0'*64)
+    assert not (new/'source.tar').exists()
+    worker.reuse_input(new,'source.tar',len(raw),hashlib.sha256(raw).hexdigest())
+    assert (new/'source.tar').read_bytes()==raw
+    with pytest.raises(ValueError): worker.reuse_input(new,'prepared-native.so',len(raw),hashlib.sha256(raw).hexdigest())
