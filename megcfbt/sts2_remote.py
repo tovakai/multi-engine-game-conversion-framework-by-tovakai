@@ -97,6 +97,10 @@ class FrameTransport:
         result=subprocess.run(self.arguments(command),input=data,capture_output=True,timeout=timeout,**process_options())
         if result.returncode:
             error=result.stderr.decode('utf-8',errors='replace')[-4000:]
+            try:
+                report=json.loads(result.stdout.decode('utf-8'))
+                if report.get('type')=='error': error=report['message']
+            except (ValueError,AttributeError,KeyError): pass
             raise RemoteError('Secure Frame connection failed: '+error)
         return result.stdout
 

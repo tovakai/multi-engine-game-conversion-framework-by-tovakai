@@ -804,6 +804,7 @@ class ConverterApp:
     def _steam_configured(self,restored):
         self._set_busy(False)
         self.steam_restore_btn.configure(state='normal')
+        self._set_progress(1.0,'Steam launch restored' if restored else 'Ready to play through Steam')
         self._set_status('Steam launch restored' if restored else 'Ready to play through Steam',C_OK)
         messagebox.showinfo(APP_NAME,'Previous Steam launch setting restored.' if restored else 'Steam launch configured. On the Frame, open the owned Slay the Spire 2 entry and press Play. STS2 remains experimental pending gameplay acceptance.')
 

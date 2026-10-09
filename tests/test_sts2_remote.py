@@ -111,3 +111,12 @@ def test_original_input_reuse_requires_full_hash_and_owned_job(tmp_path,capsys):
     worker.reuse_input(new,'source.tar',len(raw),hashlib.sha256(raw).hexdigest())
     assert (new/'source.tar').read_bytes()==raw
     with pytest.raises(ValueError): worker.reuse_input(new,'prepared-native.so',len(raw),hashlib.sha256(raw).hexdigest())
+
+
+def test_transport_preserves_remote_worker_diagnostic(tmp_path):
+    import subprocess
+    transport=FrameTransport(FrameSettings(host='192.168.0.102'))
+    result=subprocess.CompletedProcess([],2,b'{"type":"error","message":"Steam library UI debug endpoint is unavailable"}',b'')
+    with mock.patch('megcfbt.sts2_remote.ssh_program',return_value='ssh'), mock.patch('megcfbt.sts2_remote.subprocess.run',return_value=result):
+        with pytest.raises(RemoteError,match='Steam library UI debug endpoint'):
+            transport.run('worker')

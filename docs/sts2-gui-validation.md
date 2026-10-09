@@ -114,3 +114,11 @@ The user confirms the menu, controller navigation and audio work. This evidence
 is specific to the new packaged-GUI conversion, not the older prototype. Full
 combat/gameplay, save/reload, achievements and Cloud synchronization remain
 unverified; STS2 stays experimental.
+
+The original Windows installation still passes full selected-input checksum
+preflight after all GUI conversions. The packaged Restore Steam button restored
+the previous saved launch setting; a subsequent packaged Connect Steam action
+reselected the corrected output. Both states were checked through Steam's actual
+UI API. The running game was not interrupted. The two-action automation initially
+missed a confirmation dialog; the Restore state and separate reconnect were then
+independently confirmed.
