@@ -11,6 +11,7 @@ if (-not (Test-Path $py)) {
 }
 
 & $py -m pip install -e ".[gui,build]"
+if ($LASTEXITCODE -ne 0) { throw "Windows build dependencies installation failed" }
 
 $appName = "Multi-Engine Game Conversion Framework by tovakai"
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
@@ -43,6 +44,10 @@ foreach ($path in @(
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
   "app\main.py"
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed; refusing to package a stale or partial executable" }
+if (-not (Test-Path "dist\$appName\$appName.exe")) {
+  throw "PyInstaller returned without producing dist\$appName\$appName.exe"
+}
 
 $release = "dist\windows\$appName"
 New-Item -ItemType Directory -Force -Path $release | Out-Null
