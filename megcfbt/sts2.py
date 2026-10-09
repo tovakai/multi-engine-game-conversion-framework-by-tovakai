@@ -63,12 +63,10 @@ def summary(root: Path) -> UnifiedInspection | None:
         warnings=warnings, evidence=(f"STS2 {report.get('release')} / {report.get('commit')}",))
 
 
-def build(source: Path, output: Path, *, sdk=None, authorized=False, progress=None):
+def build(source: Path, output: Path, *, sdk=None, progress=None):
     args = [python_command(), str(tools_directory() / "pipeline.py"), str(source), str(output)]
     if sdk:
         args += ["--fmod-sdk", str(sdk)]
-    if authorized:
-        args += ["--acknowledge-licenses"]
     # Stream progress on stderr; JSON result is small and read after process exit.
     with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as process:
         assert process.stderr is not None
