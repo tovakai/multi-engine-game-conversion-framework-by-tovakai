@@ -347,15 +347,22 @@ def build_source(
             engine_version = result.engine_version
 
         stage(0.82, "Game build complete")
+        runtime_metadata = {}
+        if inspection.backend == "renframe":
+            # Keep source identity and the engine actually shipped distinct,
+            # including manual overrides and the 7.4 full-engine fallback.
+            runtime_metadata["runtime_engine_version"] = result.runtime_version
+            if renpy_ddlc_753_migration:
+                runtime_metadata["compatibility_profile"] = "experimental-ddlc-111-renpy-753"
+            elif renpy_legacy_arm64_fallback:
+                runtime_metadata["compatibility_profile"] = "experimental-renpy-74-arm64-fallback"
         write_frame_metadata(
             output_path,
             name=game_name or inspection.game_name or source_base_name(path),
             launcher_path=launcher_path,
             engine=inspection.engine,
             engine_version=engine_version,
-            **({"runtime_engine_version": result.runtime_version,
-                "compatibility_profile": "experimental-ddlc-111-renpy-753"}
-               if renpy_ddlc_753_migration else {}),
+            **runtime_metadata,
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)

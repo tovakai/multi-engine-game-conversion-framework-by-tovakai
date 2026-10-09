@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -45,6 +46,7 @@ def test_renpy_router_delegates_automatic_runtime_to_backend(
             display_name="Synthetic",
             game_name="Synthetic",
             source_version="8.5.3",
+            runtime_version="8.5.3",
         )
 
     monkeypatch.setattr(router, "build_renpy_game", fake_build)
@@ -57,6 +59,10 @@ def test_renpy_router_delegates_automatic_runtime_to_backend(
     assert result.engine == "renpy"
     assert result.engine_version == "8.5.3"
     assert "automatic backend" in result.warnings
+    metadata = json.loads((result.output_path / ".megcfbt/package.json").read_text())
+    assert metadata["engine_version"] == "8.5.3"
+    assert metadata["runtime_engine_version"] == "8.5.3"
+    assert "compatibility_profile" not in metadata
 
 
 def test_renpy_router_passes_manual_runtime_override_through(
@@ -98,13 +104,18 @@ def test_renpy_router_passes_manual_runtime_override_through(
             display_name="Synthetic",
             game_name="Synthetic",
             source_version="8.5.3",
+            runtime_version="8.5.2",
         )
 
     monkeypatch.setattr(router, "build_renpy_game", fake_build)
 
-    router.build_source(source, archive=False, renpy_runtime=manual)
+    result = router.build_source(source, archive=False, renpy_runtime=manual)
 
     assert seen["runtime"] == manual
+    metadata = json.loads((result.output_path / ".megcfbt/package.json").read_text())
+    assert metadata["engine_version"] == "8.5.3"
+    assert metadata["runtime_engine_version"] == "8.5.2"
+    assert "compatibility_profile" not in metadata
 
 
 
@@ -145,6 +156,7 @@ def test_renpy_router_forwards_experimental_fallback_approval(
             display_name="Legacy",
             game_name="Legacy",
             source_version="7.4.11",
+            runtime_version="7.5.0",
         )
 
     monkeypatch.setattr(router, "build_renpy_game", fake_build)
@@ -156,3 +168,7 @@ def test_renpy_router_forwards_experimental_fallback_approval(
     assert captured[0]["legacy_arm64_fallback"] is True
     assert "EXPERIMENTAL" in result.warnings[0]
     assert result.engine_version == "7.4.11"
+    metadata = json.loads((result.output_path / ".megcfbt/package.json").read_text())
+    assert metadata["engine_version"] == "7.4.11"
+    assert metadata["runtime_engine_version"] == "7.5.0"
+    assert metadata["compatibility_profile"] == "experimental-renpy-74-arm64-fallback"
