@@ -42,8 +42,7 @@ def _parser() -> argparse.ArgumentParser:
     build_cmd.add_argument("--force", action="store_true")
     build_cmd.add_argument("--no-archive", action="store_true")
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
-    build_cmd.add_argument("--fmod-sdk", type=Path, help="Authorized FMOD Studio API 2.03.15 Linux SDK for STS2 source builds")
-    build_cmd.add_argument("--acknowledge-licenses", action="store_true", help="Acknowledge game ownership and STS2 vendor dependency permissions")
+    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK for STS2 source builds")
 
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
@@ -104,7 +103,6 @@ def main(argv: list[str] | None = None) -> int:
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             sts2_sdk=args.fmod_sdk,
-            acknowledge_licenses=args.acknowledge_licenses,
             **kwargs,
         )
         print(f"Built:   {result.output_path}")
