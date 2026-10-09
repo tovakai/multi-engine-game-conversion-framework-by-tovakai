@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import shutil
 import uuid
 from collections.abc import Callable
@@ -462,12 +463,25 @@ def _write_grafted_launcher(
         relative = source_launcher.relative_to(root).as_posix()
         command = f'exec bash "$ROOT/{relative}" "$ROOT" "$@"'
     else:
+        # Windows-only distributions often rename renpy.py to the game's name
+        # and omit the shell launcher. The native `renpy` executable otherwise
+        # tries to open renpy.py, which is absent in those distributions.
+        bootstraps = [
+            path for path in sorted(root.glob("*.py"))
+            if "import renpy.bootstrap" in path.read_text(encoding="utf-8", errors="replace")
+        ]
+        bootstrap = root / "renpy.py"
+        if not bootstrap.is_file() and len(bootstraps) == 1:
+            bootstrap = bootstraps[0]
+        elif not bootstrap.is_file() and len(bootstraps) > 1:
+            raise BuildError("Multiple Ren'Py Python launchers found; cannot choose a game entrypoint")
+        bootstrap_arg = '"$ROOT"/' + shlex.quote(bootstrap.name)
         command = (
             f'RUNTIME="$ROOT/lib/{platform_name}"\n'
-            'if [[ -x "$RUNTIME/renpy" ]]; then\n'
+            f'if [[ -x "$RUNTIME/python" && -f {bootstrap_arg} ]]; then\n'
+            f'    exec "$RUNTIME/python" {bootstrap_arg} "$ROOT" "$@"\n'
+            'elif [[ -x "$RUNTIME/renpy" ]]; then\n'
             '    exec "$RUNTIME/renpy" "$ROOT" "$@"\n'
-            'elif [[ -x "$RUNTIME/python" && -f "$ROOT/renpy.py" ]]; then\n'
-            '    exec "$RUNTIME/python" "$ROOT/renpy.py" "$ROOT" "$@"\n'
             'fi\n'
             'echo "No usable Ren\\x27Py ARM64 runtime entrypoint found." >&2\n'
             'exit 126'

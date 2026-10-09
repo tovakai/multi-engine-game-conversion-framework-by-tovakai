@@ -106,6 +106,34 @@ def test_python_tag_tracks_renpy_generation() -> None:
         python_tag_for_generation(6)
 
 
+@pytest.mark.skipif(shutil.which("bash") is None, reason="Needs Bash for POSIX launch test")
+@pytest.mark.parametrize("name", ["Roadwarden.py", "Game's Name.py", "renpy.py"])
+def test_windows_only_game_launcher_uses_supplied_bootstrap(tmp_path: Path, name: str) -> None:
+    (tmp_path / name).write_text("import renpy.bootstrap\n", encoding="utf-8")
+    (tmp_path / "unrelated.py").write_text("# game helper\n", encoding="utf-8")
+    runtime = tmp_path / "lib/py2-linux-aarch64"
+    runtime.mkdir(parents=True)
+    (runtime / "python").write_text(
+        '#!/bin/bash\n[[ -f "$1" ]] || exit 2\n'
+        'printf "%s\\n" "$(basename "$1")" "$3"\n', encoding="utf-8", newline="\n"
+    )
+    (runtime / "renpy").write_text("#!/bin/bash\nexit 99\n", encoding="utf-8", newline="\n")
+    launcher = _write_grafted_launcher(tmp_path, source_launcher=None, platform_name=runtime.name)
+    result = subprocess.run(
+        ["bash", launcher.as_posix(), "forwarded-argument"], cwd=tmp_path.parent,
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [name, "forwarded-argument"]
+
+
+def test_windows_only_game_rejects_ambiguous_bootstraps(tmp_path: Path) -> None:
+    for name in ("Game.py", "Other.py"):
+        (tmp_path / name).write_text("import renpy.bootstrap\n", encoding="utf-8")
+    with pytest.raises(BuildError, match="Multiple Ren'Py Python launchers"):
+        _write_grafted_launcher(tmp_path, source_launcher=None, platform_name="py2-linux-aarch64")
+
+
 def test_checksum_parser_uses_sha256_section() -> None:
     filename = "renpy-8.5.3-sdkarm.tar.bz2"
     digest = "a" * 64
