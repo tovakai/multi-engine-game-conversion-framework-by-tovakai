@@ -12,6 +12,7 @@ import time
 import uuid
 import zipfile
 from pathlib import Path, PurePosixPath
+from collections.abc import Callable
 
 from megcfbt.nonsteam_package import installer_files
 
@@ -226,6 +227,7 @@ def create_frame_zip(
     launcher_path: Path | None = None,
     output: Path | None = None,
     force: bool = False,
+    progress: Callable[[str], None] | None = None,
 ) -> Path:
     """Create a portable Steam Frame ZIP with a launcher and non-Steam installer.
 
@@ -259,6 +261,10 @@ def create_frame_zip(
 
     temporary = archive.parent / f".{archive.name}.tmp-{uuid.uuid4().hex[:8]}"
     root_name = source.name
+    streamed_bytes = 0
+    last_report = time.monotonic()
+    if progress:
+        progress("Streaming and compressing Frame ZIP")
     target_literal = shlex.quote(launcher_relative)
     trampoline = (
         "#!/usr/bin/env bash\n"
@@ -374,7 +380,12 @@ def create_frame_zip(
                 # archive itself has allowZip64=True.
                 info.file_size = path.stat().st_size
                 with path.open("rb") as src, zf.open(info, "w") as dst:
-                    shutil.copyfileobj(src, dst, 1 << 20)
+                    while chunk := src.read(1 << 20):
+                        dst.write(chunk)
+                        streamed_bytes += len(chunk)
+                        if progress and time.monotonic() - last_report >= 2:
+                            progress(f"Creating Frame ZIP: {streamed_bytes // (1024 * 1024)} MiB processed ({path.name})")
+                            last_report = time.monotonic()
 
             # Duplicate tiny integration metadata at the wrapper root so an extracted
             # package can itself be fed to our native steam-install command.

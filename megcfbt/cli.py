@@ -26,6 +26,8 @@ def _parser() -> argparse.ArgumentParser:
                            help="opt in: original DDLC 1.1.1 / Ren'Py 6.99.12 only; full 7.5.3 Python 2 engine; hardware unverified")
     build_cmd.add_argument("--dry-run", action="store_true",
                            help="Ren'Py only: validate and report without downloads or output")
+    build_cmd.add_argument("--experimental-renpy-prerelease-migration", action="store_true",
+                           help="opt in: identified Ren'Py 8.5 nightlies; complete matched 8.5.3 Python 3 engine/runtime")
     build_cmd.add_argument("-o", "--output", type=Path)
     build_cmd.add_argument(
         "--renpy-runtime",
@@ -231,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
             output=args.output,
             renpy_runtime=args.renpy_runtime,
             renpy_ddlc_753_migration=args.experimental_ddlc_753_migration,
+            renpy_prerelease_853_migration=args.experimental_renpy_prerelease_migration,
             renpy_legacy_arm64_fallback=args.experimental_legacy_arm64_fallback,
             dry_run=args.dry_run,
             backend_runtime=args.runtime,

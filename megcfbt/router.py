@@ -81,6 +81,17 @@ def _candidate_roots(root: Path, *, max_depth: int = 8) -> Iterator[Path]:
 
 
 def _renpy_summary(root: Path) -> UnifiedInspection | None:
+    from renframe.profiles import detect_profile, detect_legacy_version
+    profile = detect_profile(root)
+    if profile is not None:
+        return UnifiedInspection(
+            source_path=root, backend="renframe", engine="renpy", engine_label="Ren'Py",
+            engine_version=detect_legacy_version(root), game_name=root.name,
+            compatibility="NEEDS_TESTING", confidence="high",
+            runtime_kind=f"Katawa Shoujo {profile.variant} compatibility migration to Ren'Py {profile.profile.target_version}",
+            buildable=True, warnings=("Experimental legacy profile; verify gameplay and HD UI.",),
+            evidence=(f"compatibility profile: {profile.profile.id} ({profile.variant})",),
+        )
     result = inspect_renpy_game(root)
     if not result.is_renpy:
         return None
@@ -100,7 +111,11 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
 
     fallback = experimental_arm64_fallback(result.renpy_version, result.generation, inspection=result)
     ddlc_candidate = original_ddlc_candidate(result)
-    if ddlc_candidate:
+    from renframe.prerelease import prerelease_853_candidate
+    prerelease = prerelease_853_candidate(root)
+    if prerelease:
+        runtime_kind = "experimental Ren'Py 8.5 nightly to matched 8.5.3 full-engine migration"
+    elif ddlc_candidate:
         runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; menu/launch tested on Frame; story unverified)"
     elif fallback:
         runtime_kind = (
@@ -130,6 +145,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         renpy_generation=result.generation,
         renpy_ddlc_753_candidate=ddlc_candidate,
         renpy_legacy_arm64_candidate=bool(fallback),
+        renpy_prerelease_853_candidate=prerelease,
     )
 
 
@@ -140,6 +156,10 @@ def _rpgm_summary(root: Path) -> UnifiedInspection | None:
 
     if result.engine.value == "godot":
         label = "Godot"
+    elif result.engine.value in {"construct2", "construct3"}:
+        label = "Construct " + result.engine.value[-1]
+    elif result.engine.value == "rpg2k":
+        label = "RPG Maker 2000/2003"
     else:
         label = f"RPG Maker {result.engine.value.upper()}"
 
@@ -174,6 +194,23 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
         if summary is not None:
             return summary
 
+    for candidate in candidates:
+        names = {p.name.casefold(): p for p in candidate.iterdir() if p.is_file()}
+        if "unityplayer.dll" in names and any(p.is_dir() and p.name.endswith("_Data") for p in candidate.iterdir()):
+            il2cpp = "gameassembly.dll" in names
+            return UnifiedInspection(source_path=root, backend=None, engine="unity",
+                                     engine_label="Unity IL2CPP" if il2cpp else "Unity",
+                                     engine_version=None, game_name=candidate.name,
+                                     compatibility="unsupported", confidence="high", runtime_kind=None, buildable=False,
+                                     evidence=tuple(n for n in ("UnityPlayer.dll", "GameAssembly.dll") if n.casefold() in names),
+                                     warnings=("Unity Windows native engine/game code requires a Linux ARM64 build from the developer; runtime transplantation is unavailable.",))
+        if "data.wolf" in names:
+            return UnifiedInspection(source_path=root, backend=None, engine="wolf",
+                                     engine_label="WOLF RPG Editor", engine_version=None, game_name=candidate.name,
+                                     compatibility="unsupported", confidence="high", runtime_kind=None, buildable=False,
+                                     evidence=("Data.wolf",),
+                                     warnings=("WOLF RPG Editor is not supported by the native ARM64 backends; its data is incompatible with RPG Maker/EasyRPG.",))
+
     return UnifiedInspection(
         source_path=root,
         backend=None,
@@ -202,6 +239,8 @@ def automatic_custom_godot_runtime_available(
         return False
 
     godotsteam = any("godotsteam" in item.casefold() for item in inspection.evidence)
+    if any(": built-in module " in item for item in inspection.evidence):
+        return False
     recipe = automatic_recipe_for(
         inspection.engine_version,
         custom_build=True,
@@ -231,6 +270,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 renpy_generation=result.renpy_generation,
                 renpy_ddlc_753_candidate=result.renpy_ddlc_753_candidate,
                 renpy_legacy_arm64_candidate=result.renpy_legacy_arm64_candidate,
+                renpy_prerelease_853_candidate=result.renpy_prerelease_853_candidate,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc
@@ -248,6 +288,7 @@ def build_source(
     allow_renpy_version_mismatch: bool = False,
     renpy_legacy_arm64_fallback: bool = False,
     renpy_ddlc_753_migration: bool = False,
+    renpy_prerelease_853_migration: bool = False,
     dry_run: bool = False,
     steam_cover: Path | str | None = None,
     steamgriddb_game_id: int | None = None,
@@ -270,7 +311,7 @@ def build_source(
     custom_godot_override = bool(
         inspection.backend == "rpgmframe"
         and inspection.engine == "godot"
-        and inspection.runtime_kind == "godot-custom"
+        and inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}
         and backend_runtime is not None
     )
     custom_godot_auto = automatic_custom_godot_runtime_available(inspection)
@@ -289,6 +330,7 @@ def build_source(
         raise ConversionError(
             f"Detected {inspection.engine_label}, but compatibility is "
             f"{inspection.compatibility}; refusing automatic conversion.{extra}"
+            + (" " + " ".join(inspection.warnings) if inspection.warnings else "")
         )
 
     output_path = (
@@ -314,6 +356,7 @@ def build_source(
                     allow_version_mismatch=allow_renpy_version_mismatch,
                     legacy_arm64_fallback=renpy_legacy_arm64_fallback,
                     ddlc_753_migration=renpy_ddlc_753_migration,
+                    prerelease_853_migration=renpy_prerelease_853_migration,
                     dry_run=dry_run,
                     progress=progress,
                 )
@@ -360,7 +403,13 @@ def build_source(
                if renpy_ddlc_753_migration else
                {"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "experimental-renpy-legacy-750"}
-               if renpy_legacy_arm64_fallback else {}),
+               if renpy_legacy_arm64_fallback else
+               {"runtime_engine_version": result.runtime_version,
+                "compatibility_profile": "experimental-renpy-prerelease-853"}
+               if renpy_prerelease_853_migration else
+               {"runtime_engine_version": result.runtime_version,
+                "compatibility_profile": "katawa-shoujo-legacy"}
+               if inspection.runtime_kind and inspection.runtime_kind.startswith("Katawa Shoujo") else {}),
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)
@@ -377,6 +426,7 @@ def build_source(
                 output_path,
                 launcher_path=launcher_path,
                 force=force,
+                progress=progress,
             )
         else:
             archive_path = None

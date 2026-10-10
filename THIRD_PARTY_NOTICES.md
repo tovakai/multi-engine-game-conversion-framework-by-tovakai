@@ -11,6 +11,19 @@ and upstream source links. The converter repository does not bundle the SDK
 or any original DDLC assets/scripts. No code from DDLC-ARM-Linux, PortMaster,
 decompiled DDLC repositories or mod templates was copied.
 
+## Legacy compatibility profiles
+
+The recovered Katawa Shoujo compatibility profile downloads the pinned community
+Ren'Py 8 port at https://github.com/gcammisa/KatawaShoujo-RenPy8/releases/tag/8.0.3
+and HD UI/source overrides from https://github.com/scoopgoop/Katawa-Shoujo-HD-Upscale
+at commit `ef24235c4ae6f9c67e371cfd79446cff2c02f3f8`. These are fetched locally
+and combined with the user's installation. No game payloads are bundled in this
+repository. The generated `RENFRAME-COMPATIBILITY.txt` records these sources.
+
+EasyRPG packages depend on the separately installed native EasyRPG Player:
+https://github.com/EasyRPG/Player (GPL-3.0-or-later). Its binaries are not bundled
+in the converter. The native Flatpak installation supplies its component notices.
+
 ## Deckport
 
 The Steam Frame non-Steam shortcut installer adapts Deckport's deterministic

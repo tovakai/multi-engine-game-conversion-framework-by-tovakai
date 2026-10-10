@@ -23,6 +23,11 @@ _GODOTSTEAM_MARKERS = (
     b"modules/godotsteam/godotsteam.cpp",
     b"get_godotsteam_version",
 )
+_CUSTOM_MODULE_MARKERS = {
+    "FMOD": (b"FMODStudioModule", b"FMODDebugMonitor", b"modules/fmod/"),
+    "Spine": (b"modules/spine/", b"SpineSprite"),
+    "Threen": (b"modules/threen/",),
+}
 _BINARY_SCAN_CHUNK = 1024 * 1024
 _BINARY_SCAN_OVERLAP = 256
 
@@ -32,6 +37,7 @@ class GodotExecutableFingerprint:
     path: Path
     custom_build: bool
     godotsteam: bool
+    modules: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -284,6 +290,7 @@ def inspect_godot_executable(
 
     custom_build = False
     godotsteam = False
+    modules: set[str] = set()
     carry = b""
 
     try:
@@ -297,18 +304,19 @@ def inspect_godot_executable(
                 godotsteam = godotsteam or any(
                     marker in data for marker in _GODOTSTEAM_MARKERS
                 )
-                if custom_build and godotsteam:
-                    break
+                modules.update(name for name, markers in _CUSTOM_MODULE_MARKERS.items()
+                               if any(marker in data for marker in markers))
                 carry = data[-_BINARY_SCAN_OVERLAP:]
     except OSError:
         return None
 
-    if not custom_build and not godotsteam:
+    if not custom_build and not godotsteam and not modules:
         return None
     return GodotExecutableFingerprint(
         path=executable,
-        custom_build=custom_build,
+        custom_build=custom_build or bool(modules),
         godotsteam=godotsteam,
+        modules=tuple(sorted(modules)),
     )
 
 
@@ -332,7 +340,8 @@ def is_csharp_export(root: Path) -> bool:
 def materialize_pack(pack: GodotPack, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if not pack.embedded:
-        destination.write_bytes(pack.path.read_bytes())
+        import shutil
+        shutil.copyfile(pack.path, destination)
         return
 
     remaining = pack.size
@@ -344,6 +353,58 @@ def materialize_pack(pack: GodotPack, destination: Path) -> None:
                 raise OSError(f"Unexpected end of embedded PCK: {pack.path}")
             target.write(chunk)
             remaining -= len(chunk)
+
+
+def _pack_features(pack: GodotPack) -> tuple[bool, tuple[str, ...]]:
+    """Inspect bounded PCK directories without loading game code."""
+    encrypted = False
+    extensions: list[str] = []
+    if pack.pack_format not in {1, 2, 3, 4}:
+        return False, ()
+    try:
+        with pack.path.open("rb") as handle:
+            handle.seek(pack.offset + 20)
+            if pack.pack_format >= 2:
+                flags = struct.unpack("<I", handle.read(4))[0]
+                if flags & 1:  # PACK_DIR_ENCRYPTED
+                    return True, ()
+                handle.read(8)  # file_base
+            if pack.pack_format >= 3:
+                directory_offset = struct.unpack("<Q", handle.read(8))[0]
+                if directory_offset >= pack.size:
+                    return False, ()
+                handle.seek(pack.offset + directory_offset)
+            else:
+                handle.read(64)  # reserved header words
+            directory_start = handle.tell()
+            count = struct.unpack("<I", handle.read(4))[0]
+            if count > 1000000:
+                return False, ()
+            for _ in range(count):
+                length = struct.unpack("<I", handle.read(4))[0]
+                if length > 65536 or handle.tell() - directory_start > 64 * 1024 * 1024:
+                    return encrypted, tuple(extensions)
+                name = handle.read(length).rstrip(b"\0")
+                if name.lower().endswith(b".gde"):
+                    encrypted = True
+                if name.lower().endswith((b".gdextension", b".gdnlib")):
+                    extensions.append(name.decode("utf-8", errors="replace"))
+                handle.read(32)  # offset, size, MD5
+                if pack.pack_format >= 2:
+                    flags = struct.unpack("<I", handle.read(4))[0]
+                    if flags & 1:  # PACK_FILE_ENCRYPTED
+                        encrypted = True
+    except (OSError, struct.error):
+        return encrypted, tuple(extensions)
+    return encrypted, tuple(extensions)
+
+
+def pack_requires_encryption_key(pack: GodotPack) -> bool:
+    return _pack_features(pack)[0]
+
+
+def pack_native_extensions(pack: GodotPack) -> tuple[str, ...]:
+    return _pack_features(pack)[1]
 
 
 def inspect_godot(path: Path | str) -> GameInspection | None:
@@ -422,8 +483,11 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
                 "runtime must include the matching GodotSteam API and Steamworks "
                 "support."
             )
+        if fingerprint.modules:
+            warnings.append("Custom built-in Godot modules require matching ARM64 implementations: " + ", ".join(fingerprint.modules))
 
     csharp = is_csharp_export(current)
+    encrypted, native_extensions = _pack_features(pack)
     compatibility = Compatibility.NEEDS_TESTING
     if fingerprint is not None and fingerprint.custom_build:
         compatibility = Compatibility.UNKNOWN
@@ -434,11 +498,20 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
             "enabled yet because the managed/native runtime bundle is platform-specific."
         )
 
+    if encrypted:
+        compatibility = Compatibility.UNKNOWN
+        warnings.append("Encrypted Godot content detected. Supply a matching ARM64 runtime built with the game's encryption key; the stock runtime cannot load this export.")
+    if native_extensions:
+        compatibility = Compatibility.UNKNOWN
+        warnings.append("Native Godot extensions require matching Linux ARM64 libraries: " + ", ".join(native_extensions))
+
     return GameInspection(
         source_path=root,
         family=EngineFamily.GODOT,
         engine=EngineVariant.GODOT,
         runtime=(
+            "godot-encrypted" if encrypted else
+            "godot-native-extensions" if native_extensions else
             "godot-custom"
             if fingerprint is not None and fingerprint.custom_build
             else "godot"
@@ -459,6 +532,8 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
                 if fingerprint is not None and fingerprint.godotsteam
                 else []
             )
+            + ([f"{executable_path}: built-in module {name}" for name in fingerprint.modules]
+               if fingerprint is not None else [])
         ),
         warnings=warnings,
         compatibility=compatibility,

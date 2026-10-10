@@ -212,11 +212,19 @@ def test_frame_zip_stream_error_removes_partial_archive(tmp_path, monkeypatch):
     (build / "data.bin").write_bytes(b"example data")
     archive = tmp_path / "Interrupted-linux-aarch64.zip"
 
-    def interrupt_copy(src, dst, block_size):
-        dst.write(src.read(2))
-        raise OSError("interrupted while streaming")
+    original_open = zipfile.ZipFile.open
 
-    monkeypatch.setattr(frame_package.shutil, "copyfileobj", interrupt_copy)
+    def interrupted_open(zf, name, mode="r", *args, **kwargs):
+        handle = original_open(zf, name, mode, *args, **kwargs)
+        if mode == "w":
+            original_write = handle.write
+            def interrupted_write(data):
+                original_write(data[:2])
+                raise OSError("interrupted while streaming")
+            handle.write = interrupted_write
+        return handle
+
+    monkeypatch.setattr(zipfile.ZipFile, "open", interrupted_open)
     with pytest.raises(frame_package.FramePackageError, match="interrupted while streaming"):
         create_frame_zip(build, launcher_path=launcher, output=archive)
     assert not archive.exists()

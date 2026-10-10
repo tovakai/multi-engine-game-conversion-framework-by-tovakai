@@ -15,6 +15,8 @@ from rpgmframe.godot import (
     inspect_godot_executable,
     is_csharp_export,
     materialize_pack,
+    pack_requires_encryption_key,
+    pack_native_extensions,
 )
 from rpgmframe.godot_runtime import GodotRuntimeError, GodotRuntimeManager
 from rpgmframe.launchers import godot_launcher_body
@@ -153,8 +155,14 @@ def build_godot_game(
     pack = find_godot_pack(inspection.game_root)
     if pack is None:
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
+    if runtime is None and pack_requires_encryption_key(pack):
+        raise GodotBuildError("Encrypted Godot content requires a matching ARM64 runtime built with the game's encryption key. Stock runtime substitution is unavailable.")
+    if runtime is None and pack_native_extensions(pack):
+        raise GodotBuildError("Native Godot extensions need matching Linux ARM64 libraries: " + ", ".join(pack_native_extensions(pack)))
 
     fingerprint = inspect_godot_executable(inspection.game_root, pack)
+    if runtime is None and fingerprint is not None and fingerprint.modules:
+        raise GodotBuildError("Custom Godot modules require a matching ARM64 runtime: " + ", ".join(fingerprint.modules))
 
     if runtime is None and fingerprint is not None and fingerprint.custom_build:
         from rpgmframe.godot_custom_runtime import (

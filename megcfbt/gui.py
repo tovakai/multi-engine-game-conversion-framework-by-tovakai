@@ -534,7 +534,7 @@ class ConverterApp:
             return True
         return bool(
             self.inspection.engine == "godot"
-            and self.inspection.runtime_kind == "godot-custom"
+            and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}
             and self.backend_runtime is not None
         )
 
@@ -636,6 +636,10 @@ class ConverterApp:
         if result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
+            elif result.runtime_kind and result.runtime_kind.startswith("Katawa Shoujo"):
+                runtime_text = "RUNTIME // KATAWA COMPAT // AUTO 8.0.3"
+            elif result.renpy_prerelease_853_candidate:
+                runtime_text = "RUNTIME // NIGHTLY COMPAT // 8.5.3 EXPERIMENTAL"
             elif legacy_fallback:
                 runtime_text = (
                     f"RUNTIME // {legacy_fallback} EXPERIMENTAL // OVERRIDE…"
@@ -647,7 +651,7 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.engine == "godot" and result.runtime_kind == "godot-custom":
+        elif result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}:
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
@@ -806,6 +810,21 @@ class ConverterApp:
             return
         legacy_arm64_approved = False
         ddlc_753_approved = False
+        prerelease_853_approved = False
+        if self.inspection.renpy_prerelease_853_candidate and self.renpy_runtime is None:
+            choice = messagebox.askyesnocancel(
+                APP_NAME, "This game uses a Ren'Py 8.5 nightly, whose engine can differ from the stable runtime.\n\n"
+                "YES: Convert using the complete matched official 8.5.3 engine and ARM64 runtime.\n"
+                "NO: Select a matching full ARM64 runtime.\nCANCEL: Do nothing.\n\n"
+                "This migration is experimental. Newer nightly APIs and saves need gameplay testing.", icon="warning")
+            if choice is None:
+                return
+            if choice:
+                prerelease_853_approved = True
+            else:
+                self._pick_renpy_runtime()
+                if self.renpy_runtime is None:
+                    return
         if self.inspection.engine == "renpy" and self.renpy_runtime is None:
             fallback = experimental_arm64_fallback(
                 self.inspection.engine_version, self.inspection.renpy_generation
@@ -861,7 +880,7 @@ class ConverterApp:
                 return
         if (
             self.inspection.engine == "godot"
-            and self.inspection.runtime_kind == "godot-custom"
+            and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}
             and self.backend_runtime is None
             and not automatic_custom_godot_runtime_available(self.inspection)
         ):
@@ -890,6 +909,7 @@ class ConverterApp:
                     renpy_runtime=self.renpy_runtime,
                     renpy_legacy_arm64_fallback=legacy_arm64_approved,
                     renpy_ddlc_753_migration=ddlc_753_approved,
+                    renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
                     force=force,
                     archive=archive,

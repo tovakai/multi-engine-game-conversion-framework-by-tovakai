@@ -30,6 +30,7 @@ _RELEASE_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.\d+)?$")
 _DEFAULT_BASE_URL = "https://www.renpy.org/dl"
 _SDK_753_SHA256 = "6e5da3388b083d05f9d43991310776ff394b04bbb5541ee6216484ebd3d5a567"
 _SDK_SHA256 = {
+    "8.5.3": "0579782517f203ba3535dcc2dab54e34bfc318f2f2a7510a5130b6f809f901f6",
     "7.5.0": "33e1fcab5a9c80c0850a245e0ce634c098dcea27d8f58a523c80014ed27b94d0",
     "7.5.3": _SDK_753_SHA256,
 }
@@ -426,7 +427,8 @@ def _safe_full_sdk_members(
             or relative == ("LICENSE.txt",)
             or relative == ("doc", "license.html")
             or (len(relative) >= 2 and relative[:2] == ("lib", platform))
-            or (len(relative) >= 2 and relative[:2] == ("lib", "python2.7"))
+            or (len(relative) >= 2 and relative[0] == "lib" and
+                (relative[1] == "python2.7" if python_tag == "py2" else relative[1].startswith("python3.")))
             or relative in {("lib", "python2.7.zip"), ("lib", "python27.zip")}
         )
         if not wanted:
@@ -573,20 +575,20 @@ class RuntimeManager:
         *,
         progress: Callable[[str], None] | None = None,
     ) -> Path:
-        """Cache matched Python 2 engines for the explicit 7.5.0/7.5.3 migrations.
+        """Cache matched engines for explicit legacy and 8.5 prerelease migrations.
 
         Official runtime archive and checksum come from renpy.org. Only the
-        selected engine, entrypoint, Python 2 support, and ARM64 platform are
+        selected engine, entrypoint, Python support, and ARM64 platform are
         extracted. Builds use this SDK as a complete replacement engine.
         """
         release = normalize_release_version(version)
-        if release not in {"7.5.0", "7.5.3"} or python_tag != "py2":
+        if (release, python_tag) not in {("7.5.0", "py2"), ("7.5.3", "py2"), ("8.5.3", "py3")}:
             raise RuntimeDownloadError(
-                "Full engine fallback is only available for Ren'Py 7.5.0 or 7.5.3 Python 2."
+                "Full engine fallback is only available for Ren'Py 7.5.0/7.5.3 Python 2 and 8.5.3 Python 3."
             )
         destination = self.full_sdk_path(release, python_tag)
         try:
-            _validate_full_sdk(destination, "py2-linux-aarch64")
+            _validate_full_sdk(destination, f"{python_tag}-linux-aarch64")
             if release in {"7.5.0", "7.5.3"}:
                 _validate_matched_py2_sdk(destination, release)
                 try:
@@ -597,10 +599,14 @@ class RuntimeManager:
                     raise RuntimeDownloadError("SDK cache content changed since checksum verification")
                 if self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_SHA256[release]:
                     raise RuntimeDownloadError("SDK cache provenance does not match the official archive")
+            if python_tag == "py3":
+                manifest = json.loads((destination / ".verified-sdk.json").read_text(encoding="utf-8"))
+                if not isinstance(manifest, dict) or manifest.get("files") != _sdk_manifest(destination) or (self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_SHA256[release]):
+                    raise RuntimeDownloadError("SDK cache content or provenance changed")
             if progress:
-                progress(f"Using cached complete Ren'Py {release} Python 2 ARM64 engine")
+                progress(f"Using cached complete Ren'Py {release} {python_tag} ARM64 engine")
             return destination
-        except (RuntimeDownloadError, OSError):
+        except (RuntimeDownloadError, OSError, ValueError):
             pass
 
         filename = f"renpy-{release}-sdkarm.tar.bz2"
@@ -636,9 +642,16 @@ class RuntimeManager:
                 extracted = temporary / "extracted"
                 _extract_selected_members(archive, members, extracted)
             staged = extracted / prefix
-            _validate_full_sdk(staged, "py2-linux-aarch64")
+            _validate_full_sdk(staged, f"{python_tag}-linux-aarch64")
             if release in {"7.5.0", "7.5.3"}:
                 _validate_matched_py2_sdk(staged, release)
+                (staged / ".verified-sdk.json").write_text(json.dumps({
+                    "archive_sha256": expected, "files": _sdk_manifest(staged),
+                }, sort_keys=True), encoding="utf-8")
+            if python_tag == "py3":
+                inspection = inspect_runtime(staged)
+                if inspection.version != release or inspection.generation != 8:
+                    raise RuntimeDownloadError("Official SDK engine does not match the selected Python 3 release")
                 (staged / ".verified-sdk.json").write_text(json.dumps({
                     "archive_sha256": expected, "files": _sdk_manifest(staged),
                 }, sort_keys=True), encoding="utf-8")
@@ -658,7 +671,7 @@ class RuntimeManager:
             shutil.rmtree(temporary, ignore_errors=True)
 
         if progress:
-            progress(f"Cached complete Ren'Py {release} engine and Python 2 ARM64 runtime")
+            progress(f"Cached complete Ren'Py {release} engine and {python_tag} ARM64 runtime")
         return destination
 
     def find_platform(self, version: str, python_tag: str) -> Path | None:

@@ -10,6 +10,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Folder transfers through Windows can lose Linux executable permissions.
+for binary in "$ROOT/nw" "$ROOT/chrome_crashpad_handler" "$ROOT/mkxp-z.aarch64" "$ROOT/godot.arm64"; do
+    [[ -f "$binary" && ! -L "$binary" && ! -x "$binary" ]] || continue
+    chmod u+x "$binary" 2>/dev/null || true
+done
+
 import_graphics_env() {
     local pid="$1"
     local key value

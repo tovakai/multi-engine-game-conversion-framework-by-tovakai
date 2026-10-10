@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import re
+import dis
+import importlib.util
+import marshal
+import types
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
@@ -30,7 +34,7 @@ def looks_like_renpy_game(path: Path) -> bool:
     game_dir = path / "game"
     renpy_dir = path / "renpy"
     has_game = game_dir.is_dir()
-    has_renpy = renpy_dir.is_dir() and (renpy_dir / "__init__.py").is_file()
+    has_renpy = renpy_dir.is_dir() and any((renpy_dir / name).is_file() for name in ("__init__.py", "__init__.pyc"))
 
     if has_game and has_renpy:
         return True
@@ -357,8 +361,41 @@ def strategy_lib_python_generation(root: Path) -> VersionHint | None:
     return None
 
 
+def strategy_vc_version_bytecode(root: Path) -> VersionHint | None:
+    """Read literal assignments in bytecode without importing or executing it.
+
+    Only inspect the host's bytecode format: disassembling foreign Python
+    opcodes could silently infer the wrong version.
+    """
+    candidate = root / "renpy" / "vc_version.pyc"
+    try:
+        with candidate.open("rb") as handle:
+            data = handle.read(65537)
+        if len(data) > 65536 or data[:4] != importlib.util.MAGIC_NUMBER:
+            return None
+        code = marshal.loads(data[16:])
+        if not isinstance(code, types.CodeType):
+            return None
+        previous = None
+        for instruction in dis.get_instructions(code):
+            if (instruction.opname in {"STORE_NAME", "STORE_GLOBAL"}
+                    and instruction.argval in {"version", "vc_version"}
+                    and previous is not None and previous.opname == "LOAD_CONST"
+                    and isinstance(previous.argval, str)
+                    and re.fullmatch(r"\d+\.\d+\.\d+(?:\.\d+)?", previous.argval)):
+                version = ".".join(previous.argval.split(".")[:3])
+                return VersionHint(version=version, generation=_generation_from_version(version),
+                                   source="renpy/vc_version.pyc", confidence="high",
+                                   details="static literal bytecode assignment; no game code executed")
+            previous = instruction
+    except (OSError, ValueError, EOFError, TypeError, IndexError):
+        return None
+    return None
+
+
 DEFAULT_VERSION_STRATEGIES: tuple[VersionStrategy, ...] = (
     strategy_vc_version_py,
+    strategy_vc_version_bytecode,
     strategy_versions_py,
     strategy_renpy_init,
     strategy_script_version,
