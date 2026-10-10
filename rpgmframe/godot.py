@@ -225,6 +225,14 @@ def _candidate_packs(root: Path) -> list[GodotPack]:
         ]
         if len(matching) == 1:
             return matching
+        # A distribution may ship a companion utility with its own EXE/PCK.
+        # Use the folder identity only when it uniquely names one matched pair.
+        def normalize(name: str) -> str:
+            return "".join(char for char in name.casefold() if char.isalnum())
+        identity = normalize(root.name)
+        named = [pack for pack in matching if identity and normalize(pack.path.stem) == identity]
+        if len(named) == 1:
+            return named
         return standalone
 
     embedded = [
@@ -489,7 +497,7 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
     csharp = is_csharp_export(current)
     encrypted, native_extensions = _pack_features(pack)
     compatibility = Compatibility.NEEDS_TESTING
-    if fingerprint is not None and fingerprint.custom_build:
+    if fingerprint is not None and (fingerprint.custom_build or fingerprint.godotsteam):
         compatibility = Compatibility.UNKNOWN
     if csharp:
         compatibility = Compatibility.UNKNOWN
@@ -513,7 +521,7 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
             "godot-encrypted" if encrypted else
             "godot-native-extensions" if native_extensions else
             "godot-custom"
-            if fingerprint is not None and fingerprint.custom_build
+            if fingerprint is not None and (fingerprint.custom_build or fingerprint.godotsteam)
             else "godot"
         ),
         confidence=Confidence.HIGH,

@@ -164,7 +164,7 @@ def build_godot_game(
     if runtime is None and fingerprint is not None and fingerprint.modules:
         raise GodotBuildError("Custom Godot modules require a matching ARM64 runtime: " + ", ".join(fingerprint.modules))
 
-    if runtime is None and fingerprint is not None and fingerprint.custom_build:
+    if runtime is None and fingerprint is not None and (fingerprint.custom_build or fingerprint.godotsteam):
         from rpgmframe.godot_custom_runtime import (
             CustomGodotRuntimeError,
             CustomGodotRuntimeManager,
