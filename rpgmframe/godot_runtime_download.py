@@ -17,9 +17,15 @@ from collections.abc import Callable
 from pathlib import Path
 
 from rpgmframe.elf import read_elf_architecture
-from rpgmframe.godot_custom_runtime import RECIPE_ID, GODOTSTEAM_460_RECIPE, GODOTSTEAM_472_RECIPE
+from rpgmframe.godot_custom_runtime import RECIPE_ID, GODOTSTEAM_351_RECIPE, GODOTSTEAM_460_RECIPE, GODOTSTEAM_472_RECIPE
 
 INDEX_PATH = Path(__file__).resolve().parent / "godot_runtime_index.json"
+RUNTIME_SUPPORT_FILES = (
+    'AUTHORS-Godot.md', 'COPYRIGHT-Godot.txt', 'LICENSE-Converter.txt',
+    'LICENSE-Godot.txt', 'LICENSE-GodotSteam.txt', 'NOTICE.txt',
+    'SOURCE-BUILD.txt', 'THIRD_PARTY_NOTICES.md', 'godotsteam-legacy-cpp.patch',
+    'godotsteam-legacy-header.patch', 'runtime-source-build.sh', 'variant-release-guard.patch',
+)
 BUILTIN_RECIPES = {
     RECIPE_ID: {
         "url": (
@@ -60,7 +66,7 @@ class RuntimeDownloadError(RuntimeError):
 def recipe_entry(recipe_id: str) -> dict | None:
     if recipe_id in UPSTREAM_RECIPES:
         return dict(UPSTREAM_RECIPES[recipe_id])
-    if recipe_id != RECIPE_ID:
+    if recipe_id not in {RECIPE_ID, GODOTSTEAM_351_RECIPE}:
         return None
     try:
         index = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
@@ -83,6 +89,12 @@ def recipe_entry(recipe_id: str) -> dict | None:
         int(digest, 16)
     except ValueError:
         return None
+    files = entry.get('archive_files', ['godot.arm64','runtime.json'])
+    if (not isinstance(files, list) or not all(isinstance(name,str) for name in files)
+            or len(files) != len(set(files))
+            or not {'godot.arm64','runtime.json'}.issubset(files)
+            or not set(files).issubset({'godot.arm64','runtime.json',*RUNTIME_SUPPORT_FILES})):
+        return None
     return entry
 
 
@@ -103,6 +115,25 @@ def _validate(path: Path, recipe_id: str) -> bool:
         return False
     if not isinstance(data, dict):
         return False
+    entry = recipe_entry(recipe_id)
+    if recipe_id == GODOTSTEAM_351_RECIPE:
+        capabilities = data.get('capabilities')
+        dependency = data.get('steam_api_dependency')
+        if (entry is None or data.get('engine_version') != '3.5.1'
+                or not isinstance(capabilities, dict)
+                or capabilities.get('legacy_steam_init_dictionary') is not True
+                or not isinstance(dependency, dict)
+                or dependency.get('provider') != 'steam-frame-installed'):
+            return False
+        hashes = data.get('files')
+        if not isinstance(hashes, dict):
+            return False
+        for name in entry.get('archive_files', ['godot.arm64','runtime.json']):
+            if name == 'runtime.json':
+                continue
+            file = path/name
+            if not file.is_file() or hashes.get(name) != hashlib.sha256(file.read_bytes()).hexdigest():
+                return False
     if recipe_id in UPSTREAM_RECIPES:
         steam = path / 'libsteam_api.so'
         if read_elf_architecture(steam) != 'aarch64':
@@ -127,6 +158,32 @@ def _cache_root() -> Path:
     if os.name == "nt":
         return Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "tovakai" / "cache"
     return Path.home() / ".cache" / "tovakai"
+
+
+def _extract_archive(archive: Path, extracted: Path, entry: dict, *, upstream: bool) -> dict:
+    mapping = ({entry['binary']: 'godot.arm64', entry.get('steam_library','libsteam_api.so'): 'libsteam_api.so'}
+               if upstream else {name:name for name in entry.get('archive_files', ['godot.arm64','runtime.json'])})
+    seen = set()
+    try:
+        with tarfile.open(archive, 'r:*') as tar:
+            for member in tar:
+                if upstream and entry.get('multi_platform_archive') and member.name not in mapping:
+                    continue
+                if not member.isfile() or member.name not in mapping or member.name in seen:
+                    raise RuntimeDownloadError(f'Unsafe or unexpected runtime archive member: {member.name}')
+                if member.size > 512 * 1024**2:
+                    raise RuntimeDownloadError('Runtime archive member exceeds 512 MiB limit')
+                seen.add(member.name)
+                source = tar.extractfile(member)
+                if source is None:
+                    raise RuntimeDownloadError('Unreadable runtime archive member')
+                with source, (extracted / mapping[member.name]).open('wb') as dest:
+                    shutil.copyfileobj(source, dest)
+            if seen != set(mapping):
+                raise RuntimeDownloadError('Runtime archive is missing required files')
+    except (tarfile.TarError, OSError, EOFError) as exc:
+        raise RuntimeDownloadError(f'Could not unpack verified runtime archive: {exc}') from exc
+    return mapping
 
 
 def ensure_downloaded_runtime(
@@ -179,29 +236,8 @@ def ensure_downloaded_runtime(
 
         extracted = tmp / "extracted"
         extracted.mkdir()
-        with tarfile.open(archive, "r:*") as tar:
-            members = tar.getmembers()
-            seen = set()
-            upstream = recipe_id in UPSTREAM_RECIPES
-            mapping = ({entry['binary']: 'godot.arm64', entry.get('steam_library','libsteam_api.so'): 'libsteam_api.so'}
-                       if upstream else {'godot.arm64': 'godot.arm64', 'runtime.json': 'runtime.json'})
-            for member in members:
-                if upstream and entry.get('multi_platform_archive') and member.name not in mapping:
-                    continue
-                # Release archive must have flat regular files only. Never
-                # extract symlinks, absolute paths, or parent traversal.
-                if not member.isfile() or member.name not in mapping or member.name in seen:
-                    raise RuntimeDownloadError(
-                        f"Unsafe or unexpected runtime archive member: {member.name}"
-                    )
-                seen.add(member.name)
-                source = tar.extractfile(member)
-                if source is None:
-                    raise RuntimeDownloadError("Unreadable runtime archive member")
-                with source, (extracted / mapping[member.name]).open("wb") as dest:
-                    shutil.copyfileobj(source, dest)
-            if seen != set(mapping):
-                raise RuntimeDownloadError('Runtime archive is missing required files')
+        upstream = recipe_id in UPSTREAM_RECIPES
+        mapping = _extract_archive(archive, extracted, entry, upstream=upstream)
         if upstream:
             receipt = {'kind':'godot-custom','recipe_id':recipe_id,'architecture':'aarch64',
                        'engine_version':entry['engine_version'],'godotsteam_version':entry['godotsteam_version'],
@@ -212,9 +248,17 @@ def ensure_downloaded_runtime(
         if not _validate(extracted, recipe_id):
             raise RuntimeDownloadError("Downloaded runtime failed ARM64/recipe validation")
         (extracted / "godot.arm64").chmod(0o755)
-        if target.exists():
-            shutil.rmtree(target)
-        shutil.move(str(extracted), str(target))
+        # Both paths are siblings on the same filesystem. Publish the complete
+        # verified tree by rename and retain the previous cache on failure.
+        backup = tmp / 'previous-cache'
+        try:
+            if target.exists():
+                target.rename(backup)
+            extracted.rename(target)
+        except OSError as exc:
+            if backup.exists() and not target.exists():
+                backup.rename(target)
+            raise RuntimeDownloadError(f'Could not install verified runtime cache: {exc}') from exc
     if progress:
         progress("Custom GodotSteam runtime cached. Continuing conversion…")
     return target

@@ -51,6 +51,7 @@ foreach ($path in @(
   --collect-all tkinterdnd2 `
   --collect-data megcfbt `
   --collect-data gamemakerframe `
+  --collect-data rpgmframe `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 

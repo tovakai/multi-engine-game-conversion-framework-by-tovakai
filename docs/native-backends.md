@@ -77,8 +77,9 @@ Godot 3.5.1 has a source-build recipe using pinned Godot/GodotSteam/Proton sourc
 the Frame Steam library, a release-safe Variant guard and the legacy dictionary
 initialization API. That adapter forwards real Steam results; it does not fake
 successful initialization. It does not apply
-the Godot 3.7 CanvasItem patch. On Windows, select a prepared matching bundle;
-native Linux ARM64 can build/cache this recipe automatically.
+the Godot 3.7 CanvasItem patch. Windows automatically downloads the published
+software-only runtime and caches it; native Linux ARM64 can also build this
+recipe. See [automatic runtime provisioning](downloadable-godotsteam-runtime.md).
 
 The small source-backed `libframe_steam_env.so` helper preserves the selected
 Frametop graphics environment across real Steam initialization. It is enabled
@@ -93,8 +94,10 @@ Cassette Beasts' Steam initialization error. Its old X11 backend can report a
 keyboard-layout bounds warning under Xwayland and then use its QWERTY fallback.
 The fresh Unnamed Space Idle test profile reached its introduction without the
 save recovery prompt seen after repeatedly interrupting the reused test profile.
-Automated X11 key injection did not reliably advance these screens in Frametop;
-keyboard/controller interaction through Steam still needs device testing.
+Earlier automated X11 key injection did not reliably advance these screens in
+Frametop. A later test of the frozen Windows-generated Cassette Beasts ZIP in
+Frame's desktop session accepted E and advanced from the title to update notices.
+Physical keyboard/controller interaction through Steam still needs device testing.
 Online/co-op/workshop, save round trips and complete gameplay remain unverified.
 Intro/menu screenshots are not full-game compatibility certification.
 

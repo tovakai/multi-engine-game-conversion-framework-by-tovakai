@@ -74,6 +74,14 @@ def _copy_runtime_bundle(runtime_path: Path, staging: Path) -> list[str]:
     if manifest.is_file():
         shutil.copy2(manifest, staging / "runtime.json")
         copied.append("runtime.json")
+        from rpgmframe.godot_runtime_download import RUNTIME_SUPPORT_FILES
+        # Preserve the notices and corresponding compatibility source provided
+        # by published runtime bundles when packaging the engine with a game.
+        for name in RUNTIME_SUPPORT_FILES:
+            companion = runtime_path/name
+            if companion.is_file():
+                shutil.copy2(companion, staging/name)
+                copied.append(name)
 
     return copied
 

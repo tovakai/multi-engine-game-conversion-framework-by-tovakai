@@ -72,6 +72,12 @@ The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
 turning the umbrella router into a giant conditional swamp.
 
+Supported GodotSteam 3.5.1, 4.6.0 and 4.7.2 exports now use automatic verified
+runtime downloads on Windows, alongside the existing Brotato recipe. No manual
+runtime selection or Frame connection is needed for conversion. Cassette Beasts
+has native title-screen evidence; input, full gameplay and saves still need testing.
+See [downloadable GodotSteam runtimes](docs/downloadable-godotsteam-runtime.md).
+
 Ren'Py bytecode-only exports are recognized, with static version inspection when
 their Python bytecode matches the converter's Python version. Identified Katawa
 Shoujo 6.10.2 distributions use the recovered legacy compatibility profile,

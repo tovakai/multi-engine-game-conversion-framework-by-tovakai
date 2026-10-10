@@ -5,6 +5,28 @@
       "sha256": "f87130aa44fae591a098eb03df8a419f84b47d25100756f04bb645e44102e34a",
       "status": "validated",
       "validation": "Brotato 1.1.14.6 full gameplay run on Steam Frame"
+    },
+    "godot-3.5.1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1": {
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-godot-3.5.1-godotsteam-3.30-arm64-v1/godot-3.5.1-godotsteam-3.30-frame-arm64-v1.tar.gz",
+      "sha256": "6abe8ccc6099a37c677fae5b5fea906df1ce35a2d9e1e0bdec1e98d08c361cfa",
+      "status": "startup-validated",
+      "validation": "Steam Frame native title screen; full gameplay, input and saves unverified",
+      "archive_files": [
+        "AUTHORS-Godot.md",
+        "COPYRIGHT-Godot.txt",
+        "LICENSE-Converter.txt",
+        "LICENSE-Godot.txt",
+        "LICENSE-GodotSteam.txt",
+        "NOTICE.txt",
+        "SOURCE-BUILD.txt",
+        "THIRD_PARTY_NOTICES.md",
+        "godot.arm64",
+        "godotsteam-legacy-cpp.patch",
+        "godotsteam-legacy-header.patch",
+        "runtime-source-build.sh",
+        "runtime.json",
+        "variant-release-guard.patch"
+      ]
     }
   }
 }

@@ -672,7 +672,7 @@ class ConverterApp:
         elif result.buildable:
             drop_text = "PAYLOAD LOCKED"
         elif auto_custom_runtime:
-            drop_text = "PAYLOAD LOCKED // AUTO COMPAT RUNTIME"
+            drop_text = "AUTOMATIC GODOTSTEAM RUNTIME AVAILABLE"
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             drop_text = "CUSTOM RUNTIME REQUIRED"
         else:
@@ -704,6 +704,11 @@ class ConverterApp:
             self.notes_box.configure(state="normal")
             self.notes_box.delete("1.0", "end")
             self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        elif auto_custom_runtime:
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Click CONVERT. A compatible runtime is downloaded once and cached for later conversions. No manual runtime selection is needed. Gameplay compatibility still requires testing.")
             self.notes_box.configure(state="disabled")
         else:
             self.notes_box.configure(state="normal")

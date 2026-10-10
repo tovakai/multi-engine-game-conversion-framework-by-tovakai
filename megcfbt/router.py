@@ -313,7 +313,7 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
 def automatic_custom_godot_runtime_available(
     inspection: UnifiedInspection,
 ) -> bool:
-    """Whether this host can build the narrow custom GodotSteam recipe."""
+    """Whether a supported recipe can be downloaded or built on this host."""
     if (
         inspection.backend != "rpgmframe"
         or inspection.engine != "godot"
@@ -322,7 +322,9 @@ def automatic_custom_godot_runtime_available(
         return False
 
     godotsteam = any("godotsteam" in item.casefold() for item in inspection.evidence)
-    if any(": built-in module " in item for item in inspection.evidence):
+    modules = [item.casefold().split(': built-in module ', 1)[1].strip()
+               for item in inspection.evidence if ': built-in module ' in item.casefold()]
+    if any(module != 'godotsteam' for module in modules):
         return False
     recipe = automatic_recipe_for(
         inspection.engine_version,
