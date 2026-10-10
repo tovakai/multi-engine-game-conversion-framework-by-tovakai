@@ -21,6 +21,8 @@ from rpgmframe.godot import (
 from rpgmframe.godot_runtime import GodotRuntimeError, GodotRuntimeManager
 from rpgmframe.launchers import godot_launcher_body
 from rpgmframe.models import BuildResult, EngineVariant, GameInspection
+from megcfbt.steam_context import steam_app_id_for_source
+from megcfbt.frame_runtime import install_steam_graphics_guard
 
 
 class GodotBuildError(RuntimeError):
@@ -169,6 +171,7 @@ def build_godot_game(
             CustomGodotRuntimeError,
             CustomGodotRuntimeManager,
             automatic_recipe_for,
+            RECIPE_ID,
         )
 
         recipe = automatic_recipe_for(
@@ -211,6 +214,7 @@ def build_godot_game(
             manager = CustomGodotRuntimeManager(
                 cache_dir=cache_root,
                 work_dir=output_path.parent / ".tovakai-runtime-work" / recipe,
+                **({'recipe_id': recipe} if recipe != RECIPE_ID else {}),
             )
             try:
                 runtime_path = manager.ensure_runtime(progress=progress)
@@ -254,6 +258,8 @@ def build_godot_game(
         stage(0.45, "Preparing build staging area")
         staging.mkdir()
         runtime_files = _copy_runtime_bundle(runtime_path, staging)
+        if fingerprint is not None and fingerprint.godotsteam:
+            install_steam_graphics_guard(staging)
         if progress:
             progress("Runtime bundle: " + ", ".join(runtime_files))
 
@@ -291,10 +297,13 @@ def build_godot_game(
                 if progress:
                     progress("Copied GodotSteam steam_data.json beside runtime")
             else:
-                warnings.append(
-                    "Built-in GodotSteam detected but steam_data.json was not found "
-                    "beside the Windows game executable."
-                )
+                app_id = steam_app_id_for_source(inspection.game_root)
+                if app_id:
+                    _write_steam_app_id(staging, game_dir, app_id)
+                    if progress:
+                        progress(f'Installed Steam application metadata: {app_id}')
+                else:
+                    warnings.append('Built-in GodotSteam detected but no Steam app ID metadata was found; direct launch may require Steam context.')
 
         pck_name = pack.path.with_suffix(".pck").name
         pck_target = game_dir / pck_name
@@ -302,6 +311,19 @@ def build_godot_game(
             materialize_pack(pack, pck_target)
         elif not pck_target.is_file():
             shutil.copy2(pack.path, pck_target)
+
+        adjacent_pack = False
+        runtime_manifest = runtime_path/'runtime.json'
+        if runtime_manifest.is_file():
+            try:
+                runtime_metadata = json.loads(runtime_manifest.read_text(encoding='utf-8'))
+                adjacent_pack = isinstance(runtime_metadata,dict) and runtime_metadata.get('pack_loading') == 'adjacent'
+            except (OSError, ValueError):
+                raise GodotBuildError('Invalid Godot runtime capability manifest.')
+        if adjacent_pack:
+            # Hardened export templates reject --main-pack. Use Godot's
+            # executable-basename lookup while retaining the game working dir.
+            pck_target.rename(staging/'godot.pck')
 
         stage(0.78, "Checking native Windows dependencies")
         dlls = list(inspection.game_root.rglob("*.dll"))
@@ -322,6 +344,7 @@ def build_godot_game(
             godot_launcher_body(
                 f"game/{pck_name}",
                 force_zink=bool(fingerprint is not None and fingerprint.custom_build),
+                **({'adjacent_pack': True} if adjacent_pack else {}),
             ),
             encoding="utf-8",
             newline="\n",

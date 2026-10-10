@@ -27,6 +27,8 @@ APP_NAME="Multi-Engine Game Conversion Framework by Tovakai"
   --hidden-import tkinterdnd2 \
   --collect-all customtkinter \
   --collect-all tkinterdnd2 \
+  --collect-data megcfbt \
+  --collect-data gamemakerframe \
   app/main.py
 
 RELEASE="dist/linux-aarch64/$APP_NAME"

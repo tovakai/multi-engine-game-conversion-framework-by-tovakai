@@ -49,6 +49,8 @@ def read_elf_architecture(path: Path | str) -> str | None:
     endian = "<" if ei_data == 1 else ">"
     # e_machine is a 16-bit field at offset 18 in both ELF32 and ELF64.
     (e_machine,) = struct.unpack_from(f"{endian}H", header, 18)
+    if e_machine == _EM_AARCH64 and ei_class != 2:
+        return None
     return _MACHINE_NAMES.get(e_machine, f"unknown({e_machine})")
 
 

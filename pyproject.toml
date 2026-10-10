@@ -36,8 +36,12 @@ renframe = "renframe.cli:main"
 rpgmframe = "rpgmframe.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["megcfbt*", "renframe*", "rpgmframe*"]
+include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.setuptools.package-data]
+megcfbt = ["runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
+gamemakerframe = ["patches/*.patch"]

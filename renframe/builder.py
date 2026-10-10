@@ -12,6 +12,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 from renframe.inspect_service import inspect_game
+from renframe.source_safety import validate_copy_tree
+from renframe.elf import read_elf_architecture
 from renframe.ddlc import original_ddlc_candidate
 from renframe.models import BuildResult, Compatibility, GameInspection, RuntimeInspection
 from renframe.runtime import (
@@ -177,6 +179,13 @@ def _validate_runtime_inspection(inspection: RuntimeInspection) -> list[str]:
             f"Supplied runtime appears to be x86-only ({arches}); "
             f"need an ARM64/aarch64 Ren'Py runtime: {inspection.path}"
         )
+    if inspection.architecture == "arm":
+        raise BuildError("Supplied runtime is 32-bit ARM; an AArch64 runtime is required.")
+    layout = detect_runtime_layout(inspection.path)
+    if layout.python_bin:
+        actual = read_elf_architecture(layout.python_bin)
+        if actual is not None and actual != "aarch64":
+            raise BuildError(f"Selected Python binary is {actual}, not AArch64: {layout.python_bin}")
 
     return list(inspection.warnings)
 
@@ -355,7 +364,7 @@ def _copy_runtime_and_game(
     shutil.copytree(
         runtime,
         staging,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         dirs_exist_ok=False,
         ignore_dangling_symlinks=True,
@@ -372,7 +381,7 @@ def _copy_runtime_and_game(
     shutil.copytree(
         source_game,
         staging_game,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         ignore_dangling_symlinks=True,
     )
@@ -548,7 +557,7 @@ def _copy_source_and_arm_platform(
     shutil.copytree(
         source,
         staging,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         dirs_exist_ok=False,
         ignore_dangling_symlinks=True,
@@ -626,11 +635,15 @@ def build_game(
 
     if not source_path.exists() or not source_path.is_dir():
         raise BuildError(f"Source path is not a directory: {source_path}")
+    try:
+        validate_copy_tree(source_path)
+    except ValueError as exc:
+        raise BuildError(str(exc)) from exc
 
     from renframe.profiles import detect_profile, migrate_profile, ProfileError, detect_legacy_version
     profile = detect_profile(source_path)
     if profile is not None:
-        if legacy_arm64_fallback or ddlc_753_migration:
+        if legacy_arm64_fallback or ddlc_753_migration or prerelease_853_migration:
             raise BuildError("Katawa compatibility profile cannot be combined with another migration.")
         manager = runtime_manager or RuntimeManager()
         validate_output_paths(source_path, output_path, manager.cache_dir)
@@ -653,6 +666,8 @@ def build_game(
 
     warnings: list[str] = []
     game_inspection = inspect_game(source_path)
+    if ddlc_753_migration and not original_ddlc_candidate(game_inspection):
+        raise BuildError("Experimental DDLC 7.5.3 migration requires original DDLC 1.1.1 layout and Ren'Py 6.99.12 engine evidence.")
     warnings.extend(
         _validate_source_inspection(
             game_inspection,
@@ -744,6 +759,9 @@ def build_game(
                 )
             else:
                 runtime_path = manager.platform_path(release, python_tag)
+                validate_output_paths(source_path, output_path, runtime_path)
+                if output_path.exists() and not force and not dry_run:
+                    raise BuildError(f"Output already exists: {output_path}. Pass --force to replace it.")
                 if not dry_run:
                     runtime_path = manager.ensure_platform(
                         release,
@@ -763,6 +781,10 @@ def build_game(
         runtime_path = normalize_path(runtime)
         if not runtime_path.exists() or not runtime_path.is_dir():
             raise BuildError(f"Runtime path is not a directory: {runtime_path}")
+        try:
+            validate_copy_tree(runtime_path)
+        except ValueError as exc:
+            raise BuildError(str(exc)) from exc
 
         runtime_inspection = inspect_runtime(runtime_path)
         warnings.extend(_validate_runtime_inspection(runtime_inspection))

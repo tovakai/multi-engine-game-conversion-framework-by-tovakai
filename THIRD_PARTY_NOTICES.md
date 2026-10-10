@@ -53,3 +53,57 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Native engine SDKs and Frame Steam helper
+
+SDKs are built or selected separately and run as external processes. Game assets
+are never bundled in this repository. The SDK producer retains upstream notices:
+
+- Butterscotch: https://github.com/ButterscotchRunner/Butterscotch,
+  AGPL-3.0. The bundled `ds_list_set` patch modifies argument validation; the
+  pinned source commit and patch are recorded by the SDK recipe.
+- LÖVE: https://github.com/love2d/love, zlib license.
+- lua-https: https://github.com/love2d/lua-https, zlib license.
+- luasteam: https://github.com/uspgamedev/luasteam, MIT license. The source
+  recipe adapts the removed current-user stats request to the native API.
+- Adventure Game Studio: https://github.com/adventuregamestudio/ags,
+  Artistic License 2.0; component licenses remain applicable.
+- GodotSteam: https://codeberg.org/godotsteam/godotsteam, MIT license, with
+  Godot's MIT and component notices. The Godot 3.5.1 recipe restores its older
+  dictionary initialization contract while preserving actual Steam results.
+
+Steamworks libraries and headers retain Valve's applicable terms and are not
+relicensed by this project. They are resolved from the selected upstream runtime
+or the user's installation. The project-authored Frame graphics environment
+helper is GPL-3.0, like the converter. Its C source, build recipe and checksum
+receipt accompany the bundled ARM64 binary.
+
+The Steam networking inline compatibility helpers follow the public
+GameNetworkingSockets interface helpers:
+https://github.com/ValveSoftware/GameNetworkingSockets
+
+Copyright (c) 2018 Valve Corporation. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.

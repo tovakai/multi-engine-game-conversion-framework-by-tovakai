@@ -29,10 +29,16 @@ from collections.abc import Callable
 from pathlib import Path
 
 from rpgmframe.elf import read_elf_architecture
+from rpgmframe.steam_sdk_compat import NETWORKING_INLINE_HELPERS
+from rpgmframe.godotsteam_legacy import LEGACY_INITIALIZER
 
 ProgressCallback = Callable[[str], None]
 
 RECIPE_ID = "godot-3.7-dev1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1"
+GODOTSTEAM_460_RECIPE = "godot-4.6.0-godotsteam-4.17.1-arm64-v1"
+GODOTSTEAM_472_RECIPE = "godot-4.7.2-godotsteam-4.23-arm64-v1"
+GODOTSTEAM_351_RECIPE = "godot-3.5.1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1"
+GODOT_351_REF = "6fed1ffa313c6760fa88b368ae580378daaef0f0"
 GODOT_REF = "a117d512b00f1646db174e703e7e888519b64608"
 GODOTSTEAM_REF = "v3.30"
 GODOTSTEAM_EXPECTED_SHA = "f73d138b56fe971a940dd0498e8b9d0fc8fdcffd"
@@ -64,6 +70,12 @@ def automatic_recipe_for(
     godotsteam: bool,
 ) -> str | None:
     '''Return the supported automatic compatibility recipe, if any.'''
+    if godotsteam and engine_version == '4.6.0':
+        return GODOTSTEAM_460_RECIPE
+    if godotsteam and engine_version == '4.7.2':
+        return GODOTSTEAM_472_RECIPE
+    if godotsteam and engine_version == '3.5.1':
+        return GODOTSTEAM_351_RECIPE
     if engine_version == "3.7.0" and custom_build and godotsteam:
         return RECIPE_ID
     return None
@@ -97,7 +109,11 @@ def _native_toolchain_available() -> bool:
 
 
 def _distrobox_command() -> str | None:
-    return shutil.which("distrobox")
+    command = shutil.which("distrobox")
+    if command:
+        return command
+    local = Path.home()/'.local/bin/distrobox'
+    return str(local) if local.is_file() and os.access(local,os.X_OK) else None
 
 
 def _distrobox_toolchain_available(name: str) -> bool:
@@ -436,6 +452,54 @@ echo "==> Runtime bundle complete: $OUTPUT_DIR"
 '''
 
 
+_WORKER_SCRIPT = _WORKER_SCRIPT.replace(
+    'echo "==> Wiring native ARM64 Steam API"',
+    'echo "==> Restoring native Steam networking C++ helpers"\n'
+    'cat >> "$MODULE/sdk/public/steam/steam_api.h" <<\'TOVAKAI_HELPERS\'\n'
+    + NETWORKING_INLINE_HELPERS + '\nTOVAKAI_HELPERS\n\n'
+    'echo "==> Wiring native ARM64 Steam API"',
+)
+
+
+def worker_script_for(recipe_id: str) -> str:
+    if recipe_id == RECIPE_ID:
+        return _WORKER_SCRIPT
+    if recipe_id != GODOTSTEAM_351_RECIPE:
+        raise CustomGodotRuntimeError(f'No source-build recipe for {recipe_id}')
+    start = _WORKER_SCRIPT.index('echo "==> Applying Godot 3.x CanvasItem cast fix"')
+    end = _WORKER_SCRIPT.index('echo "==> Applying release-safe Variant missing-method guard"')
+    worker = _WORKER_SCRIPT[:start] + _WORKER_SCRIPT[end:]
+    legacy_patch = '''echo "==> Restoring legacy GodotSteam dictionary initialization API"
+MODULE="$MODULE" python3 - <<'LEGACY_PATCH'
+import os
+import re
+from pathlib import Path
+module = Path(os.environ["MODULE"])
+cpp = module / "godotsteam.cpp"
+header = module / "godotsteam.h"
+text = cpp.read_text()
+pattern = r'(?m)^([ \\t]*)ClassDB::bind_method\\(D_METHOD\\("steamInit",[^\\n]*&Steam::steamInit,[^\\n]*$'
+binding = r'\\1ClassDB::bind_method(D_METHOD("steamInit", "retrieve_stats", "app_id", "embed_callbacks"), &Steam::steamInitLegacy, DEFVAL(true), DEFVAL(0), DEFVAL(false));'
+text, count = re.subn(pattern, binding, text)
+if count != 1 or text.count("bool Steam::steamInit(") != 1:
+    raise SystemExit("Unexpected legacy initialization patch layout")
+text = text.replace("bool Steam::steamInit(", LEGACY_INITIALIZER + "\\n" + "bool Steam::steamInit(")
+declarations, count = re.subn(r'(?m)^([ \\t]*)bool steamInit\\(',
+    r'\\1Dictionary steamInitLegacy(bool retrieve_stats, uint32_t app_id, bool embed_callbacks);\\n\\1bool steamInit(', header.read_text())
+if count != 1:
+    raise SystemExit("Unexpected legacy initialization declaration")
+cpp.write_text(text)
+header.write_text(declarations)
+LEGACY_PATCH
+
+'''
+    legacy_patch = legacy_patch.replace('text = cpp.read_text()',f'LEGACY_INITIALIZER = {LEGACY_INITIALIZER!r}\ntext = cpp.read_text()')
+    worker = worker.replace('echo "==> Wiring native ARM64 Steam API"',legacy_patch+'echo "==> Wiring native ARM64 Steam API"')
+    return (worker.replace('Godot 3.7-dev1','Godot 3.5.1')
+            .replace('Godot 3.7 custom/development','Godot 3.5.1')
+            .replace('upstream Godot PR #123099 CanvasItem ancestral-class fix + ',''))
+
+
 class CustomGodotRuntimeManager:
     '''Build and cache the Steam Frame Godot 3.7/GodotSteam compatibility runtime.'''
 
@@ -446,7 +510,11 @@ class CustomGodotRuntimeManager:
         work_dir: Path | str | None = None,
         steam_api: Path | str | None = None,
         distrobox_name: str | None = None,
+        recipe_id: str = RECIPE_ID,
     ) -> None:
+        self.recipe_id = recipe_id
+        self.worker_script = worker_script_for(recipe_id)
+        self.godot_ref = GODOT_351_REF if recipe_id == GODOTSTEAM_351_RECIPE else GODOT_REF
         configured = os.environ.get("RPGMFRAME_CACHE_DIR")
         if cache_dir is not None:
             root = Path(cache_dir)
@@ -459,7 +527,7 @@ class CustomGodotRuntimeManager:
         if work_dir is not None:
             self.work_dir = Path(work_dir).expanduser().resolve()
         else:
-            self.work_dir = self.cache_dir / ".work" / RECIPE_ID
+            self.work_dir = self.cache_dir / ".work" / self.recipe_id
         self.steam_api = (
             Path(steam_api).expanduser().resolve()
             if steam_api is not None
@@ -472,7 +540,7 @@ class CustomGodotRuntimeManager:
         )
 
     def runtime_path(self) -> Path:
-        return self.cache_dir / RECIPE_ID
+        return self.cache_dir / self.recipe_id
 
     def _validate_runtime(self, path: Path) -> bool:
         binary = path / "godot.arm64"
@@ -490,7 +558,7 @@ class CustomGodotRuntimeManager:
             value = json.loads(manifest.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return False
-        return isinstance(value, dict) and value.get("recipe_id") == RECIPE_ID
+        return isinstance(value, dict) and value.get("recipe_id") == self.recipe_id
 
     def _build_command(
         self,
@@ -511,6 +579,7 @@ class CustomGodotRuntimeManager:
                     "GODOTSTEAM_EXPECTED_SHA",
                     "PROTON_REF",
                     "RECIPE_ID",
+                    "JOBS",
                 )
             ]
             return (
@@ -565,11 +634,14 @@ class CustomGodotRuntimeManager:
 
         self.work_dir.mkdir(parents=True, exist_ok=True)
         worker = self.work_dir / "build-runtime.sh"
-        worker.write_text(_WORKER_SCRIPT, encoding="utf-8", newline="\n")
+        worker.write_text(self.worker_script, encoding="utf-8", newline="\n")
         worker.chmod(worker.stat().st_mode | 0o755)
+        steam_copy = self.work_dir/'steam-runtime/libsteam_api.so'
+        steam_copy.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(self.steam_api,steam_copy)
 
         final.parent.mkdir(parents=True, exist_ok=True)
-        temporary = final.parent / f".{RECIPE_ID}.tmp-{uuid.uuid4().hex[:8]}"
+        temporary = final.parent / f".{self.recipe_id}.tmp-{uuid.uuid4().hex[:8]}"
         shutil.rmtree(temporary, ignore_errors=True)
 
         env = dict(os.environ)
@@ -577,19 +649,20 @@ class CustomGodotRuntimeManager:
             {
                 "WORK_DIR": str(self.work_dir / "sources"),
                 "OUTPUT_DIR": str(temporary),
-                "STEAM_API": str(self.steam_api),
-                "GODOT_REF": GODOT_REF,
+                "STEAM_API": str(steam_copy),
+                "GODOT_REF": self.godot_ref,
                 "GODOTSTEAM_REF": GODOTSTEAM_REF,
                 "GODOTSTEAM_EXPECTED_SHA": GODOTSTEAM_EXPECTED_SHA,
                 "PROTON_REF": PROTON_REF,
-                "RECIPE_ID": RECIPE_ID,
+                "RECIPE_ID": self.recipe_id,
+                "JOBS": str(max(1,min(6,os.cpu_count() or 1))),
             }
         )
 
         command, runner = self._build_command(env)
         if progress:
             progress(
-                "Building automatic Godot 3.7/GodotSteam compatibility runtime "
+                f"Building automatic Godot {self.godot_ref[:12]}/GodotSteam compatibility runtime "
                 f"using {runner}"
             )
 
@@ -649,6 +722,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--steam-api", type=Path)
     parser.add_argument("--distrobox", dest="distrobox_name")
+    parser.add_argument('--recipe',dest='recipe_id',choices=[RECIPE_ID,GODOTSTEAM_351_RECIPE],default=RECIPE_ID)
     parser.add_argument(
         "--output",
         type=Path,
@@ -664,6 +738,7 @@ def main(argv: list[str] | None = None) -> int:
         work_dir=args.work_dir,
         steam_api=args.steam_api,
         distrobox_name=args.distrobox_name,
+        recipe_id=args.recipe_id,
     )
     try:
         runtime = manager.ensure_runtime(progress=print)

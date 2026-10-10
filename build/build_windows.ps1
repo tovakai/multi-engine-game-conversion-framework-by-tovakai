@@ -49,6 +49,8 @@ foreach ($path in @(
   --hidden-import tkinterdnd2 `
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
+  --collect-data megcfbt `
+  --collect-data gamemakerframe `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 
@@ -63,13 +65,15 @@ Multi-Engine Game Conversion Framework by tovakai
 =================================================
 
 1. Run the application.
-2. Drop a Ren'Py, RPG Maker, or Godot game folder / ZIP.
+2. Drop a supported game folder / ZIP (Ren'Py, RPG Maker, Godot, Construct, GameMaker, LÖVE or AGS).
 3. Let the framework detect the engine.
 4. Convert.
 5. Copy the generated *-linux-aarch64.zip to the target Linux ARM64 device.
 6. Extract the ZIP and run ./install-to-steam.sh in the graphical desktop session.
 
 RPG Maker and Godot runtimes are resolved automatically.
+GameMaker, LÖVE and AGS use a matching ARM64 SDK bundle selected in the GUI
+or configured once in the native runtime cache. Native addons require matching builds.
 Ren'Py 7/8 runtimes resolve automatically, with a manual ARM64 override.
 Original DDLC 1.1.1 / Ren'Py 6.99.12 has an opt-in experimental 7.5.3
 full-engine migration. DDLC hardware/story compatibility is unverified.

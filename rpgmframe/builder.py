@@ -12,6 +12,7 @@ import zipfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from contextlib import nullcontext
 
 from rpgmframe.compat import install_compatibility
 from rpgmframe.detector import inspect_game
@@ -19,7 +20,7 @@ from rpgmframe.elf import read_elf_architecture
 from rpgmframe.launchers import nwjs_launcher_body
 from rpgmframe.models import BuildResult, EngineVariant
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION, RuntimeManager
-from rpgmframe.source import SourceError, prepare_source
+from rpgmframe.source import SourceError, prepare_source, PreparedSource
 
 
 class BuildError(RuntimeError):
@@ -325,6 +326,7 @@ def build_game(
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
+    prepared_source: PreparedSource | None = None,
 ) -> BuildResult:
     """Create a self-contained Linux ARM64 package for a supported game."""
     source_path = _normalize_path(source)
@@ -333,7 +335,7 @@ def build_game(
     )
 
     try:
-        prepared_context = prepare_source(source_path)
+        prepared_context = nullcontext(prepared_source) if prepared_source else prepare_source(source_path, progress=progress)
         prepared = prepared_context.__enter__()
     except SourceError as exc:
         raise BuildError(str(exc)) from exc

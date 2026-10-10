@@ -3,10 +3,6 @@
 from __future__ import annotations
 
 import re
-import dis
-import importlib.util
-import marshal
-import types
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
@@ -207,7 +203,7 @@ def strategy_renpy_init(root: Path) -> VersionHint | None:
         return None
 
     assignments = re.findall(
-        r"(?m)^[ \t]*version_tuple[ \t]*=[ \t]*\([ \t]*"
+        r"(?m)^[ \t]*version_tuple[ \t]*=[ \t]*(?:VersionTuple)?\([ \t]*"
         r"(\d+)[ \t]*,[ \t]*(\d+)[ \t]*,[ \t]*(\d+)[ \t]*(?:,|\))",
         text,
     )
@@ -362,34 +358,14 @@ def strategy_lib_python_generation(root: Path) -> VersionHint | None:
 
 
 def strategy_vc_version_bytecode(root: Path) -> VersionHint | None:
-    """Read literal assignments in bytecode without importing or executing it.
-
-    Only inspect the host's bytecode format: disassembling foreign Python
-    opcodes could silently infer the wrong version.
-    """
-    candidate = root / "renpy" / "vc_version.pyc"
-    try:
-        with candidate.open("rb") as handle:
-            data = handle.read(65537)
-        if len(data) > 65536 or data[:4] != importlib.util.MAGIC_NUMBER:
-            return None
-        code = marshal.loads(data[16:])
-        if not isinstance(code, types.CodeType):
-            return None
-        previous = None
-        for instruction in dis.get_instructions(code):
-            if (instruction.opname in {"STORE_NAME", "STORE_GLOBAL"}
-                    and instruction.argval in {"version", "vc_version"}
-                    and previous is not None and previous.opname == "LOAD_CONST"
-                    and isinstance(previous.argval, str)
-                    and re.fullmatch(r"\d+\.\d+\.\d+(?:\.\d+)?", previous.argval)):
-                version = ".".join(previous.argval.split(".")[:3])
-                return VersionHint(version=version, generation=_generation_from_version(version),
-                                   source="renpy/vc_version.pyc", confidence="high",
-                                   details="static literal bytecode assignment; no game code executed")
-            previous = instruction
-    except (OSError, ValueError, EOFError, TypeError, IndexError):
-        return None
+    from renframe.bytecode_metadata import literal_assignments
+    values = literal_assignments(root / "renpy/vc_version.pyc")
+    raw = values.get("version", values.get("vc_version"))
+    if isinstance(raw, str) and re.fullmatch(r"\d+\.\d+\.\d+(?:\.\d+)?", raw):
+        version = ".".join(raw.split(".")[:3])
+        return VersionHint(version=version, generation=_generation_from_version(version),
+                           source="renpy/vc_version.pyc", confidence="high",
+                           details="bounded static metadata; no game code executed")
     return None
 
 
@@ -458,7 +434,9 @@ def detect_game_name(root: Path) -> str:
     # Prefer a similarly named .sh launcher if present.
     for script in sorted(root.glob("*.sh")):
         stem = script.stem
-        if stem.lower() in {"renpy", "linux-x86_64", "linux-aarch64"}:
+        if stem.lower() in {"renpy", "linux-x86_64", "linux-aarch64", "launch", "launch-steam", "add-to-steam", "install-to-steam"}:
             continue
         return stem.replace("-", " ").replace("_", " ")
+    if root.name == "Resources" and root.parent.name == "Contents" and root.parent.parent.suffix.lower() == ".app":
+        return root.parent.parent.stem
     return guess_game_name(root)

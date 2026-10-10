@@ -25,12 +25,25 @@ from megcfbt.frame_package import (
     create_frame_zip,
     embed_steam_cover,
     write_frame_metadata,
+    default_zip_path,
 )
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
-from rpgmframe.source import SourceError, prepare_source
+from rpgmframe.source import SourceError, prepare_source, PreparedSource
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from renframe.utils import sanitize_fs_name
+from renframe.detector import looks_like_renpy_game
+from megcfbt.native_backend import NativeBuildError
+from megcfbt.steam_context import steam_app_id_for_source
+
+
+def _native_backends():
+    from gamemakerframe import backend as gamemaker
+    from loveframe import backend as love
+    from agsframe import backend as ags
+    from constructframe import backend as construct
+    return {'gamemakerframe': gamemaker, 'loveframe': love,
+            'agsframe': ags, 'constructframe': construct}
 
 
 class ConversionError(RuntimeError):
@@ -78,6 +91,33 @@ def _candidate_roots(root: Path, *, max_depth: int = 8) -> Iterator[Path]:
             return
         current = child
         yield current
+
+
+def _renpy_root_candidates(root: Path, *, max_depth: int = 8) -> list[Path]:
+    """Find shallow Ren'Py exports, including macOS Resources and mixed wrappers."""
+    level = [root]
+    visited = 0
+    skip = {"game", "renpy", "lib", ".git", "__macosx", "node_modules", "steam_settings"}
+    for _ in range(max_depth + 1):
+        matches, children = [], []
+        for candidate in level:
+            visited += 1
+            if visited > 4096:
+                return []
+            if looks_like_renpy_game(candidate):
+                matches.append(candidate)
+                continue
+            try:
+                children.extend(path for path in candidate.iterdir() if path.is_dir()
+                                and not path.is_symlink()
+                                and not getattr(path, "is_junction", lambda: False)()
+                                and path.name.casefold() not in skip)
+            except OSError:
+                continue
+        if matches:
+            return matches
+        level = children
+    return []
 
 
 def _renpy_summary(root: Path) -> UnifiedInspection | None:
@@ -184,15 +224,53 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
     # seeing each candidate, but its own detector remains the authority for its engines.
     candidates = list(_candidate_roots(root))
 
-    for candidate in candidates:
+    renpy_roots = _renpy_root_candidates(root)
+    if len(renpy_roots) > 1:
+        return UnifiedInspection(source_path=root, backend=None, engine="renpy",
+                                 engine_label="Ren'Py", engine_version=None, game_name=root.name,
+                                 compatibility="ambiguous", confidence="high", runtime_kind=None,
+                                 buildable=False, evidence=tuple(str(p.relative_to(root)) for p in renpy_roots),
+                                 warnings=("Multiple Ren'Py game roots found; select the intended game directory.",))
+    for candidate in renpy_roots:
         summary = _renpy_summary(candidate)
         if summary is not None:
             return summary
 
     for candidate in candidates:
+        for backend in _native_backends().values():
+            summary = backend.inspect_game(candidate)
+            if summary is not None:
+                return summary
         summary = _rpgm_summary(candidate)
         if summary is not None:
             return summary
+
+    # Native exports may have sibling manuals or Steam metadata alongside
+    # their platform directory, so a single-directory wrapper chain is not
+    # sufficient. Only inspect shallow exports and require one candidate.
+    level = [root]
+    skip = {'game','lib','renpy','assets','audio','data','graphics','www','node_modules','.git'}
+    for _ in range(3):
+        children = []
+        for parent in level:
+            try:
+                children.extend(p for p in parent.iterdir() if p.is_dir() and not p.is_symlink()
+                                and not getattr(p,'is_junction',lambda:False)()
+                                and p.name.casefold() not in skip)
+            except OSError:
+                continue
+        if len(children) > 4096:
+            break
+        matches = [result for candidate in children for backend in _native_backends().values()
+                   if (result := backend.inspect_game(candidate)) is not None]
+        if len(matches) == 1:
+            return matches[0]
+        if matches:
+            return UnifiedInspection(root,None,'unknown','Multiple native engine exports',None,root.name,
+                                     'ambiguous','high',None,False,
+                                     ('Select one native game export directory.',),
+                                     tuple(str(result.source_path.relative_to(root)) for result in matches))
+        level = children
 
     for candidate in candidates:
         names = {p.name.casefold(): p for p in candidate.iterdir() if p.is_file()}
@@ -210,6 +288,11 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
                                      compatibility="unsupported", confidence="high", runtime_kind=None, buildable=False,
                                      evidence=("Data.wolf",),
                                      warnings=("WOLF RPG Editor is not supported by the native ARM64 backends; its data is incompatible with RPG Maker/EasyRPG.",))
+        if any((app/'Contents/MacOS/librenpython.dylib').is_file() for app in candidate.glob('*.app')):
+            return UnifiedInspection(root,'renframe','renpy',"Ren'Py",None,candidate.name,
+                                     'incomplete_export','high',None,False,
+                                     ('Ren\'Py macOS runtime found, but complete game/ and renpy/ resources are missing. Restore the original distribution before converting.',),
+                                     ('macOS librenpython.dylib',))
 
     return UnifiedInspection(
         source_path=root,
@@ -295,14 +378,30 @@ def build_source(
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
+    _prepared_source: PreparedSource | None = None,
 ) -> UnifiedBuildResult:
+    options = locals().copy()
+    options.pop('source')
     def stage(value: float, message: str) -> None:
         if stage_progress:
             stage_progress(max(0.0, min(1.0, value)), message)
 
     path = Path(source).expanduser().resolve()
+    if output is not None:
+        output_path = Path(output).expanduser().resolve()
+        if output_path == path or output_path in path.parents or (path.is_dir() and path in output_path.parents):
+            raise ConversionError("Output must be separate from the original source, including source archives.")
+        if archive and default_zip_path(output_path).resolve() == path:
+            raise ConversionError('Generated ZIP would replace the original source archive; choose another output name.')
     stage(0.03, "Inspecting source")
-    inspection = inspect_source(path)
+    if path.is_file() and path.suffix.casefold() == '.zip' and _prepared_source is None:
+        try:
+            with prepare_source(path, progress=progress) as prepared:
+                options['_prepared_source'] = prepared
+                return build_source(path, **options)
+        except SourceError as exc:
+            raise ConversionError(str(exc)) from exc
+    inspection = _inspect_prepared(_prepared_source.root) if _prepared_source else inspect_source(path)
     if renpy_ddlc_753_migration and (
         inspection.backend != "renframe" or not inspection.renpy_ddlc_753_candidate
     ):
@@ -338,13 +437,15 @@ def build_source(
         if output is not None
         else output_path_for_source(path, path.parent, inspection.game_name)
     )
+    if archive and default_zip_path(output_path).resolve() == path:
+        raise ConversionError('Generated ZIP would replace the original source archive; choose another output name.')
     if dry_run and inspection.backend != "renframe":
         raise ConversionError("--dry-run currently supports Ren'Py builds only.")
 
     try:
         stage(0.20, "Building ARM64 package")
         if inspection.backend == "renframe":
-            with prepare_source(path) as prepared:
+            with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
                 prepared_inspection = _inspect_prepared(prepared.root)
                 if prepared_inspection.backend != "renframe":
                     raise ConversionError("Ren'Py source disappeared after extraction.")
@@ -372,6 +473,19 @@ def build_source(
                         engine_version=engine_version, game_name=game_name,
                         warnings=warnings,
                     )
+        elif inspection.backend in _native_backends():
+            with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
+                selected = _inspect_prepared(prepared.root)
+                result = _native_backends()[inspection.backend].build_game(
+                    selected.source_path, output=output_path, runtime=backend_runtime,
+                    runtime_version=runtime_version, force=force, progress=progress,
+                    download_progress=download_progress,
+                    steam_app_id=steam_app_id_for_source(_prepared_source.root if _prepared_source else path),
+                )
+            launcher_path = result.launcher_path
+            warnings = tuple(result.warnings)
+            game_name = result.game_name
+            engine_version = result.engine_version
         else:
             def backend_stage(value: float, message: str) -> None:
                 stage(0.20 + (0.62 * max(0.0, min(1.0, value))), message)
@@ -385,6 +499,7 @@ def build_source(
                 progress=progress,
                 stage_progress=backend_stage,
                 download_progress=download_progress,
+                **({'prepared_source': _prepared_source} if _prepared_source else {}),
             )
             launcher_path = result.launcher_path
             warnings = tuple(result.warnings)
@@ -436,6 +551,7 @@ def build_source(
         RPGMFrameBuildError,
         FramePackageError,
         SourceError,
+        NativeBuildError,
     ) as exc:
         raise ConversionError(str(exc)) from exc
 

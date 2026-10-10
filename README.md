@@ -62,7 +62,10 @@ it pretend it has one?**
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | RPG Maker 2000 / 2003 | RPGMFrame / EasyRPG | copy LCF game data; launch native EasyRPG installed on the target | Experimental; requires system EasyRPG or the aarch64 `org.easyrpg.player` Flatpak |
-| Construct 2 / 3 | RPGMFrame / NW.js | discover web exports, including `package.nw`, and replace the desktop wrapper with ARM64 NW.js | Experimental; game addons require testing |
+| Construct 2 / 3 | ConstructFrame / NW.js | discover web exports, including `package.nw`, and replace the desktop wrapper with ARM64 NW.js | Experimental; game addons require testing |
+| GameMaker VM | GameMakerFrame / Butterscotch | validate FORM/GEN8/CODE and retain external assets | Experimental; native SDK required; YYC/GMRT excluded |
+| LÖVE | LÖVEFrame | unpack fused EXE or `.love`; replace native Lua modules | ARM64 SDK required; Balatro menu and Gravity Circuit startup tested |
+| Adventure Game Studio | AGSFrame | retain CLIB data, volumes, audio and translations | ARM64 SDK/plugin capabilities required; The Cat Lady startup tested |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
@@ -302,6 +305,11 @@ Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 ## Custom Godot / GodotSteam compatibility runtime
+
+Matching GodotSteam ARM64 release-template downloads are now available for
+Godot 4.6.0 and 4.7.2, with a separate pinned source recipe for Godot 3.5.1.
+See [native backends and GodotSteam tests](docs/native-backends.md) for SDK setup,
+the Frame graphics-routing fix, runtime capabilities and remaining test coverage.
 
 Custom Godot development exports are still treated conservatively. The first
 automatic compatibility recipe is deliberately narrow: Godot 3.7.0 custom

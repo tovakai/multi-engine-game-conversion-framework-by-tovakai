@@ -651,7 +651,7 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}:
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe"} or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
@@ -754,7 +754,7 @@ class ConverterApp:
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.engine == "godot" and self.inspection.runtime_kind == "godot-custom":
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe"} or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:
@@ -769,15 +769,16 @@ class ConverterApp:
 
     def _pick_backend_runtime(self) -> None:
         folder = filedialog.askdirectory(
-            title="Select custom Godot Linux ARM64 runtime bundle"
+            title="Select matching Linux ARM64 runtime bundle"
         )
         if not folder:
             return
         runtime = Path(folder)
-        if not (runtime / "godot.arm64").is_file():
+        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags"}.get(self.inspection.backend, "godot.arm64")
+        if not (runtime / executable).is_file():
             messagebox.showerror(
                 APP_NAME,
-                "Custom Godot runtime must contain godot.arm64 in its root folder.",
+                f"Runtime must contain {executable} in its root folder.",
             )
             return
         self.backend_runtime = runtime

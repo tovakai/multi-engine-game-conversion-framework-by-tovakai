@@ -44,6 +44,13 @@ def test_py2_layout_selects_renpy_7_not_version_example(tmp_path):
     assert any(h.source == "lib/" and h.generation == 7 for h in inspection.version_hints)
 
 
+def test_named_version_tuple_selects_matching_python_generation(tmp_path):
+    root = make_game(tmp_path, "python2.7")
+    text = REN_SCRIPT.replace('version_tuple = (', 'version_tuple = VersionTuple(')
+    (root / 'renpy/__init__.py').write_text(text)
+    assert inspect_game(root).renpy_version == '7.4.11'
+
+
 def test_py3_layout_selects_renpy_8(tmp_path):
     root = make_game(tmp_path, "python3.9")
     hint = strategy_renpy_init(root)

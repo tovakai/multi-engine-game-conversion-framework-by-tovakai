@@ -1,5 +1,10 @@
 Engine expansion feasibility — 2026-10-10
 
+Implementation update: the four data-driven backends now exist and have native
+startup evidence. See [native backend status and SDK setup](native-backends.md)
+for the current implementation, limitations and Godot candidate retests. The
+assessment below records the earlier discovery stage.
+
 GameMakerFrame and LÖVEFrame are practical next backends. ConstructFrame can be
 factored out of the existing Construct/NW.js path. AGSFrame is practical with
 native plugin handling. WOLFRPGFrame has a WebAssembly candidate, but its data

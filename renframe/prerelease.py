@@ -11,4 +11,8 @@ def prerelease_853_candidate(root: Path) -> bool:
                     and (root / 'game').is_dir()
                     and (root / 'lib/python3.12').is_dir())
     except (OSError, UnicodeError):
-        return False
+        from renframe.bytecode_metadata import literal_assignments
+        values = literal_assignments(root / 'renpy/vc_version.pyc')
+        return bool(values.get('nightly') is True
+                    and re.fullmatch(r'8\.5\.[0-4]\.\d+', str(values.get('version', '')))
+                    and (root / 'game').is_dir() and (root / 'lib/python3.12').is_dir())
