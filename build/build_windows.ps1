@@ -73,8 +73,8 @@ Multi-Engine Game Conversion Framework by tovakai
 6. Extract the ZIP and run ./install-to-steam.sh in the graphical desktop session.
 
 RPG Maker and Godot runtimes are resolved automatically.
-GameMaker, LÖVE and AGS use a matching ARM64 SDK bundle selected in the GUI
-or configured once in the native runtime cache. Native addons require matching builds.
+GameMaker VM, LÖVE 11.x, AGS and EasyRPG runtimes download and cache automatically.
+The runtime chooser remains an optional override. Unknown native addons require matching builds.
 Ren'Py 7/8 runtimes resolve automatically, with a manual ARM64 override.
 Original DDLC 1.1.1 / Ren'Py 6.99.12 has an opt-in experimental 7.5.3
 full-engine migration. DDLC hardware/story compatibility is unverified.

@@ -202,6 +202,15 @@ def ensure_downloaded_runtime(
             progress("Using cached custom GodotSteam ARM64 runtime")
         return target
 
+    if recipe_id not in UPSTREAM_RECIPES:
+        from megcfbt.runtime_download import ensure_bundle, RuntimeDownloadError as BundleDownloadError
+        bundle=dict(entry,executable='godot.arm64',archive_files=entry.get('archive_files',['godot.arm64','runtime.json']))
+        try:
+            return ensure_bundle(bundle,target,validate=lambda path:_validate(path,recipe_id),
+                                 progress=progress,download_progress=download_progress)
+        except BundleDownloadError as exc:
+            raise RuntimeDownloadError(str(exc)) from exc
+
     target.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".godotsteam-", dir=target.parent) as temp:
         tmp = Path(temp)

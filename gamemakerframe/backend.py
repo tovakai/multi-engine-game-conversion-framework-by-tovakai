@@ -4,7 +4,7 @@ import struct
 
 from megcfbt.models import UnifiedInspection
 from megcfbt.native_backend import NativeBuildError, build_native
-from megcfbt.native_runtime import configured_runtime
+from megcfbt.native_runtime import resolve_runtime
 
 
 def data_info(path: Path):
@@ -71,10 +71,10 @@ def inspect_game(root: Path):
 
 
 def build_game(source: Path, *, output, runtime=None, force=False, progress=None, **kwargs):
-    runtime = runtime if runtime is not None else configured_runtime('gamemaker')
     inspection = inspect_game(source)
     if inspection is None or not inspection.buildable:
         raise NativeBuildError('No supported unambiguous GameMaker VM data found.')
+    runtime = resolve_runtime('gamemaker',runtime,progress=progress,download_progress=kwargs.get('download_progress'))
     data_path, _ = find_game(source)[0]
     def prepare(destination):
         shutil.copytree(source, destination, symlinks=False,

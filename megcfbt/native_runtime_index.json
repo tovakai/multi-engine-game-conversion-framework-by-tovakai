@@ -1,0 +1,92 @@
+{
+  "recipes": {
+    "gamemaker": {
+      "recipe_id": "gamemaker-frame-arm64-v1",
+      "executable": "butterscotch",
+      "sha256": "7cd137dc54c0cef5c98815b8e135454c1232b2e54aa4422da26c935662e687d8",
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-native-arm64-v1/gamemaker-frame-arm64-v1.tar.gz",
+      "archive_files": [
+        "LICENSE-Butterscotch.txt",
+        "LICENSE-box2d.txt",
+        "LICENSE-miniz.txt",
+        "LICENSE-mojoal.txt",
+        "SOURCE-BUILD.txt",
+        "butterscotch",
+        "ds-list-set-arity.patch",
+        "engine-capabilities.json"
+      ],
+      "engine_version": null
+    },
+    "love": {
+      "recipe_id": "love-frame-arm64-v1",
+      "executable": "love",
+      "sha256": "90e05b4e11c548f37c3fceb55967c5e3820d17d03e8d60628566d29c7df82f7d",
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-native-arm64-v1/love-frame-arm64-v1.tar.gz",
+      "archive_files": [
+        "LICENSE-LOVE.txt",
+        "LICENSE-lua-https.txt",
+        "LICENSE-luasteam.txt",
+        "SOURCE-BUILD.txt",
+        "engine-capabilities.json",
+        "https.so",
+        "libliblove.so",
+        "love",
+        "luasteam-stats.patch",
+        "luasteam.so"
+      ],
+      "engine_version": "11.5"
+    },
+    "ags": {
+      "recipe_id": "ags-frame-arm64-v1",
+      "executable": "ags",
+      "sha256": "5aa53b381727cf1573dd12750ff9d4d2a2e0878a02b9ea371242180a22aa411d",
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-native-arm64-v1/ags-frame-arm64-v1.tar.gz",
+      "archive_files": [
+        "COPYRIGHT-AGS.txt",
+        "LICENSE-AGS.txt",
+        "LICENSE-agsblend.txt",
+        "SOURCE-BUILD.txt",
+        "ags",
+        "engine-capabilities.json"
+      ],
+      "engine_version": "3.6.2.21"
+    },
+    "easyrpg": {
+      "recipe_id": "easyrpg-frame-arm64-v1",
+      "executable": "easyrpg-player",
+      "sha256": "384c60cc69298e9008eec48738170a8be613e24dec64152a61ed26381c29e183",
+      "engine_version": "0.8.1.1",
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-native-arm64-v1/easyrpg-frame-arm64-v1.tar.gz",
+      "archive_files": [
+        "DEPENDENCY-SOURCES.tar.xz",
+        "LICENSE-EasyRPG.txt",
+        "LICENSE-GPL-2.txt",
+        "LICENSE-GPL-3.txt",
+        "LICENSE-LGPL-2.1.txt",
+        "LICENSE-LGPL-3.txt",
+        "LICENSE-TimGM6mb.txt",
+        "LICENSE-libfluidsynth3.txt",
+        "LICENSE-libfmt8.txt",
+        "LICENSE-libicu70.txt",
+        "LICENSE-libinih1.txt",
+        "LICENSE-libinstpatch-1.0-2.txt",
+        "LICENSE-liblcf.txt",
+        "LICENSE-libopusfile0.txt",
+        "LICENSE-libxmp4.txt",
+        "SOURCE-BUILD.txt",
+        "TimGM6mb.sf2",
+        "easyrpg-player",
+        "engine-capabilities.json",
+        "libfluidsynth.so.3",
+        "libfmt.so.8",
+        "libicudata.so.70",
+        "libicui18n.so.70",
+        "libicuuc.so.70",
+        "libinih.so.1",
+        "libinstpatch-1.0.so.2",
+        "libopusfile.so.0",
+        "libxmp.so.4"
+      ]
+    }
+  }
+}

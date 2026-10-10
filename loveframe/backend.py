@@ -6,7 +6,7 @@ import zipfile
 from megcfbt.models import UnifiedInspection
 from megcfbt.native_backend import NativeBuildError, build_native, validate_runtime
 from rpgmframe.source import _safe_extract_zip
-from megcfbt.native_runtime import configured_runtime
+from megcfbt.native_runtime import resolve_runtime,configured_runtime
 
 
 def find_game(root: Path):
@@ -50,10 +50,12 @@ def inspect_game(root: Path):
 
 
 def build_game(source: Path, *, output, runtime=None, force=False, progress=None, **kwargs):
-    runtime = runtime if runtime is not None else configured_runtime('love')
     inspection = inspect_game(source)
     if inspection is None or not inspection.buildable:
         raise NativeBuildError('No unambiguous LÖVE export found.')
+    if runtime is None and configured_runtime('love') is None and inspection.engine_version and not inspection.engine_version.startswith('11.'):
+        raise NativeBuildError(f'Automatic LÖVE runtime currently supports 11.x; select a compatible runtime for {inspection.engine_version}.')
+    runtime = resolve_runtime('love',runtime,progress=progress,download_progress=kwargs.get('download_progress'))
     payload = find_game(source)[0]
     if runtime is not None:
         runtime_root = validate_runtime(Path(runtime), 'love')

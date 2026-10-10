@@ -6,10 +6,10 @@ Detection and a successful package build are distinct from gameplay validation.
 
 | Backend | Accepted exports | Runtime | Current hardware evidence |
 | --- | --- | --- | --- |
-| GameMakerFrame | FORM/GEN8 data with VM CODE, WAD 8–17 | ARM64 Butterscotch | Undertale opening scene; Void Stranger startup; Desert Child still has runner gaps |
-| LÖVEFrame | `.love`, fused EXE ZIP, or Lua project | LÖVE 11.5 / LuaJIT and required ARM64 modules | Balatro main menu; Gravity Circuit language screen with Steam initialized |
+| GameMakerFrame | FORM/GEN8 data with VM CODE, WAD 8–17 | Automatically downloaded ARM64 Butterscotch | Undertale opening scene; Void Stranger startup; Desert Child still has runner gaps |
+| LÖVEFrame | `.love`, fused EXE ZIP, or Lua project | Automatically downloaded LÖVE 11.5 and supported ARM64 modules | Balatro main menu; Gravity Circuit language screen with Steam initialized |
 | ConstructFrame | Construct 2/3 packaged web exports | Shared ARM64 NW.js backend | The Witch's House main menu from the earlier native conversion test |
-| AGSFrame | CLIB game library or appended executable data | AGS 3.6.2.21 with plugin capabilities | The Cat Lady opening sequence through the generated launcher |
+| AGSFrame | CLIB game library or appended executable data | Automatically downloaded AGS 3.6.2.21 with plugin capabilities | The Cat Lady opening sequence through the generated launcher |
 
 GameMaker YYC/GMRT native exports cannot use a VM runner. Newer WAD 17 features,
 native extensions and unimplemented runner functions can still prevent gameplay.
@@ -31,15 +31,39 @@ fallbacks are reported in package warnings. The identified Windows D3D vsync
 hook is matched by its SHA-256 and replaced by native OpenGL vsync, independently
 of the game name. Unknown variants remain subject to the plugin requirement.
 
-## Configure an SDK once
+## Automatic provisioning
 
-Select a runtime bundle using the GUI runtime button or `--backend-runtime`.
+Normal Windows conversions download a checksum-pinned runtime, verify ARM64
+executables/shared libraries, install its complete cache atomically and reuse it.
+No manual SDK selection, Frame connection or device compilation is required.
+The GUI runtime button shows automatic selection and retains an optional override.
+
+The [native ARM64 runtime prerelease](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/runtime-native-arm64-v1)
+provides GameMaker VM, LÖVE 11.x, AGS and portable EasyRPG bundles. Files and
+capability metadata are checked on cache reuse; damaged caches are repaired.
+Failed downloads cannot replace existing game outputs.
+
+LÖVE's Steam module uses Frame's installed native Steam API. The published
+bundle omits that proprietary library. Portable EasyRPG includes required older
+open-source libraries and a licensed MIDI soundfont, with notices and applicable
+corresponding dependency source. It needs no separate Flatpak installation.
+Original RPG Maker RTP assets are never downloaded/distributed; games needing
+them must provide those assets legally.
+
+Runtime availability does not guarantee gameplay compatibility. GameMaker YYC
+and runner gaps, unknown native plugins, unsupported LÖVE generations, encrypted
+or unsupported custom Godot exports and engines without compatible ARM64 runtimes
+remain technical constraints. Known Steam stubs are reported as offline.
+
+## Optional manual SDKs
+
+Override automatic selection using the GUI runtime button or `--backend-runtime`.
 The bundle root contains `butterscotch`, `love`, or `ags`, its native libraries,
 license notices and optional capability manifest. Executables and ELF libraries
 are checked for ARM64. Failed builds preserve an existing output directory.
 
-For repeated conversions, set `GAMEMAKERFRAME_RUNTIME`, `LOVEFRAME_RUNTIME`, or
-`AGSFRAME_RUNTIME`. Alternatively place SDKs in:
+For custom builds, set `GAMEMAKERFRAME_RUNTIME`, `LOVEFRAME_RUNTIME`,
+`AGSFRAME_RUNTIME` or `EASYRPGFRAME_RUNTIME`. Alternatively place custom SDKs in:
 
 - Windows: `%LOCALAPPDATA%/tovakai/cache/runtimes/native/{gamemaker,love,ags}`
 - Linux: `~/.cache/tovakai/runtimes/native/{gamemaker,love,ags}`

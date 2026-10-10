@@ -26,6 +26,7 @@ from renframe.runtime import experimental_arm64_fallback, requires_pre_sdkarm_ov
 from megcfbt.router import (
     ConversionError,
     automatic_custom_godot_runtime_available,
+    automatic_native_runtime_available,
     build_source,
     inspect_source,
     output_path_for_source,
@@ -612,6 +613,7 @@ class ConverterApp:
         self.engine_label.configure(text=f"Engine: {result.engine_label}{version}", text_color=C_TEXT)
         self.backend_label.configure(text=f"Backend: {result.backend or 'none'}", text_color=C_MUTED)
         auto_custom_runtime = automatic_custom_godot_runtime_available(result)
+        auto_native_runtime = automatic_native_runtime_available(result)
         legacy_fallback = (
             ("7.5.0" if result.renpy_legacy_arm64_candidate else
              experimental_arm64_fallback(result.engine_version, result.renpy_generation))
@@ -651,11 +653,13 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.backend in {"gamemakerframe", "loveframe", "agsframe"} or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
                 runtime_text = "RUNTIME // AUTO GODOTSTEAM COMPAT  //  OVERRIDE…"
+            elif auto_native_runtime:
+                runtime_text = "RUNTIME // AUTOMATIC ARM64  //  OVERRIDE…"
             else:
                 runtime_text = "RUNTIME // SELECT CUSTOM ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
@@ -759,7 +763,7 @@ class ConverterApp:
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe"} or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:

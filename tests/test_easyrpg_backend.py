@@ -17,14 +17,18 @@ def game(root):
 def test_easyrpg_nested_source_build_is_relocatable(tmp_path, monkeypatch):
     source = game(tmp_path / 'source/game')
     monkeypatch.setattr('megcfbt.router.complete_frame_artwork', lambda *a, **k: {})
+    runtime=tmp_path/'runtime';runtime.mkdir()
+    elf=bytearray(20);elf[:6]=b'\x7fELF\x02\x01';elf[18:20]=(183).to_bytes(2,'little')
+    (runtime/'easyrpg-player').write_bytes(elf)
     inspection = inspect_source(source.parent)
     assert inspection.engine == 'rpg2k' and inspection.buildable
-    result = build_source(source.parent, output=tmp_path / 'output', archive=False)
+    result = build_source(source.parent, output=tmp_path / 'output', archive=False,backend_runtime=runtime)
     assert (result.output_path / 'game/Map0001.lmu').read_bytes() == b'map fixture'
     assert (result.output_path / 'game/RPG_RT.exe').read_bytes() == b'MZ'
     assert (source / 'RPG_RT.exe').exists()
     launcher = result.launcher_path.read_text()
-    assert '--arch=aarch64' in launcher and '--filesystem="$ROOT/game"' in launcher
+    assert 'exec "$ROOT/runtime/easyrpg-player" --project-path .' in launcher
+    assert (result.output_path/'runtime/easyrpg-player').is_file()
     assert json.loads((result.output_path / '.megcfbt/package.json').read_text())['engine'] == 'rpg2k'
 
 

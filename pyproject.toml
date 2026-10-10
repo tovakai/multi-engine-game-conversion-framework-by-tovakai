@@ -43,6 +43,6 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.setuptools.package-data]
-megcfbt = ["runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
+megcfbt = ["native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
 gamemakerframe = ["patches/*.patch"]
 rpgmframe = ["godot_runtime_index.json"]

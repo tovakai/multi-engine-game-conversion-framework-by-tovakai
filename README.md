@@ -61,11 +61,11 @@ it pretend it has one?**
 | Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12, exact 7.3.5, and legacy 7.4.x | Ren'Py 8, legacy 7.3.5/7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; deeper compatibility varies |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
-| RPG Maker 2000 / 2003 | RPGMFrame / EasyRPG | copy LCF game data; launch native EasyRPG installed on the target | Experimental; requires system EasyRPG or the aarch64 `org.easyrpg.player` Flatpak |
+| RPG Maker 2000 / 2003 | RPGMFrame / EasyRPG | copy LCF data and automatically package portable native EasyRPG | Experimental; no separate target player installation required |
 | Construct 2 / 3 | ConstructFrame / NW.js | discover web exports, including `package.nw`, and replace the desktop wrapper with ARM64 NW.js | Experimental; game addons require testing |
-| GameMaker VM | GameMakerFrame / Butterscotch | validate FORM/GEN8/CODE and retain external assets | Experimental; native SDK required; YYC/GMRT excluded |
-| LÖVE | LÖVEFrame | unpack fused EXE or `.love`; replace native Lua modules | ARM64 SDK required; Balatro menu and Gravity Circuit startup tested |
-| Adventure Game Studio | AGSFrame | retain CLIB data, volumes, audio and translations | ARM64 SDK/plugin capabilities required; The Cat Lady startup tested |
+| GameMaker VM | GameMakerFrame / Butterscotch | automatically download a verified runner; validate VM data and retain assets | Experimental; Undertale startup tested; YYC/GMRT excluded |
+| LÖVE | LÖVEFrame | automatically download LÖVE 11.5 and supported modules; unpack game data | Experimental; Balatro menu and Gravity Circuit startup tested |
+| Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
@@ -87,7 +87,8 @@ experimental complete 8.5.3 engine/runtime migration in the GUI or with
 Encrypted Godot packs/scripts require an ARM64 runtime built with the game's key.
 Unity native exports and WOLF RPG Editor games are diagnosed as unsupported.
 
-For EasyRPG packages, install the native target dependency once:
+New EasyRPG packages include a portable player and supporting libraries
+automatically. Older packages can still use the system player or
 `flatpak install --user --arch=aarch64 flathub org.easyrpg.player`.
 EasyRPG reads the copied `RPG_RT.exe` as engine metadata; the launcher executes
 EasyRPG, and Windows engine plugins are not supported.

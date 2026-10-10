@@ -59,6 +59,13 @@ SOFTWARE.
 SDKs are built or selected separately and run as external processes. Game assets
 are never bundled in this repository. The SDK producer retains upstream notices:
 
+Published automatic native bundles retain component notices, source references
+and build instructions. Butterscotch's argument validation patch is included.
+Portable EasyRPG (GPL-3.0), liblcf and bundled LGPL dependencies have source
+references; applicable dependency source archives and the GPL-2.0 TimGM6mb notice
+accompany the bundle. No original RPG Maker RTP or proprietary Steam API binary
+or SDK headers are published. LÖVE uses the Frame-installed native Steam API.
+
 - Butterscotch: https://github.com/ButterscotchRunner/Butterscotch,
   AGPL-3.0. The bundled `ds_list_set` patch modifies argument validation; the
   pinned source commit and patch are recorded by the SDK recipe.

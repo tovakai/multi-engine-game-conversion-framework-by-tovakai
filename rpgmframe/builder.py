@@ -350,10 +350,9 @@ def build_game(
             raise BuildError(f"Could not identify supported game: {detail}")
         if inspection.engine is EngineVariant.RPG_2K:
             from rpgmframe.easyrpg_backend import build_easyrpg_game
-            if runtime is not None:
-                raise BuildError("EasyRPG packages use native EasyRPG installed on the target; runtime overrides are unavailable.")
             return build_easyrpg_game(source_path=source_path, output_path=output_path,
-                                      inspection=inspection, force=force, progress=progress)
+                                      inspection=inspection, force=force, progress=progress,
+                                      runtime=runtime,download_progress=download_progress)
         if inspection.engine is EngineVariant.GODOT:
             from rpgmframe.godot_backend import GodotBuildError, build_godot_game
 

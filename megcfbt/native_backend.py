@@ -47,7 +47,8 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
                  executable: str, engine: str, game_name: str,
                  engine_version: str | None, prepare_game, arguments: list[str],
                  warnings: tuple[str, ...] = (), force: bool = False,
-                 progress=None, steam_app_id: str | None = None) -> NativeBuildResult:
+                 progress=None, steam_app_id: str | None = None,
+                 runtime_file_arguments: tuple[tuple[str,str], ...] = ()) -> NativeBuildResult:
     source, output = source.resolve(), output.expanduser().resolve()
     if output == source or output in source.parents or source in output.parents:
         raise NativeBuildError('Output must be separate from the source directory.')
@@ -80,11 +81,15 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
         binary = stage / 'runtime' / executable
         binary.chmod(binary.stat().st_mode | 0o111)
         command = ' '.join(shlex.quote(arg) for arg in arguments)
+        for flag,name in runtime_file_arguments:
+            if Path(name).name!=name or name in {'.','..'} or not (stage/'runtime'/name).is_file():
+                raise NativeBuildError(f'Invalid or missing runtime argument file: {name}')
+            command += ' '+shlex.quote(flag)+' "$ROOT/runtime"/'+shlex.quote(name)
         launcher = stage / 'launch.sh'
         launcher.write_text(
             _FRAME_ENV_PREAMBLE +
             'cd "$ROOT/game"\n'
-            'export LD_LIBRARY_PATH="$ROOT/runtime${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
+            'export LD_LIBRARY_PATH="$ROOT/runtime:/opt/steamvr/bin/linuxarm64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
             'export LUA_CPATH="$ROOT/runtime/?.so;${LUA_CPATH:-;;}"\n'
             f'chmod +x "$ROOT/runtime/{executable}"\n'
             f'exec "$ROOT/runtime/{executable}" {command} "$@"\n',

@@ -5,7 +5,7 @@ import json
 from megcfbt.models import UnifiedInspection
 from megcfbt.native_backend import NativeBuildError, build_native, validate_runtime
 from agsframe.compat import is_windows_vsync_hook, native_graphics_config
-from megcfbt.native_runtime import configured_runtime
+from megcfbt.native_runtime import resolve_runtime
 
 FOOTER = b'CLIB\x01\x02\x03\x04SIGE'
 
@@ -40,10 +40,10 @@ def inspect_game(root: Path):
 
 
 def build_game(source: Path, *, output, runtime=None, force=False, progress=None, **kwargs):
-    runtime = runtime if runtime is not None else configured_runtime('ags')
     inspection = inspect_game(source)
     if inspection is None or not inspection.buildable:
         raise NativeBuildError('No unambiguous AGS CLIB game data found.')
+    runtime = resolve_runtime('ags',runtime,progress=progress,download_progress=kwargs.get('download_progress'))
     payload = find_game(source)[0]
     warnings = list(inspection.warnings)
     vsync_hook = False

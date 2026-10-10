@@ -35,6 +35,15 @@ from renframe.utils import sanitize_fs_name
 from renframe.detector import looks_like_renpy_game
 from megcfbt.native_backend import NativeBuildError
 from megcfbt.steam_context import steam_app_id_for_source
+from megcfbt.native_runtime import automatic_runtime_available
+
+
+def automatic_native_runtime_available(inspection: UnifiedInspection) -> bool:
+    engine={'gamemakerframe':'gamemaker','loveframe':'love','agsframe':'ags'}.get(inspection.backend)
+    if inspection.engine=='rpg2k':engine='easyrpg'
+    if engine is None or not inspection.buildable:return False
+    if engine=='love' and inspection.engine_version and not inspection.engine_version.startswith('11.'):return False
+    return automatic_runtime_available(engine)
 
 
 def _native_backends():

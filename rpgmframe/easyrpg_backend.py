@@ -34,8 +34,27 @@ def find_easyrpg_root(root: Path) -> Path | None:
     return None
 
 
-def build_easyrpg_game(*, source_path, output_path, inspection, force=False, progress=None):
+def build_easyrpg_game(*, source_path, output_path, inspection, force=False, progress=None,
+                       runtime=None,download_progress=None):
     from rpgmframe.builder import BuildError, _install_staging
+    from megcfbt.native_runtime import resolve_runtime,automatic_runtime_available
+    if runtime is not None or automatic_runtime_available('easyrpg'):
+        from megcfbt.native_backend import build_native,NativeBuildError
+        try:
+            selected=resolve_runtime('easyrpg',runtime,progress=progress,download_progress=download_progress)
+            def prepare(destination):
+                shutil.copytree(inspection.game_root,destination,
+                    ignore=lambda directory,names:[name for name in names if name=='.git' or
+                        (name.casefold().endswith(('.exe','.dll')) and name.casefold()!='rpg_rt.exe')])
+            result=build_native(inspection.game_root,output=output_path,runtime=selected,
+                executable='easyrpg-player',engine='EasyRPG',game_name=inspection.game_name,
+                engine_version=None,prepare_game=prepare,arguments=['--project-path','.'],
+                runtime_file_arguments=((('--soundfont','TimGM6mb.sf2'),) if (selected/'TimGM6mb.sf2').is_file() else ()),
+                warnings=('Windows engine plugins are not portable; verify gameplay.',),force=force,progress=progress)
+        except NativeBuildError as exc:raise BuildError(str(exc)) from exc
+        return BuildResult(success=True,source_path=source_path,output_path=result.output_path,
+            runtime_path=selected,launcher_path=result.launcher_path,engine=EngineVariant.RPG_2K,
+            game_name=inspection.game_name,engine_version=None,runtime_architecture='aarch64',warnings=list(result.warnings))
     source = inspection.game_root
     if source is None or source == output_path or source in output_path.parents or output_path in source.parents:
         raise BuildError('EasyRPG output must be separate from the game source.')
