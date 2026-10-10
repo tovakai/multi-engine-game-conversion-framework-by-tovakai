@@ -10,6 +10,7 @@ There is no short public product name. You have to say the whole thing.
 
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
+- [Roadmap](#roadmap)
 - [Architecture](#architecture)
 - [Install for development](#install-for-development)
 - [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
@@ -81,6 +82,10 @@ For EasyRPG packages, install the native target dependency once:
 `flatpak install --user --arch=aarch64 flathub org.easyrpg.player`.
 EasyRPG reads the copied `RPG_RT.exe` as engine metadata; the launcher executes
 EasyRPG, and Windows engine plugins are not supported.
+
+## Roadmap
+
+See [the release roadmap](docs/ROADMAP.md) for milestones from **v0.1.0 through v1.0.0**, including the **v0.2.0** GameMakerFrame and 35-title compatibility-testing target.
 
 ## Architecture
 
