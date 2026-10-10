@@ -6,7 +6,7 @@ Detection and a successful package build are distinct from gameplay validation.
 
 | Backend | Accepted exports | Runtime | Current hardware evidence |
 | --- | --- | --- | --- |
-| GameMakerFrame | FORM/GEN8 data with VM CODE, WAD 8–17 | Automatically downloaded ARM64 Butterscotch | Undertale opening scene; Void Stranger startup; Desert Child still has runner gaps |
+| GameMakerFrame | FORM/GEN8 data with VM CODE, WAD 8–17 | Automatically downloaded ARM64 Butterscotch | Undertale gameplay through second savepoint and save/load user-confirmed; Void Stranger startup; Desert Child still has runner gaps |
 | LÖVEFrame | `.love`, fused EXE ZIP, or Lua project | Automatically downloaded LÖVE 11.5 and supported ARM64 modules | Balatro main menu; Gravity Circuit language screen with Steam initialized |
 | ConstructFrame | Construct 2/3 packaged web exports | Shared ARM64 NW.js backend | The Witch's House main menu from the earlier native conversion test |
 | AGSFrame | CLIB game library or appended executable data | Automatically downloaded AGS 3.6.2.21 with plugin capabilities | The Cat Lady opening sequence through the generated launcher |
