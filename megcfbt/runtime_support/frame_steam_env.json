@@ -1,0 +1,7 @@
+{
+  "architecture": "aarch64",
+  "recipe_id": "frame-steam-graphics-env-v1",
+  "compiler": "GCC 11, Ubuntu 22.04 ARM64",
+  "source_sha256": "666033ca73915197bab62a4b57f41e557000c7345509fbe01d8e4528c7b5e8c5",
+  "sha256": "938f22d19e5aaa72975d4f3507767afcc003496ae243529b54eea0caaa30eaff"
+}

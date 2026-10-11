@@ -6,15 +6,26 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
+The `integration/working-main` branch is being prepared for **0.1.0**. See the
+[release candidate scope and remaining gates](docs/releases/0.1.0.md) and
+[repository cleanup record](docs/repository-cleanup-0.1.0.md).
+
+The GUI also includes the experimental [STS2 two-stage workflow](docs/sts2-integrated-workflow.md):
+Windows prepares a verified transfer ZIP using your FMOD Linux SDK, then the Frame
+installer builds the native components. This follows a separate packaging path
+from the other engines and requires installation on the Frame before play.
+
 ## Contents
 
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
+- [Roadmap](#roadmap)
 - [Architecture](#architecture)
 - [Install for development](#install-for-development)
 - [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
 - [Ren'Py runtime resolution](#renpy-runtime-resolution)
 - [Custom Godot / GodotSteam compatibility runtime](#custom-godot--godotsteam-compatibility-runtime)
+- [Optional SteamGridDB artwork](#optional-steamgriddb-artwork-for-non-steam-games)
 - [Launching converted games on Linux ARM64](#launching-converted-games-on-linux-arm64)
 - [Tested game compatibility](#tested-game-compatibility)
 - [Support the project](#support-the-project-)
@@ -56,14 +67,45 @@ it pretend it has one?**
 
 | Engine family | Backend | Conversion strategy | Hardware status |
 | --- | --- | --- | --- |
-| Ren'Py | RenFrame | replace the distributed runtime with a matching Linux ARM64 Ren'Py runtime | proven separately in RenFrame; combined path needs validation |
+| Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12, exact 7.3.5, and legacy 7.4.x | Ren'Py 8, legacy 7.3.5/7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; deeper compatibility varies |
 | RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
+| RPG Maker 2000 / 2003 | RPGMFrame / EasyRPG | copy LCF data and automatically package portable native EasyRPG | Experimental; no separate target player installation required |
+| Construct 2 / 3 | ConstructFrame / NW.js | discover web exports, including `package.nw`, and replace the desktop wrapper with ARM64 NW.js | Experimental; game addons require testing |
+| GameMaker VM | GameMakerFrame / Butterscotch | automatically download a verified runner; validate VM data and retain assets | Experimental; Undertale gameplay through second savepoint and save/load confirmed; YYC/GMRT excluded |
+| LÖVE | LÖVEFrame | automatically download LÖVE 11.5 and supported modules; unpack game data | Experimental; Balatro menu and Gravity Circuit startup tested |
+| Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
+| MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
 turning the umbrella router into a giant conditional swamp.
+
+Supported GodotSteam 3.5.1, 4.6.0 and 4.7.2 exports now use automatic verified
+runtime downloads on Windows, alongside the existing Brotato recipe. No manual
+runtime selection or Frame connection is needed for conversion. Cassette Beasts
+has native title-screen evidence; input, full gameplay and saves still need testing.
+See [downloadable GodotSteam runtimes](docs/downloadable-godotsteam-runtime.md).
+
+Ren'Py bytecode-only exports are recognized using bounded, non-executing metadata
+inspection for supported bytecode formats, independently of the host Python version. Identified Katawa
+Shoujo 6.10.2 distributions use the recovered legacy compatibility profile,
+including pinned HD source and UI fixes. Identified Ren'Py 8.5 nightlies offer an
+experimental complete 8.5.3 engine/runtime migration in the GUI or with
+`--experimental-renpy-prerelease-migration`; this requires gameplay/save testing.
+Encrypted Godot packs/scripts require an ARM64 runtime built with the game's key.
+Unity native exports and WOLF RPG Editor games are diagnosed as unsupported.
+
+New EasyRPG packages include a portable player and supporting libraries
+automatically. Older packages can still use the system player or
+`flatpak install --user --arch=aarch64 flathub org.easyrpg.player`.
+EasyRPG reads the copied `RPG_RT.exe` as engine metadata; the launcher executes
+EasyRPG, and Windows engine plugins are not supported.
+
+## Roadmap
+
+See [the release roadmap](docs/ROADMAP.md) for milestones from **v0.1.0 through v1.0.0**, including the **v0.2.0** GameMakerFrame and 35-title compatibility-testing target.
 
 ## Architecture
 
@@ -83,10 +125,13 @@ Multi-Engine Game Conversion Framework by Tovakai
                      |
              Linux ARM64 build
                      |
-             optional tar.gz
+          Steam Frame ZIP package
 ```
 
-The current import points are recorded under `docs/backends/`.
+The router also dispatches GameMakerFrame, LOVEFrame, ConstructFrame, AGSFrame and
+MonoFrame through the same packaging flow. The experimental STS2 two-stage path
+has its own device-side finishing contract. Current import points are recorded
+under `docs/backends/`; experimental status is listed in the backend table above.
 
 ## Install for development
 
@@ -129,7 +174,103 @@ There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
 
+## Steam Frame install flow
+
+The default build also creates a portable `*-linux-aarch64.zip` package. For
+now, treat it as a normal file transfer rather than a magic sideload bundle:
+
+1. copy the ZIP to the Steam Frame using Frame Control, SCP, a USB drive, or any
+   other file-transfer method
+2. extract it on the Frame
+3. leave Steam / SteamVR running
+4. open a terminal in the extracted folder
+5. run `./install-to-steam.sh`
+
+The bundled installer asks the running Steam client to import the package's
+`launch.sh` as a normal **non-Steam game** using SteamOS's
+`steam://addnonsteamgame/` path. It then reads back the shortcut Steam created
+and installs bundled artwork under that shortcut's actual non-Steam AppID.
+
+The installer also computes the deterministic non-Steam AppID formula used by
+Deckport and related tools. That gives us a predictable ID when Steam preserves
+the expected executable/name strings, while the read-back step remains the
+authority if Steam normalizes the imported shortcut differently. When the source
+exposes an exact Steam AppID, the converter best-effort bundles official portrait,
+horizontal banner, hero, and logo art. Steam may require a Steam / SteamVR
+environment restart before newly copied custom artwork becomes visible.
+
+This avoids directly rewriting `shortcuts.vdf` while Steam is closed, which is
+important on Steam Frame because shutting down Steam/SteamVR also tears down the
+desktop environment.
+
+Direct installation through third-party sideloaders such as FrameDrop or Frame
+Control is not a supported contract yet. Their executable-selection and Devkit
+Game behavior can bypass the generated launcher or conflict with games that use
+their original Steam AppID.
+
+## Optional SteamGridDB artwork for non-Steam games
+
+Set the `STEAMGRIDDB_API_KEY` **process environment variable** before running
+the converter to enable [SteamGridDB](https://www.steamgriddb.com/api/v2) artwork.
+The key is never written to the repository, portable ZIP, metadata or Steam shortcut.
+
+For non-Steam games such as My Pig Princess, the converter searches for a
+**unique exact title match**, rather than guessing based on fuzzy titles.
+With an existing embedded Steam AppID, official Steam CDN artwork takes priority,
+and SteamGridDB resolves the game by that platform ID only for missing slots.
+
+Artwork priority for each slot: **user-selected > official Steam > SteamGridDB**.
+The provider fills available portrait (600x900), horizontal grid, hero and logo
+slots with static JPEG/PNG. Missing artwork or network/API errors never block conversion.
+SteamGridDB defaults to its safe `nsfw=false` filter. To allow adult artwork
+from the community, set `STEAMGRIDDB_NSFW=any` explicitly in the environment.
+
+To get art when the **converted game is not on this computer**, fetch it
+standalone by title. No game files, launcher, or conversion output are needed:
+
+~~~powershell
+.\.venv-win\Scripts\python.exe -m megcfbt.cli artwork `
+    --name "My Pig Princess" `
+    --output "$env:USERPROFILE\Downloads\MyPigPrincess-artwork"
+~~~
+Images are saved under `.megcfbt/artwork/` inside that destination.
+Copy those small image files to the existing Frame installation and use its
+Steam installer if available. Standalone mode intentionally does **not**
+generate a fake game launcher or a game ZIP, and rejects `--repackage`.
+
+You can also **refresh artwork on an existing converted game** without rebuilding:
+
+~~~powershell
+# Run from the repository root. The key is entered without echoing.
+$secure = Read-Host "SteamGridDB API key" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try {
+    $env:STEAMGRIDDB_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+}
+$env:STEAMGRIDDB_NSFW = "any"  # Optional: allow adult-tagged artwork
+.\.venv-win\Scripts\python.exe -m megcfbt.cli artwork "C:\path\to\MyPigPrincess-frame" --repackage --force
+~~~
+
+Use `--steamgriddb-id NUMBER` if there are several exact-title records;
+otherwise the converter skips ambiguous matches instead of using the wrong
+game's art. The `artwork` command expects the **original converted build**
+directory, not an already extracted Frame ZIP wrapper, when using `--repackage`.
+On the Frame, run `./install-to-steam.sh` again to refresh custom art for
+the existing non-Steam shortcut. The installer uses the actual non-Steam shortcut
+ID, never the SteamGridDB game ID. Artwork provenance is recorded in
+`.megcfbt/package.json`; no API credentials are recorded.
+
 ## Ren'Py runtime resolution
+
+Original DDLC 1.1.1 / Ren'Py 6.99.12 has a separate opt-in **experimental**
+full-engine migration to official Ren'Py 7.5.3 Python 2 ARM64 in the main GUI.
+Steam Frame Stage A launch, menu, audio, controls, exit and graphical relaunch
+were confirmed on real hardware (2026-10-08). Story progression, poem game,
+saves, character-file transitions and in-story restarts still require deeper
+verification. Other Ren'Py 6 games remain unsupported automatically. See
+[the DDLC migration and Steam Frame test procedure](docs/ddlc-111-arm64-migration.md).
 
 Ren'Py now follows the same automatic-runtime philosophy as the other backends.
 When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
@@ -146,8 +287,34 @@ When inspection yields an exact Ren'Py 7.x or 8.x release, the RenFrame backend:
 The original game's `renpy/` engine tree and other payload files are preserved.
 This is intentionally more surgical than replacing the game with a complete SDK.
 
-The converter does **not** substitute a nearby Ren'Py version when detection is
-ambiguous. A manual runtime remains available as an escape hatch:
+**Ren'Py 7.3.5 and 7.4.x** predate official ARM64 sdkarm releases. In the GUI, when
+inspection identifies Ren'Py 7.4.x with **Python 2**, or exact **7.3.5** with
+high-confidence, consistent engine version evidence and a Python 2 layout, the runtime
+selector says **experimental Ren'Py 7.5.0** instead of incorrectly promising
+automatic 7.4.x support. Clicking **CONVERT** asks for explicit consent:
+
+- **Yes:** download and checksum-verify the official Ren'Py 7.5.0 sdkarm,
+  use its **matching Ren'Py 7.5 Python engine and Python 2 ARM64 binaries**
+  together, and copy the original game's `game/` assets and scripts into
+  the new runtime. We do **not** combine the older Python engine with 7.5
+  compiled graphics libraries;
+- **No:** browse for a manually supplied compatible ARM64 Ren'Py runtime;
+- **Cancel:** do nothing.
+
+The experimental cross-minor fallback is intentionally limited to detected
+7.4.x and authoritative exact 7.3.5 / Python 2 games, never automatic and never a Python 2-to-3 upgrade.
+The original installation is left unchanged; the converted copy runs on
+7.5.0 engine code rather than the source game's older engine code.
+The output clearly warns that gameplay compatibility is **not established**.
+Other pre-7.5 Ren'Py games still require an explicitly selected runtime.
+The converter does **not silently** substitute a nearby Ren'Py version.
+The same opt-in is available in both CLIs as `--experimental-legacy-arm64-fallback`;
+`--dry-run` validates it without downloading or writing a build.
+Pesterquest's 7.3.5 conversion passed Steam Frame Stages A and B (menu, music,
+controls, brief gameplay, choices, save/load, quit and saved-progress restoration
+after native Steam relaunch); several volumes and Steam hooks remain unverified. See
+[the inspection notes and Steam Frame test procedure](docs/renpy-735-arm64-migration.md).
+A manual runtime remains available as an escape hatch:
 
 ```bash
 multi-engine-game-conversion-framework-by-tovakai build Game.zip \
@@ -158,6 +325,11 @@ Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 ## Custom Godot / GodotSteam compatibility runtime
+
+Matching GodotSteam ARM64 release-template downloads are now available for
+Godot 4.6.0 and 4.7.2, with a separate pinned source recipe for Godot 3.5.1.
+See [native backends and GodotSteam tests](docs/native-backends.md) for SDK setup,
+the Frame graphics-routing fix, runtime capabilities and remaining test coverage.
 
 Custom Godot development exports are still treated conservatively. The first
 automatic compatibility recipe is deliberately narrow: Godot 3.7.0 custom
@@ -192,6 +364,11 @@ event loop doesn't necessarily mean its window is visible on your headset.
 
 ## Tested game compatibility
 
+See the [2026-10-11 Steam Frame user test report](docs/hardware-feedback-2026-10-11.md)
+for 23 working packages and the reported input/rendering/conversion limitations.
+The subsequent [Stardew Valley MonoFrame validation](docs/monoframe.md) also records
+pointer/gamepad input, early gameplay and save/load through Steam.
+
 This table tracks **real game tests on Linux ARM64 hardware**, not games that
 merely pass engine detection or produce a build. It is a growing test log,
 not a promise that every game using an engine will work.
@@ -199,10 +376,13 @@ not a promise that every game using an engine will work.
 | Game | Engine | Tested device | Status | Notes |
 | --- | --- | --- | --- | --- |
 | [Brotato 1.1.14.6](https://store.steampowered.com/app/1942280/Brotato/) | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
+| [Undertale](https://store.steampowered.com/app/391540/Undertale/) | GameMaker VM / native ARM64 Butterscotch | Steam Frame | Playable (early gameplay and save/load user-confirmed) | 2026-10-10: user played through the second savepoint and successfully loaded saved progress. Exact game version and converter build were not recorded in the report. Full-game, later routes and Steam features remain unverified. |
 | [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
+| [Milk inside a bag of milk inside a bag of milk](https://store.steampowered.com/app/1392820/) | Ren'Py 7.x (exact version not recorded) | Steam Frame | Playable (user-confirmed) | Native ARM64 reported working; exact game/runtime version and depth of gameplay testing not recorded. |
 | [Everlasting Summer 1.6](https://store.steampowered.com/app/331470/Everlasting_Summer/) (original release) | Ren'Py 7.4.11 / Python 2; experimental full-engine migration to Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief skip-through; full testing pending) | Game launches, passes splash screen and progresses through dialogue. Requires the opt-in 7.5.0 engine/runtime fallback; the previous 7.4 engine + 7.5 graphics-library hybrid crashed at GL initialization. |
 | Everlasting Summer (author's Ren'Py 8 beta) | Ren'Py 8.x; exact beta/runtime version not recorded | Steam Frame | Playable (initial gameplay confirmed; full testing pending) | Standard conversion ran without observed issues during initial play. Upstream beta status relates to potential mod compatibility; mods were not tested. |
 | [Doki Doki Literature Club! 1.1.1](https://ddlc.moe/) (original, not Plus) | Ren'Py 6.99.12 / Python 2; experimental full-engine migration to official Ren'Py 7.5.3 ARM64 | Steam Frame | Launches (Stage A passed; gameplay verification pending) | Real-device native Steam shortcut: menu, audio, input, exit and relaunch reported working. The user's original files are preserved locally. Poem game, save/load, character-file transitions and later acts remain untested; mods not tested. |
+| [Pesterquest](https://store.steampowered.com/app/1144030/Pesterquest/) (installed Steam distribution) | Ren'Py 7.3.5 / Python 2; experimental full-engine migration to official Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief gameplay; full testing pending) | 2026-10-09: Stages A/B passed. Menu, music, controls, route selection, dialogue/choices, save/load, normal quit, and correct saved-progress restoration after native Steam relaunch confirmed. Runtime process is AArch64; Proton is not forced. Several volumes, unusual transitions, deeper persistence, and Steam hooks remain unverified. |
 
 **Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
 but gameplay not yet validated; **Issues** = runs with notable problems;
@@ -240,4 +420,6 @@ source payloads intact unless a generic compatibility repair is justified.
 
 ## License
 
-GNU GPLv3. See `LICENSE`.
+Existing framework components use GNU GPLv3 (`LICENSE`); the integrated STS2
+backend retains GNU AGPLv3 (`experiments/sts2-steamworks/LICENSE`). Combined
+distributions carry the AGPL requirements described in `THIRD_PARTY_NOTICES.md`.

@@ -45,6 +45,11 @@ def inspect_game(path: Path | str) -> GameInspection:
     arches = detect_runtime_architectures(source)
     hints = collect_version_hints(source) if is_renpy else []
     best = select_best_version(hints) if hints else None
+    authoritative = {hint.version for hint in hints if hint.version and hint.confidence == "high"}
+    conflicting_versions = len(authoritative) > 1
+    if conflicting_versions:
+        best = None
+        warnings.append("Conflicting authoritative Ren'Py versions: " + ", ".join(sorted(authoritative)))
 
     natives = scan_native_dependencies(source) if is_renpy else []
     windows_execs = sorted(

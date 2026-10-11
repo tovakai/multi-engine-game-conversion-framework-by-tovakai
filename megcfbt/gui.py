@@ -10,11 +10,23 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from megcfbt import APP_NAME
+from megcfbt import APP_NAME, sts2
+from megcfbt.frame_control_patch import (
+    PATCHED_LIMIT_GIB,
+    STOCK_LIMIT_GIB,
+    FrameControlPatchError,
+    inspect_frame_control,
+    locate_frame_control_server,
+    patch_upload_limit,
+    restore_upload_limit,
+)
+from megcfbt.frame_package import FRAMEDROP_ZIP_UNPACK_LIMIT, zip_unpacked_size
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from renframe.runtime import experimental_arm64_fallback, requires_pre_sdkarm_override
 from megcfbt.router import (
     ConversionError,
     automatic_custom_godot_runtime_available,
+    automatic_native_runtime_available,
     build_source,
     inspect_source,
     output_path_for_source,
@@ -119,8 +131,11 @@ class ConverterApp:
         self.inspection: UnifiedInspection | None = None
         self.renpy_runtime: Path | None = None
         self.backend_runtime: Path | None = None
+        self.sts2_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
+        self.last_result: UnifiedBuildResult | None = None
+        self.steam_cover: Path | None = None
         self.output_dir = Path.home() / "Desktop"
         if not self.output_dir.is_dir():
             self.output_dir = Path.home()
@@ -238,7 +253,16 @@ class ConverterApp:
             command=self._start_convert,
         )
         self.convert_btn.pack(side="left")
-
+        ctk.CTkButton(
+            controls,
+            text="CUSTOM COVER…",
+            width=130,
+            height=40,
+            fg_color=C_PANEL_2,
+            hover_color=C_BORDER,
+            text_color=C_MUTED,
+            command=self._pick_steam_cover,
+        ).pack(side="left", padx=(10, 0))
         ctk.CTkButton(
             controls,
             text="OUTPUT FOLDER",
@@ -266,7 +290,7 @@ class ConverterApp:
         options.pack(fill="x", padx=28, pady=(0, 8))
         ctk.CTkCheckBox(
             options,
-            text="CREATE TRANSFER .TAR.GZ",
+            text="CREATE STEAM FRAME PACKAGE (.ZIP)",
             variable=self.archive_var,
             fg_color=C_TEAL,
             text_color=C_MUTED,
@@ -404,6 +428,20 @@ class ConverterApp:
         )
         self.activity_progress.pack(fill="x", pady=(2, 0))
         self.activity_progress.stop()
+        self.download_label = ctk.CTkLabel(
+            progress_panel,
+            text="RUNTIME DOWNLOAD // WAITING",
+            text_color=C_MUTED,
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+        )
+        self.download_bar = ctk.CTkProgressBar(
+            progress_panel,
+            mode="determinate",
+            fg_color=C_PANEL,
+            progress_color=C_TEAL,
+        )
+        self.download_bar.set(0)
         status_row = ctk.CTkFrame(self.root, fg_color="transparent")
         status_row.pack(fill="x", padx=28, pady=(0, 14))
         self.status = ctk.CTkLabel(
@@ -427,11 +465,20 @@ class ConverterApp:
             self._ui_queue.put(callback)
 
     def _drain_ui_queue(self) -> None:
-        try:
-            while True:
-                self._ui_queue.get_nowait()()
-        except queue.Empty:
-            pass
+        while True:
+            try:
+                callback = self._ui_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                callback()
+            except Exception as exc:
+                # One bad queued callback must not permanently stop GUI updates.
+                try:
+                    self.log_box.insert("end", f"UI callback error: {exc}\n")
+                    self.log_box.see("end")
+                except Exception:
+                    pass
         try:
             self.root.after(25, self._drain_ui_queue)
         except Exception:
@@ -453,6 +500,27 @@ class ConverterApp:
 
         self._dispatch(update)
 
+    def _download_progress(self, received: int, total: int | None) -> None:
+        def update() -> None:
+            if not self.download_bar.winfo_manager():
+                self.download_label.pack(fill="x", pady=(8, 0))
+                self.download_bar.pack(fill="x", pady=(2, 0))
+            if total and total > 0:
+                self.download_bar.configure(mode="determinate")
+                self.download_bar.set(min(1.0, received / total))
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} / "
+                    f"{total / 1048576:.1f} MiB "
+                    f"({received * 100 // total}%)"
+                )
+            else:
+                self.download_bar.configure(mode="indeterminate")
+                self.download_bar.start()
+                self.download_label.configure(
+                    text=f"RUNTIME DOWNLOAD // {received / 1048576:.1f} MiB"
+                )
+        self._dispatch(update)
+
     def _progress_log(self, message: str) -> None:
         self._log(message)
         self._dispatch(
@@ -462,13 +530,15 @@ class ConverterApp:
     def _conversion_allowed(self) -> bool:
         if self.inspection is None:
             return False
+        if self.inspection.backend == "sts2":
+            return self.inspection.compatibility == "needs_testing"
         if self.inspection.buildable:
             return True
         if automatic_custom_godot_runtime_available(self.inspection):
             return True
         return bool(
             self.inspection.engine == "godot"
-            and self.inspection.runtime_kind == "godot-custom"
+            and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}
             and self.backend_runtime is not None
         )
 
@@ -480,10 +550,16 @@ class ConverterApp:
             self.progress_percent_label.configure(text="0%")
             self.activity_label.configure(text="CURRENT OPERATION // STARTING CONVERSION…")
             self.activity_progress.start()
+            self.download_bar.stop()
+            self.download_bar.configure(mode="determinate")
+            self.download_bar.set(0)
+            self.download_bar.pack_forget()
+            self.download_label.pack_forget()
         else:
             allowed = self._conversion_allowed()
             self.convert_btn.configure(state="normal" if allowed else "disabled", text="CONVERT")
             self.activity_progress.stop()
+            self.download_bar.stop()
 
     def _set_source(self, path: Path) -> None:
         source = path.expanduser().resolve()
@@ -498,6 +574,8 @@ class ConverterApp:
         self.inspection = None
         self.renpy_runtime = None
         self.backend_runtime = None
+        self.steam_cover = None
+        self.last_result = None
         self.log_box.delete("1.0", "end")
         self.convert_btn.configure(state="disabled")
         self.path_label.configure(text=str(source), text_color=C_TEAL)
@@ -518,7 +596,14 @@ class ConverterApp:
                 result = inspect_source(source)
                 self._dispatch(lambda: self._show_inspection(result) if generation == self._generation else None)
             except Exception as exc:
-                self._dispatch(lambda: self._inspection_failed(str(exc)) if generation == self._generation else None)
+                message = str(exc)
+                self._dispatch(
+                    lambda message=message: (
+                        self._inspection_failed(message)
+                        if generation == self._generation
+                        else None
+                    )
+                )
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -531,28 +616,56 @@ class ConverterApp:
         self.engine_label.configure(text=f"Engine: {result.engine_label}{version}", text_color=C_TEXT)
         self.backend_label.configure(text=f"Backend: {result.backend or 'none'}", text_color=C_MUTED)
         auto_custom_runtime = automatic_custom_godot_runtime_available(result)
+        auto_native_runtime = automatic_native_runtime_available(result)
+        legacy_fallback = (
+            ("7.5.0" if result.renpy_legacy_arm64_candidate else
+             experimental_arm64_fallback(result.engine_version, result.renpy_generation))
+            if result.engine == "renpy" else None
+        )
+        if result.engine == "renpy" and result.renpy_ddlc_753_candidate:
+            legacy_fallback = "7.5.3"
+        pre_sdkarm = (
+            requires_pre_sdkarm_override(result.engine_version, result.renpy_generation)
+            if result.engine == "renpy" else False
+        )
         self.compat_label.configure(
             text=f"Compatibility: {result.compatibility}  ·  confidence {result.confidence}",
             text_color=(
-                C_OK if result.buildable
+                C_WARN if pre_sdkarm
+                else C_OK if result.buildable
                 else C_WARN if auto_custom_runtime
                 else C_ERR
             ),
         )
 
-        if result.engine == "renpy":
+        if result.backend == "sts2":
+            self.sts2_sdk = sts2.find_sdk()
+            self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
+        elif result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
+            elif result.runtime_kind and result.runtime_kind.startswith("Katawa Shoujo"):
+                runtime_text = "RUNTIME // KATAWA COMPAT // AUTO 8.0.3"
+            elif result.renpy_prerelease_853_candidate:
+                runtime_text = "RUNTIME // NIGHTLY COMPAT // 8.5.3 EXPERIMENTAL"
+            elif legacy_fallback:
+                runtime_text = (
+                    f"RUNTIME // {legacy_fallback} EXPERIMENTAL // OVERRIDE…"
+                )
+            elif pre_sdkarm:
+                runtime_text = "RUNTIME // MANUAL ARM64 REQUIRED…"
             elif result.engine_version:
                 runtime_text = f"RUNTIME // AUTO REN'PY {result.engine_version}  //  OVERRIDE…"
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.engine == "godot" and result.runtime_kind == "godot-custom":
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
                 runtime_text = "RUNTIME // AUTO GODOTSTEAM COMPAT  //  OVERRIDE…"
+            elif auto_native_runtime:
+                runtime_text = "RUNTIME // AUTOMATIC ARM64  //  OVERRIDE…"
             else:
                 runtime_text = "RUNTIME // SELECT CUSTOM ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
@@ -562,10 +675,14 @@ class ConverterApp:
         self.convert_btn.configure(
             state="normal" if self._conversion_allowed() else "disabled"
         )
-        if result.buildable:
+        if legacy_fallback:
+            drop_text = "PAYLOAD LOCKED // EXPERIMENTAL ARM64"
+        elif pre_sdkarm:
+            drop_text = "PAYLOAD LOCKED // MANUAL ARM64 REQUIRED"
+        elif result.buildable:
             drop_text = "PAYLOAD LOCKED"
         elif auto_custom_runtime:
-            drop_text = "PAYLOAD LOCKED // AUTO COMPAT RUNTIME"
+            drop_text = "AUTOMATIC GODOTSTEAM RUNTIME AVAILABLE"
         elif result.engine == "godot" and result.runtime_kind == "godot-custom":
             drop_text = "CUSTOM RUNTIME REQUIRED"
         else:
@@ -575,8 +692,44 @@ class ConverterApp:
             f"Detected {result.engine_label}" if result.backend else "No supported engine detected",
             C_TEAL if result.backend else C_ERR,
         )
+        if legacy_fallback:
+            advisory = (
+                f"Ren'Py {result.engine_version} predates official ARM64 support. "
+                f"Click CONVERT to approve an experimental official Ren'Py "
+                f"{legacy_fallback} Python 2 full-engine migration (requires approval), or use RUNTIME "
+                "to select a manual override. Full gameplay compatibility is not yet verified."
+                + (" Unofficial personal-use conversion of your own original DDLC files. Poem game, saves, character-file changes and in-story restarts still need testing." if result.renpy_ddlc_753_candidate else "")
+            )
+            self._log("Inspect: " + advisory)
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        elif pre_sdkarm:
+            advisory = (
+                f"Ren'Py {result.engine_version} has no exact official ARM64 "
+                "runtime. Select a compatible manual runtime to convert."
+            )
+            self._log("Inspect: " + advisory)
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        elif auto_custom_runtime:
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Click CONVERT. A compatible runtime is downloaded once and cached for later conversions. No manual runtime selection is needed. Gameplay compatibility still requires testing.")
+            self.notes_box.configure(state="disabled")
+        else:
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "ROUTING MATRIX ONLINE.\n\n"
+                "Engine detection selects the conversion path; source files remain untouched.")
+            self.notes_box.configure(state="disabled")
         for warning in result.warnings:
             self._log("Inspect: " + warning)
+        if result.backend == "sts2" and result.compatibility == "needs_testing" and self.sts2_sdk is None:
+            self._pick_runtime()
 
     def _inspection_failed(self, message: str) -> None:
         self.activity_progress.stop()
@@ -615,10 +768,14 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
+        if self.inspection and self.inspection.backend == "sts2":
+            from megcfbt.sts2_sdk_setup import Sts2SdkDialog
+            self.sts2_sdk_dialog = Sts2SdkDialog(self)
+            return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.engine == "godot" and self.inspection.runtime_kind == "godot-custom":
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:
@@ -633,15 +790,16 @@ class ConverterApp:
 
     def _pick_backend_runtime(self) -> None:
         folder = filedialog.askdirectory(
-            title="Select custom Godot Linux ARM64 runtime bundle"
+            title="Select matching Linux ARM64 runtime bundle"
         )
         if not folder:
             return
         runtime = Path(folder)
-        if not (runtime / "godot.arm64").is_file():
+        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
+        if not (runtime / executable).is_file():
             messagebox.showerror(
                 APP_NAME,
-                "Custom Godot runtime must contain godot.arm64 in its root folder.",
+                f"Runtime must contain {executable} in its root folder.",
             )
             return
         self.backend_runtime = runtime
@@ -660,9 +818,101 @@ class ConverterApp:
         else:
             _open_path(self.output_dir)
 
+    def _pick_steam_cover(self) -> None:
+        selected = filedialog.askopenfilename(
+            title="Optional Steam portrait artwork",
+            filetypes=[("Images", "*.png *.jpg *.jpeg")],
+        )
+        if selected:
+            self.steam_cover = Path(selected)
+            self._log(f"Custom artwork: {self.steam_cover}")
+
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
+        if self.inspection.engine == "renpy" and self.inspection.renpy_live2d_required:
+            from renframe.live2d import find_core
+            roots = [self.source]
+            if self.renpy_runtime is not None:
+                roots.append(self.renpy_runtime)
+            if find_core(*roots) is None:
+                from megcfbt.live2d_setup import Live2DSdkDialog
+                self.live2d_dialog = Live2DSdkDialog(self)
+                return
+        if self.inspection.backend == "sts2":
+            if self.inspection.compatibility != "needs_testing":
+                return
+            from megcfbt import sts2
+            try:
+                self.sts2_sdk = sts2.validate_sdk(self.sts2_sdk) if self.sts2_sdk else sts2.find_sdk()
+            except (OSError, ValueError):
+                self.sts2_sdk = sts2.find_sdk()
+            if self.sts2_sdk is None:
+                self.runtime_button.configure(text="GET FMOD SDK â€¢ STS2")
+                self._pick_runtime()
+                return
+        legacy_arm64_approved = False
+        ddlc_753_approved = False
+        prerelease_853_approved = False
+        if self.inspection.renpy_prerelease_853_candidate and self.renpy_runtime is None:
+            choice = messagebox.askyesnocancel(
+                APP_NAME, "This game uses a Ren'Py 8.4/8.5 nightly, whose engine can differ from the stable runtime.\n\n"
+                "YES: Convert using the complete matched official 8.5.3 engine and ARM64 runtime.\n"
+                "NO: Select a matching full ARM64 runtime.\nCANCEL: Do nothing.\n\n"
+                "This migration is experimental. Newer nightly APIs and saves need gameplay testing.", icon="warning")
+            if choice is None:
+                return
+            if choice:
+                prerelease_853_approved = True
+            else:
+                self._pick_renpy_runtime()
+                if self.renpy_runtime is None:
+                    return
+        if self.inspection.engine == "renpy" and self.renpy_runtime is None:
+            fallback = experimental_arm64_fallback(
+                self.inspection.engine_version, self.inspection.renpy_generation
+            )
+            if self.inspection.renpy_legacy_arm64_candidate:
+                fallback = "7.5.0"
+            if self.inspection.renpy_ddlc_753_candidate:
+                fallback = "7.5.3"
+            if fallback:
+                choice = messagebox.askyesnocancel(
+                    APP_NAME,
+                    f"Ren'Py {self.inspection.engine_version} predates official "
+                    "Linux ARM64 support.\n\n"
+                    f"YES: Automatically download the official checksum-verified "
+                    f"Ren'Py {fallback} Python 2 ARM64 engine AND runtime, "
+                    "then preserve this game's original game/ content in a "
+                    "converted copy.\n\n"
+                    "NO: Select your own compatible ARM64 Ren'Py runtime folder.\n\n"
+                    "CANCEL: Do nothing.\n\n"
+                    "This is an experimental cross-minor full-engine migration. The game may not run correctly, "
+                    "even if conversion succeeds. Original game files remain untouched."
+                    + ("\n\nYES also confirms this is your own original DDLC 1.1.1 installation, not DDLC Plus or a mod. Layout detection does not authenticate the game release. Unofficial personal-use conversion. Preserves characters/ and game-owned sidecars in the copy. Story, saves, later acts and restart behavior are NOT hardware verified. No DDLC-specific patches are applied." if self.inspection.renpy_ddlc_753_candidate else ""),
+                    icon="warning",
+                )
+                if choice is None:
+                    return
+                if choice:
+                    ddlc_753_approved = self.inspection.renpy_ddlc_753_candidate
+                    legacy_arm64_approved = not ddlc_753_approved
+                else:
+                    self._pick_renpy_runtime()
+                    if self.renpy_runtime is None:
+                        return
+            elif requires_pre_sdkarm_override(
+                self.inspection.engine_version, self.inspection.renpy_generation
+            ):
+                messagebox.showinfo(
+                    APP_NAME,
+                    f"Ren'Py {self.inspection.engine_version} has no matching "
+                    "official Linux ARM64 runtime. Please select a compatible "
+                    "runtime folder to attempt conversion.",
+                )
+                self._pick_renpy_runtime()
+                if self.renpy_runtime is None:
+                    return
         if (
             self.inspection.engine == "renpy"
             and self.renpy_runtime is None
@@ -673,7 +923,7 @@ class ConverterApp:
                 return
         if (
             self.inspection.engine == "godot"
-            and self.inspection.runtime_kind == "godot-custom"
+            and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}
             and self.backend_runtime is None
             and not automatic_custom_godot_runtime_available(self.inspection)
         ):
@@ -682,7 +932,7 @@ class ConverterApp:
                 return
 
         source = self.source
-        output = output_path_for_source(source, self.output_dir)
+        output = output_path_for_source(source, self.output_dir, self.inspection.game_name)
         force = bool(self.force_var.get())
         archive = bool(self.archive_var.get())
 
@@ -700,17 +950,26 @@ class ConverterApp:
                     source,
                     output=output,
                     renpy_runtime=self.renpy_runtime,
+                    renpy_legacy_arm64_fallback=legacy_arm64_approved,
+                    renpy_ddlc_753_migration=ddlc_753_approved,
+                    renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
+                    **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
+                       if self.inspection.backend == "sts2" else {}),
                     force=force,
                     archive=archive,
+                    steam_cover=self.steam_cover,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
+                    download_progress=self._download_progress,
                 )
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
-                self._dispatch(lambda: self._fail(str(exc)))
+                message = str(exc)
+                self._dispatch(lambda message=message: self._fail(message))
             except Exception as exc:
-                self._dispatch(lambda: self._fail(f"Unexpected error: {exc}"))
+                message = f"Unexpected error: {exc}"
+                self._dispatch(lambda message=message: self._fail(message))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -718,10 +977,29 @@ class ConverterApp:
         self._set_progress(1.0, "Complete")
         self.last_output = result.output_path
         self.last_archive = result.archive_path
+        self.last_result = result
+        self._set_busy(False)
+        if result.requires_frame_install:
+            self._set_status('TRANSFER PACKAGE READY â€” INSTALL ON FRAME', C_OK)
+            messagebox.showinfo(APP_NAME,
+                'Windows preparation is complete. Additional compilation is required on the Frame.\n\n'
+                + ('Copy this ZIP to the Frame and extract it:\n' + str(result.archive_path)
+                   if result.archive_path else 'Copy this entire folder to the Frame:\n' + str(result.output_path))
+                + '\n\nOpen a terminal in the extracted folder and run:\nsh ./install.sh\n\n'
+                'First install Slay the Spire 2 through Steam on the Frame and let its download finish. '
+                'The installer checks that its Steam entry is ready before compiling. '
+                'It shows compilation activity and elapsed time, verifies the game, then prints the Steam launch option. '
+                'First installation requires internet access and the Frame build prerequisites. '
+                'See INSTALL-ON-FRAME.txt inside the package.')
+            return
+        self._set_progress(1.0, "Complete")
+        self.last_output = result.output_path
+        self.last_archive = result.archive_path
+        self.last_result = result
         self._set_busy(False)
         self._log(f"Built: {result.output_path}")
         if result.archive_path:
-            self._log(f"Archive: {result.archive_path}")
+            self._log(f"Steam Frame package: {result.archive_path}")
         for warning in result.warnings:
             self._log("Warning: " + warning)
         target = result.archive_path or result.output_path
@@ -730,7 +1008,8 @@ class ConverterApp:
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
             f"Build directory:\n{result.output_path}\n\n"
-            + (f"Transfer archive:\n{result.archive_path}\n" if result.archive_path else ""),
+            + (f"Steam Frame package:\n{result.archive_path}\n\n"
+              f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else ""),
         )
 
     def _fail(self, message: str) -> None:

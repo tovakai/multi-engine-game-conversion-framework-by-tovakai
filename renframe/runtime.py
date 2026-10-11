@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -20,13 +21,19 @@ from renframe.detector import (
     select_best_version,
 )
 from renframe.elf import is_elf_file, read_elf_architecture
-from renframe.models import RuntimeInspection
+from renframe.models import GameInspection, RuntimeInspection
 from renframe.utils import normalize_path
 
 _X86_ARCHES = frozenset({"x86_64", "x86", "amd64", "i386", "i686"})
 _ARM_ARCHES = frozenset({"aarch64", "arm64", "arm"})
 _RELEASE_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.\d+)?$")
 _DEFAULT_BASE_URL = "https://www.renpy.org/dl"
+_SDK_753_SHA256 = "6e5da3388b083d05f9d43991310776ff394b04bbb5541ee6216484ebd3d5a567"
+_SDK_SHA256 = {
+    "8.5.3": "0579782517f203ba3535dcc2dab54e34bfc318f2f2a7510a5130b6f809f901f6",
+    "7.5.0": "33e1fcab5a9c80c0850a245e0ce634c098dcea27d8f58a523c80014ed27b94d0",
+    "7.5.3": _SDK_753_SHA256,
+}
 
 
 class RuntimeDownloadError(RuntimeError):
@@ -41,6 +48,60 @@ def normalize_release_version(version: str) -> str:
             f"Ren'Py version must be an exact release such as 8.5.3; got {version!r}"
         )
     return ".".join(match.groups())
+
+
+
+def requires_pre_sdkarm_override(version: str | None, generation: int | None) -> bool:
+    """Whether the official matching ARM64 runtime predates Ren'Py 7.5."""
+    if generation is not None and generation < 7:
+        return True
+    if generation != 7 or not version:
+        return False
+    try:
+        major, minor, _patch = map(int, normalize_release_version(version).split("."))
+    except RuntimeDownloadError:
+        return False
+    return major == 7 and minor < 5
+
+
+def experimental_arm64_fallback(version: str | None, generation: int | None,
+                                *, inspection: GameInspection | None = None) -> str | None:
+    """Offer Python 2 fallback for 7.4.x and authoritative exact 7.3.5.
+
+    Ren'Py 7.5.0 is the first official sdkarm release. This is an opt-in,
+    cross-minor experiment, not evidence that every 7.4 game will run.
+    Never infer a Python generation from the version alone.
+    """
+    if generation != 7 or not version:
+        return None
+    try:
+        release = normalize_release_version(version)
+    except RuntimeDownloadError:
+        return None
+    if release.startswith("7.4."):
+        return "7.5.0"
+    if release != "7.3.5" or inspection is None:
+        return None
+    root = inspection.source_path
+    hints = [h for h in inspection.version_hints
+             if h.version and h.source in {"renpy/__init__.py", "renpy/vc_version.py", "renpy/versions.py"}]
+    if (not inspection.is_renpy or inspection.renpy_version != release
+            or inspection.generation != 7 or not hints
+            or not any(h.confidence == "high" and h.generation == 7 for h in hints)
+            or any(h.version != release or h.generation != 7 for h in hints)
+            or not (root / "game").is_dir()
+            or not (root / "renpy/__init__.py").is_file()):
+        return None
+    # A renamed/fake engine directory, or a Python 3 distribution with a
+    # stale version marker, must not enable the new migration.
+    lib = root / "lib"
+    if not lib.is_dir():
+        return None
+    names = [p.name.casefold() for p in lib.iterdir() if p.is_dir()]
+    if (not any(n.startswith(("py2-", "python2.", "pythonlib2.")) for n in names)
+            or any(n.startswith(("py3-", "python3.", "pythonlib3.")) for n in names)):
+        return None
+    return "7.5.0"
 
 
 def python_tag_for_generation(generation: int | None) -> str:
@@ -334,6 +395,102 @@ def _safe_tar_members(
     return members
 
 
+
+def _safe_full_sdk_members(
+    archive: tarfile.TarFile,
+    release: str,
+    python_tag: str,
+) -> tuple[list[tarfile.TarInfo], str]:
+    """Select a complete matching Ren'Py engine and Python 2 ARM64 runtime.
+
+    Archive contents are never extracted wholesale; SDK examples, other CPU
+    architectures, and unrelated editor files are intentionally excluded.
+    """
+    selected: list[tarfile.TarInfo] = []
+    prefixes: set[str] = set()
+    platform = f"{python_tag}-linux-aarch64"
+    seen: set[str] = set()
+    for member in archive.getmembers():
+        path = PurePosixPath(member.name)
+        if path.is_absolute() or ".." in path.parts or "\\" in member.name or ":" in member.name:
+            raise RuntimeDownloadError(
+                f"Refusing unsafe path in official Ren'Py archive: {member.name}"
+            )
+        parts = path.parts
+        if len(parts) < 2 or parts[0] not in {f"renpy-{release}-sdk", f"renpy-{release}-sdkarm"}:
+            continue
+        relative = parts[1:]
+        wanted = (
+            relative[0] == "renpy"
+            or relative == ("renpy.py",)
+            or relative == ("renpy.sh",)
+            or relative == ("LICENSE.txt",)
+            or relative == ("doc", "license.html")
+            or (len(relative) >= 2 and relative[:2] == ("lib", platform))
+            or (len(relative) >= 2 and relative[0] == "lib" and
+                (relative[1] == "python2.7" if python_tag == "py2" else relative[1].startswith("python3.")))
+            or relative in {("lib", "python2.7.zip"), ("lib", "python27.zip")}
+        )
+        if not wanted:
+            continue
+        canonical = path.as_posix().casefold()
+        if canonical in seen:
+            raise RuntimeDownloadError(f"Duplicate/colliding SDK path: {member.name}")
+        seen.add(canonical)
+        if member.issym() or member.islnk():
+            link = PurePosixPath(member.linkname)
+            if link.is_absolute() or ".." in link.parts or "\\" in member.linkname or ":" in member.linkname:
+                raise RuntimeDownloadError(
+                    f"Refusing unsafe link in official Ren'Py archive: "
+                    f"{member.name} -> {member.linkname}"
+                )
+        prefixes.add(parts[0])
+        selected.append(member)
+    if len(prefixes) != 1:
+        raise RuntimeDownloadError(
+            f"Expected one Ren'Py {release} SDK root, found {sorted(prefixes)}"
+        )
+    selected_names = {member.name for member in selected}
+    for member in selected:
+        if member.issym() or member.islnk():
+            target = (PurePosixPath(member.name).parent / member.linkname).as_posix() if member.issym() else member.linkname
+            if target not in selected_names:
+                raise RuntimeDownloadError(f"SDK link target is outside selected runtime: {member.name}")
+    return selected, next(iter(prefixes))
+
+
+def _sdk_manifest(path: Path) -> dict[str, str]:
+    manifest = {}
+    for p in sorted(path.rglob("*")):
+        if p.is_symlink() or getattr(p, "is_junction", lambda: False)():
+            raise RuntimeDownloadError("Verified SDK cache cannot contain links/junctions")
+        relative = p.relative_to(path).as_posix()
+        if p.is_file() and relative != ".verified-sdk.json":
+            manifest[relative] = _sha256(p)
+    return manifest
+
+
+def _validate_matched_py2_sdk(path: Path, release: str) -> None:
+    _validate_full_sdk(path, "py2-linux-aarch64")
+    inspection = inspect_runtime(path)
+    if inspection.version != release or inspection.generation != 7:
+        raise RuntimeDownloadError(f"Official SDK engine must identify as Ren'Py {release} Python 2")
+    if not (path / "lib/python2.7").is_dir() or not any((path / "lib/python2.7").rglob("*.py*")):
+        raise RuntimeDownloadError("Official SDK is missing the Python 2.7 standard library")
+    if not (path / "LICENSE.txt").is_file():
+        raise RuntimeDownloadError("Official SDK is missing its license notices")
+
+
+def _validate_full_sdk(path: Path, platform: str) -> None:
+    if not (path / "renpy" / "__init__.py").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing its Python engine")
+    if not (path / "renpy.py").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing renpy.py")
+    if not (path / "renpy.sh").is_file():
+        raise RuntimeDownloadError("Official Ren'Py SDK is missing renpy.sh")
+    _validate_platform_dir(path / "lib" / platform)
+
+
 def _extract_selected_members(
     archive: tarfile.TarFile,
     members: list[tarfile.TarInfo],
@@ -406,6 +563,116 @@ class RuntimeManager:
     def platform_path(self, version: str, python_tag: str) -> Path:
         release = normalize_release_version(version)
         return self.cache_dir / release / f"{python_tag}-linux-aarch64"
+
+    def full_sdk_path(self, version: str, python_tag: str) -> Path:
+        release = normalize_release_version(version)
+        return self.cache_dir / release / f"{python_tag}-arm64-compat-sdk"
+
+    def ensure_full_sdk(
+        self,
+        version: str,
+        python_tag: str,
+        *,
+        progress: Callable[[str], None] | None = None,
+    ) -> Path:
+        """Cache matched engines for explicit legacy and 8.5 prerelease migrations.
+
+        Official runtime archive and checksum come from renpy.org. Only the
+        selected engine, entrypoint, Python support, and ARM64 platform are
+        extracted. Builds use this SDK as a complete replacement engine.
+        """
+        release = normalize_release_version(version)
+        if (release, python_tag) not in {("7.5.0", "py2"), ("7.5.3", "py2"), ("8.5.3", "py3")}:
+            raise RuntimeDownloadError(
+                "Full engine fallback is only available for Ren'Py 7.5.0/7.5.3 Python 2 and 8.5.3 Python 3."
+            )
+        destination = self.full_sdk_path(release, python_tag)
+        try:
+            _validate_full_sdk(destination, f"{python_tag}-linux-aarch64")
+            if release in {"7.5.0", "7.5.3"}:
+                _validate_matched_py2_sdk(destination, release)
+                try:
+                    manifest = json.loads((destination / ".verified-sdk.json").read_text(encoding="utf-8"))
+                except (OSError, ValueError) as exc:
+                    raise RuntimeDownloadError("Missing verified SDK cache manifest") from exc
+                if not isinstance(manifest, dict) or manifest.get("files") != _sdk_manifest(destination):
+                    raise RuntimeDownloadError("SDK cache content changed since checksum verification")
+                if self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_SHA256[release]:
+                    raise RuntimeDownloadError("SDK cache provenance does not match the official archive")
+            if python_tag == "py3":
+                manifest = json.loads((destination / ".verified-sdk.json").read_text(encoding="utf-8"))
+                if not isinstance(manifest, dict) or manifest.get("files") != _sdk_manifest(destination) or (self.base_url == _DEFAULT_BASE_URL and manifest.get("archive_sha256") != _SDK_SHA256[release]):
+                    raise RuntimeDownloadError("SDK cache content or provenance changed")
+            if progress:
+                progress(f"Using cached complete Ren'Py {release} {python_tag} ARM64 engine")
+            return destination
+        except (RuntimeDownloadError, OSError, ValueError):
+            pass
+
+        filename = f"renpy-{release}-sdkarm.tar.bz2"
+        url = f"{self.base_url}/{release}"
+        if progress:
+            progress(f"Resolving official Ren'Py {release} full ARM64 SDK")
+        expected = _parse_sha256(
+            self._read_url(f"{url}/checksums.txt"), filename
+        )
+        if self.base_url == _DEFAULT_BASE_URL and expected != _SDK_SHA256[release]:
+            raise RuntimeDownloadError(f"Official {release} checksum differs from independently verified SHA256")
+        archive_path = self.cache_dir / "downloads" / filename
+        if not archive_path.is_file() or _sha256(archive_path) != expected:
+            self._download(f"{url}/{filename}", archive_path, progress=progress)
+        if _sha256(archive_path) != expected:
+            archive_path.unlink(missing_ok=True)
+            raise RuntimeDownloadError(
+                f"SHA256 verification failed for official {filename}"
+            )
+        if progress:
+            progress(f"Ren'Py {release} full SDK checksum verified")
+
+        release_root = destination.parent
+        release_root.mkdir(parents=True, exist_ok=True)
+        temporary = Path(tempfile.mkdtemp(prefix=".sdk-", dir=str(release_root)))
+        try:
+            with tarfile.open(archive_path, "r:bz2") as archive:
+                members, prefix = _safe_full_sdk_members(archive, release, python_tag)
+                if not members:
+                    raise RuntimeDownloadError(
+                        f"Official {filename} has no selected engine/runtime files"
+                    )
+                extracted = temporary / "extracted"
+                _extract_selected_members(archive, members, extracted)
+            staged = extracted / prefix
+            _validate_full_sdk(staged, f"{python_tag}-linux-aarch64")
+            if release in {"7.5.0", "7.5.3"}:
+                _validate_matched_py2_sdk(staged, release)
+                (staged / ".verified-sdk.json").write_text(json.dumps({
+                    "archive_sha256": expected, "files": _sdk_manifest(staged),
+                }, sort_keys=True), encoding="utf-8")
+            if python_tag == "py3":
+                inspection = inspect_runtime(staged)
+                if inspection.version != release or inspection.generation != 8:
+                    raise RuntimeDownloadError("Official SDK engine does not match the selected Python 3 release")
+                (staged / ".verified-sdk.json").write_text(json.dumps({
+                    "archive_sha256": expected, "files": _sdk_manifest(staged),
+                }, sort_keys=True), encoding="utf-8")
+            if destination.exists():
+                backup = temporary / "previous-sdk"
+                destination.replace(backup)
+                try:
+                    staged.replace(destination)
+                except OSError:
+                    backup.replace(destination)
+                    raise
+            else:
+                staged.replace(destination)
+        except (tarfile.TarError, OSError, KeyError, RecursionError) as exc:
+            raise RuntimeDownloadError(f"Could not safely extract official {filename}: {exc}") from exc
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
+
+        if progress:
+            progress(f"Cached complete Ren'Py {release} engine and {python_tag} ARM64 runtime")
+        return destination
 
     def find_platform(self, version: str, python_tag: str) -> Path | None:
         path = self.platform_path(version, python_tag)

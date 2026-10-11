@@ -10,6 +10,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Folder transfers through Windows can lose Linux executable permissions.
+for binary in "$ROOT/nw" "$ROOT/chrome_crashpad_handler" "$ROOT/mkxp-z.aarch64" "$ROOT/godot.arm64"; do
+    [[ -f "$binary" && ! -L "$binary" && ! -x "$binary" ]] || continue
+    chmod u+x "$binary" 2>/dev/null || true
+done
+
 import_graphics_env() {
     local pid="$1"
     local key value
@@ -51,6 +57,14 @@ if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
     fi
 fi
 
+# Steam API initialization can replace DISPLAY before the engine creates its
+# window. Keep the selected Frame desktop while forwarding the real API calls.
+if [[ ( "${XDG_RUNTIME_DIR:-}" == */frametop || "${XAUTHORITY:-}" == */frametop/* )
+      && -f "$ROOT/libframe_steam_env.so" ]]; then
+    export TOVAKAI_FRAME_PRESERVE_GRAPHICS=1
+    export LD_PRELOAD="$ROOT/libframe_steam_env.so${LD_PRELOAD:+:$LD_PRELOAD}"
+fi
+
 '''
 
 
@@ -85,6 +99,7 @@ def godot_launcher_body(
     pack_relative: str,
     *,
     force_zink: bool = False,
+    adjacent_pack: bool = False,
 ) -> str:
     pack = shlex.quote(pack_relative)
     zink = (
@@ -97,10 +112,16 @@ export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
         if force_zink
         else ""
     )
+    pack_argument = '' if adjacent_pack else f' --main-pack "$ROOT"/{pack}'
     return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
 # may ship shared libraries beside the engine runtime.
-export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+steam_arm64_dir="/opt/steamvr/bin/linuxarm64"
+if [[ -d "$steam_arm64_dir" ]]; then
+    export LD_LIBRARY_PATH="$ROOT:$steam_arm64_dir${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+else
+    export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+fi
 
 {zink}cd "$ROOT/game"
-exec "$ROOT/godot.arm64" --main-pack "$ROOT"/{pack} "$@"
+exec "$ROOT/godot.arm64"{pack_argument} "$@"
 '''

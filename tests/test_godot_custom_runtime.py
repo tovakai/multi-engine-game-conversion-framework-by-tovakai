@@ -110,9 +110,11 @@ def test_worker_script_has_valid_bash_syntax() -> None:
     bash = shutil.which("bash")
     if bash is None:
         return
+    # Pass bytes so Windows does not translate LF to CRLF on stdin before
+    # WSL/Git Bash receives the script. The generated worker itself is always
+    # written with explicit LF endings.
     subprocess.run(
         [bash, "-n"],
-        input=_WORKER_SCRIPT,
-        text=True,
+        input=_WORKER_SCRIPT.encode("utf-8"),
         check=True,
     )

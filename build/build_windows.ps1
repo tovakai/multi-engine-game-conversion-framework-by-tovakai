@@ -11,12 +11,18 @@ if (-not (Test-Path $py)) {
 }
 
 & $py -m pip install -e ".[gui,build]"
+if ($LASTEXITCODE -ne 0) { throw "Build dependency installation failed ($LASTEXITCODE)" }
 
 $appName = "Multi-Engine Game Conversion Framework by tovakai"
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
-$commit = (& git rev-parse --short HEAD 2>$null)
-if (-not $commit) { $commit = "unknown" }
-
+$buildWorkspace = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\') + '\'
+function Assert-BuildTarget([string]$target) {
+  $resolvedTarget = [IO.Path]::GetFullPath((Join-Path $buildWorkspace $target))
+  if (-not $resolvedTarget.StartsWith($buildWorkspace, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Build target escapes workspace: $resolvedTarget"
+  }
+  return $resolvedTarget
+}
 # Remove both current and legacy-named outputs so an old binary cannot survive
 # a successful rebuild and masquerade as the fresh application.
 foreach ($path in @(
@@ -27,7 +33,8 @@ foreach ($path in @(
   "build\$appName",
   "build\$legacyAppName"
 )) {
-  if (Test-Path $path) { Remove-Item -Recurse -Force $path }
+  $safeBuildTarget = Assert-BuildTarget $path
+  if (Test-Path -LiteralPath $safeBuildTarget) { Remove-Item -LiteralPath $safeBuildTarget -Recurse -Force }
 }
 & $py -m PyInstaller `
   --noconfirm `
@@ -39,7 +46,13 @@ foreach ($path in @(
   --hidden-import tkinterdnd2 `
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
+  --collect-data megcfbt `
+  --collect-data gamemakerframe `
+  --collect-data rpgmframe `
+  --collect-data monoframe `
+  --add-data "experiments/sts2-steamworks;sts2-tools" `
   "app\main.py"
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 
 $release = "dist\windows\$appName"
 New-Item -ItemType Directory -Force -Path $release | Out-Null
@@ -47,32 +60,6 @@ if (Test-Path "dist\$appName") {
   Copy-Item -Recurse -Force "dist\$appName\*" $release
 }
 
-$readme = @"
-Multi-Engine Game Conversion Framework by tovakai
-=================================================
-
-1. Run the application.
-2. Drop a Ren'Py, RPG Maker, or Godot game folder / ZIP.
-3. Let the framework detect the engine.
-4. Convert.
-5. Copy the generated *-linux-aarch64.tar.gz to the target Linux ARM64 device.
-
-RPG Maker and Godot runtimes are resolved automatically.
-Ren'Py currently requires a matching ARM64 Ren'Py runtime folder.
-"@
-Set-Content -Path (Join-Path $release "README.txt") -Value $readme -Encoding UTF8
-
-$buildInfo = @"
-commit=$commit
-built=$(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
-"@
-Set-Content -Path (Join-Path $release "BUILD.txt") -Value $buildInfo -Encoding UTF8
-
-
-$zip = "dist\multi-engine-game-conversion-framework-by-tovakai-windows-x64.zip"
-if (Test-Path $zip) { Remove-Item $zip -Force }
-Compress-Archive -Path $release -DestinationPath $zip -CompressionLevel Optimal
-
-Write-Host "Built commit: $commit"
-Write-Host "Built: $release\$appName.exe"
-Write-Host "Zip:   $zip"
+& $py build/release_metadata.py --application $release --platform windows-x64
+if ($LASTEXITCODE -ne 0) { throw "Release packaging failed ($LASTEXITCODE)" }
+Write-Host "GUI: $release\$appName.exe"

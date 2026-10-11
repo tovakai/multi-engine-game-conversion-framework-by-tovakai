@@ -1,0 +1,55 @@
+name: build windows x64
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - "megcfbt/**"
+      - "renframe/**"
+      - "rpgmframe/**"
+      - "gamemakerframe/**"
+      - "loveframe/**"
+      - "constructframe/**"
+      - "agsframe/**"
+      - "monoframe/**"
+      - "experiments/sts2-steamworks/**"
+      - "build/build_windows.ps1"
+      - "build/release_metadata.py"
+      - "docs/releases/**"
+      - "pyproject.toml"
+      - ".github/workflows/build-windows.yml"
+  push:
+    branches: [integration/working-main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Windows GUI
+        shell: pwsh
+        run: ./build/build_windows.ps1
+      - name: Check frozen GUI startup
+        shell: pwsh
+        run: |
+          $exe = "dist/windows/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai.exe"
+          $process = Start-Process -FilePath $exe -ArgumentList @('--verify-gui-startup', '--receipt', 'build/frozen-gui-startup.json') -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Frozen GUI startup failed" }
+          $receipt = Get-Content build/frozen-gui-startup.json -Raw | ConvertFrom-Json
+          if ($receipt.state -ne 'complete' -or -not $receipt.frozen) { throw "Invalid startup receipt" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: multi-engine-game-conversion-framework-by-tovakai-windows-x64
+          path: |
+            dist/*-windows-x64.zip
+            dist/SHA256SUMS-windows-x64.txt
+            build/frozen-gui-startup.json
+          if-no-files-found: error

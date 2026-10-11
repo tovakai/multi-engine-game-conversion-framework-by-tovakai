@@ -15,11 +15,14 @@ _MACHINE_NAMES = {
 def read_elf_architecture(path: Path) -> str | None:
     """Return a simple architecture label for an ELF binary."""
     try:
-        header = path.read_bytes()[:20]
+        with path.open('rb') as stream:
+            header = stream.read(20)
     except OSError:
         return None
 
     if len(header) < 20 or header[:4] != b"\x7fELF":
+        return None
+    if header[4] not in (1, 2):
         return None
 
     byte_order = header[5]
@@ -30,4 +33,6 @@ def read_elf_architecture(path: Path) -> str | None:
     else:
         return None
 
+    if machine == 183 and header[4] != 2:
+        return None
     return _MACHINE_NAMES.get(machine, f"elf-machine-{machine}")

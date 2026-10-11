@@ -63,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     build_p.add_argument("directory", type=Path, help="Path to the source game")
+    build_p.add_argument("--experimental-legacy-arm64-fallback", action="store_true",
+                         help="opt in: authoritative 7.3.5 or 7.4.x Python 2; matched full 7.5.0 ARM64 engine; experimental")
+    build_p.add_argument("--experimental-ddlc-753-migration", action="store_true",
+                         help="opt in: original DDLC 1.1.1 / 6.99.12 only; matched official 7.5.3 Python 2 engine; hardware unverified")
+    build_p.add_argument("--experimental-renpy-prerelease-migration", action="store_true",
+                         help="opt in: identified Ren'Py 8.5 nightlies; complete matched 8.5.3 Python 3 engine/runtime")
     build_p.add_argument(
         "--runtime",
         type=Path,
@@ -133,6 +139,9 @@ def cmd_build(
     dry_run: bool,
     allow_version_mismatch: bool,
     as_json: bool,
+    ddlc_753_migration: bool = False,
+    legacy_arm64_fallback: bool = False,
+    prerelease_853_migration: bool = False,
 ) -> int:
     try:
         result = build_game(
@@ -142,6 +151,9 @@ def cmd_build(
             force=force,
             dry_run=dry_run,
             allow_version_mismatch=allow_version_mismatch,
+            ddlc_753_migration=ddlc_753_migration,
+            legacy_arm64_fallback=legacy_arm64_fallback,
+            prerelease_853_migration=prerelease_853_migration,
         )
     except BuildError as exc:
         message = str(exc)
@@ -178,6 +190,9 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             allow_version_mismatch=args.allow_version_mismatch,
             as_json=args.json,
+            ddlc_753_migration=args.experimental_ddlc_753_migration,
+            legacy_arm64_fallback=args.experimental_legacy_arm64_fallback,
+            prerelease_853_migration=args.experimental_renpy_prerelease_migration,
         )
     parser.error(f"Unknown command: {args.command}")
     return EXIT_ERROR

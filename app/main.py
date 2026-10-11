@@ -11,4 +11,8 @@ if str(_ROOT) not in sys.path:
 from megcfbt.gui import main
 
 if __name__ == "__main__":
-    main()
+    if any(flag in sys.argv[1:] for flag in ('--verify-gui-conversion', '--verify-gui-startup')):
+        from megcfbt.gui_verification import main as verify_gui
+        raise SystemExit(verify_gui())
+    else:
+        main()

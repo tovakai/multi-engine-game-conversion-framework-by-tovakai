@@ -1,0 +1,17 @@
+{
+  "recipe": "sts2-retail-107-pack-v1",
+  "unchanged": {
+    ".godot/extension_list.cfg": "d3cc5932c1f374335d653ec3386abdf436803581b27f6c20f305c38e7e756141",
+    "addons/spine/spine_godot_extension.gdextension": "c68654b593fb6fd24997463d7fe48a3e69da531417c7eb68d782a3d95e2ed31b"
+  },
+  "manifests": {
+    "addons/fmod/fmod.gdextension": {
+      "source_sha256": "d00e76c4661575ac13f205bdd1fa7482a87bc36b448dde4627ad76be501871b9",
+      "target_sha256": "573b57815b1c7e341b567e12480e735dfc9a37d5bfaf3a8bfe0a1dca5e0e93a9"
+    },
+    "addons/sentry/sentry.gdextension": {
+      "source_sha256": "4f1eb3f2c4b9f0c4620d60156d8ab17cec7e31505bbe5a396fa3babca3c5c69e",
+      "target_sha256": "ebddcaea22d2912006f9dbb089812a92ce425e503e7d471fed170ed8af124195"
+    }
+  }
+}

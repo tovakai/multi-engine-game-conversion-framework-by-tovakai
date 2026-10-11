@@ -3,17 +3,24 @@
 from __future__ import annotations
 
 import re
+import shlex
 import shutil
+import tempfile
+import time
 import uuid
 from collections.abc import Callable
 from pathlib import Path
 
 from renframe.inspect_service import inspect_game
+from renframe.source_safety import validate_copy_tree
+from renframe.elf import read_elf_architecture
+from renframe.ddlc import original_ddlc_candidate
 from renframe.models import BuildResult, Compatibility, GameInspection, RuntimeInspection
 from renframe.runtime import (
     RuntimeDownloadError,
     RuntimeManager,
     detect_runtime_layout,
+    experimental_arm64_fallback,
     inspect_runtime,
     normalize_release_version,
     python_tag_for_generation,
@@ -172,6 +179,13 @@ def _validate_runtime_inspection(inspection: RuntimeInspection) -> list[str]:
             f"Supplied runtime appears to be x86-only ({arches}); "
             f"need an ARM64/aarch64 Ren'Py runtime: {inspection.path}"
         )
+    if inspection.architecture == "arm":
+        raise BuildError("Supplied runtime is 32-bit ARM; an AArch64 runtime is required.")
+    layout = detect_runtime_layout(inspection.path)
+    if layout.python_bin:
+        actual = read_elf_architecture(layout.python_bin)
+        if actual is not None and actual != "aarch64":
+            raise BuildError(f"Selected Python binary is {actual}, not AArch64: {layout.python_bin}")
 
     return list(inspection.warnings)
 
@@ -241,7 +255,8 @@ def _resolve_names(inspection: GameInspection, source: Path) -> tuple[str, str]:
 
 def _launcher_script_body(layout_root_relative_launcher: str | None,
                           python_rel: str | None,
-                          renpy_py_rel: str | None) -> str:
+                          renpy_py_rel: str | None,
+                          *, anchor_working_directory: bool = False) -> str:
     """
     Generate a POSIX bash launcher.
 
@@ -249,7 +264,7 @@ def _launcher_script_body(layout_root_relative_launcher: str | None,
     ``python`` + ``renpy.py`` when that is how the tree is meant to boot.
     """
     if layout_root_relative_launcher:
-        launch = f'exec "$ROOT/{layout_root_relative_launcher}" "$ROOT" "$@"'
+        launch = f'exec bash "$ROOT/{layout_root_relative_launcher}" "$ROOT" "$@"'
     elif python_rel and renpy_py_rel:
         launch = (
             f'exec "$ROOT/{python_rel}" "$ROOT/{renpy_py_rel}" "$ROOT" "$@"'
@@ -265,18 +280,26 @@ def _launcher_script_body(layout_root_relative_launcher: str | None,
         "set -euo pipefail\n"
         "\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-        "\n"
-        f"{launch}\n"
+        + (f'RUNTIME_DIR="$ROOT/{Path(python_rel).parent.as_posix()}"\n'
+           'if [[ -d "$RUNTIME_DIR" ]]; then\n'
+           '    for binary in "$RUNTIME_DIR"/*; do\n'
+           '        [[ -f "$binary" && ! -L "$binary" ]] || continue\n'
+           '        chmod u+x "$binary" 2>/dev/null || true\n'
+           '    done\n'
+           'fi\n' if python_rel else '')
+        + ('cd "$ROOT"\n' if anchor_working_directory else '')
+        + f"\n{launch}\n"
     )
 
 
-def generate_launcher(output_root: Path, launcher_name: str) -> Path:
+def generate_launcher(output_root: Path, launcher_name: str, *, anchor_working_directory: bool = False) -> Path:
     """Write an executable game launcher into *output_root*."""
     layout = detect_runtime_layout(output_root)
     body = _launcher_script_body(
         layout.launcher_relative,
         layout.python_bin_relative,
         layout.renpy_py_relative,
+        anchor_working_directory=anchor_working_directory,
     )
     launcher_path = output_root / f"{launcher_name}.sh"
     launcher_path.write_text(body, encoding="utf-8", newline="\n")
@@ -335,12 +358,13 @@ def _copy_runtime_and_game(
     source: Path,
     staging: Path,
     launcher_fs_name: str,
+    preserve_ddlc_sidecars: bool = False,
 ) -> Path:
     """Populate staging from runtime + source game/; return launcher path."""
     shutil.copytree(
         runtime,
         staging,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         dirs_exist_ok=False,
         ignore_dangling_symlinks=True,
@@ -357,15 +381,32 @@ def _copy_runtime_and_game(
     shutil.copytree(
         source_game,
         staging_game,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         ignore_dangling_symlinks=True,
     )
 
+    if preserve_ddlc_sidecars:
+        # Keep real character state, including absent/deleted files. Do not
+        # repopulate a template or redirect filesystem calls. Copy root data
+        # sidecars (including first-run state) without the obsolete engine.
+        excluded = {"game", "renpy", "lib", ".git", ".hg", ".svn", ".megcfbt"}
+        for path in source.iterdir():
+            if path.name in excluded or path.suffix.lower() in {".exe", ".dll", ".py", ".pyc", ".sh"}:
+                continue
+            target = staging / path.name
+            if target.exists():
+                raise BuildError(f"Game sidecar collides with official runtime: {path.name}")
+            if path.is_dir():
+                shutil.copytree(path, target, copy_function=shutil.copy2)
+            else:
+                shutil.copy2(path, target)
+
     # Never ship the source game's x86 lib/renpy into the Frame build.
     # Runtime copy already provided those; source payload is game/ only.
 
-    return generate_launcher(staging, launcher_fs_name)
+    return generate_launcher(staging, launcher_fs_name,
+                             anchor_working_directory=preserve_ddlc_sidecars)
 
 
 def _find_source_launcher(root: Path) -> Path | None:
@@ -429,16 +470,36 @@ def _write_grafted_launcher(
     platform_name: str,
 ) -> Path:
     launcher = root / "launch.sh"
+    launcher_platform = platform_name
     if source_launcher is not None and _patch_source_launcher_for_arm(source_launcher):
+        # Distributed launchers may prepend their Python tag to RENPY_PLATFORM.
+        # Keep the full directory name for runtime paths, but pass only the
+        # platform suffix to these launchers so the tag is not added twice.
+        source_text = source_launcher.read_text(encoding="utf-8", errors="replace")
+        if re.search(r'lib/\$(?:PYTHON|\{PYTHON\})-\$(?:RENPY_PLATFORM|\{RENPY_PLATFORM\})', source_text):
+            launcher_platform = re.sub(r"^py[23]-", "", platform_name)
         relative = source_launcher.relative_to(root).as_posix()
         command = f'exec bash "$ROOT/{relative}" "$ROOT" "$@"'
     else:
+        # Windows-only distributions often rename renpy.py to the game's name
+        # and omit the shell launcher. The native `renpy` executable otherwise
+        # tries to open renpy.py, which is absent in those distributions.
+        bootstraps = [
+            path for path in sorted(root.glob("*.py"))
+            if "import renpy.bootstrap" in path.read_text(encoding="utf-8", errors="replace")
+        ]
+        bootstrap = root / "renpy.py"
+        if not bootstrap.is_file() and len(bootstraps) == 1:
+            bootstrap = bootstraps[0]
+        elif not bootstrap.is_file() and len(bootstraps) > 1:
+            raise BuildError("Multiple Ren'Py Python launchers found; cannot choose a game entrypoint")
+        bootstrap_arg = '"$ROOT"/' + shlex.quote(bootstrap.name)
         command = (
             f'RUNTIME="$ROOT/lib/{platform_name}"\n'
-            'if [[ -x "$RUNTIME/renpy" ]]; then\n'
+            f'if [[ -x "$RUNTIME/python" && -f {bootstrap_arg} ]]; then\n'
+            f'    exec "$RUNTIME/python" {bootstrap_arg} "$ROOT" "$@"\n'
+            'elif [[ -x "$RUNTIME/renpy" ]]; then\n'
             '    exec "$RUNTIME/renpy" "$ROOT" "$@"\n'
-            'elif [[ -x "$RUNTIME/python" && -f "$ROOT/renpy.py" ]]; then\n'
-            '    exec "$RUNTIME/python" "$ROOT/renpy.py" "$ROOT" "$@"\n'
             'fi\n'
             'echo "No usable Ren\\x27Py ARM64 runtime entrypoint found." >&2\n'
             'exit 126'
@@ -448,11 +509,10 @@ def _write_grafted_launcher(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
-        'export RENPY_PLATFORM="linux-aarch64"\n\n'
+        f'export RENPY_PLATFORM="{launcher_platform}"\n\n'
         '# Files transferred through Windows may lose executable permissions.\n'
         '# Restore them for the selected ARM64 runtime before launching.\n'
-        'RUNTIME_DIR="$ROOT/lib/py3-linux-aarch64"\n'
-        '[[ -d "$RUNTIME_DIR" ]] || RUNTIME_DIR="$ROOT/lib/py2-linux-aarch64"\n'
+        f'RUNTIME_DIR="$ROOT/lib/{platform_name}"\n'
         'if [[ -d "$RUNTIME_DIR" ]]; then\n'
         '    for binary in "$RUNTIME_DIR"/*; do\n'
         '        [[ -f "$binary" && ! -L "$binary" && -x "$binary" ]] && continue\n'
@@ -477,15 +537,31 @@ def _copy_source_and_arm_platform(
     source: Path,
     platform: Path,
     staging: Path,
+    progress: Callable[[str], None] | None = None,
 ) -> Path:
     """Preserve the distributed game and graft in only the ARM64 platform slice."""
+    copied = 0
+    last_report = time.monotonic()
+
+    def copy_file(src: str, dst: str) -> str:
+        nonlocal copied, last_report
+        result = shutil.copy2(src, dst)
+        copied += Path(src).stat().st_size
+        if progress and time.monotonic() - last_report >= 2:
+            progress(f"Copying game files: {copied // (1024 * 1024)} MiB copied ({Path(src).name})")
+            last_report = time.monotonic()
+        return result
+
+    if progress:
+        progress("Copying original game files and engine")
     shutil.copytree(
         source,
         staging,
-        symlinks=True,
+        symlinks=False,
         ignore=_ignore_dev_junk,
         dirs_exist_ok=False,
         ignore_dangling_symlinks=True,
+        copy_function=copy_file,
     )
 
     destination = staging / "lib" / platform.name
@@ -538,15 +614,19 @@ def build_game(
     force: bool = False,
     dry_run: bool = False,
     allow_version_mismatch: bool = False,
+    legacy_arm64_fallback: bool = False,
+    ddlc_753_migration: bool = False,
+    prerelease_853_migration: bool = False,
     progress: Callable[[str], None] | None = None,
     runtime_manager: RuntimeManager | None = None,
 ) -> BuildResult:
     """
     Create a self-contained Linux ARM64 Ren'Py game directory.
 
-    Automatic mode preserves the distributed game tree and grafts the exact
-    official sdkarm AArch64 platform slice into it. A manually supplied runtime
-    keeps the older full-runtime replacement path as an escape hatch.
+    Normal automatic mode grafts the exact official sdkarm ARM64 platform slice
+    into the original engine. The opt-in Ren'Py 7.3.5/7.4 compatibility mode instead
+    uses a matched official 7.5 engine AND ARM64 runtime, retaining game assets.
+    A manually supplied runtime uses the full-runtime replacement path.
     """
     source_path = normalize_path(source)
     output_path = (
@@ -555,9 +635,39 @@ def build_game(
 
     if not source_path.exists() or not source_path.is_dir():
         raise BuildError(f"Source path is not a directory: {source_path}")
+    try:
+        validate_copy_tree(source_path)
+    except ValueError as exc:
+        raise BuildError(str(exc)) from exc
+
+    from renframe.profiles import detect_profile, migrate_profile, ProfileError, detect_legacy_version
+    profile = detect_profile(source_path)
+    if profile is not None:
+        if legacy_arm64_fallback or ddlc_753_migration or prerelease_853_migration:
+            raise BuildError("Katawa compatibility profile cannot be combined with another migration.")
+        manager = runtime_manager or RuntimeManager()
+        validate_output_paths(source_path, output_path, manager.cache_dir)
+        if output_path.exists() and not force and not dry_run:
+            raise BuildError(f"Output already exists: {output_path}. Pass --force to replace it.")
+        if dry_run:
+            raise BuildError("Katawa profile dry-run is unavailable; migration requires downloaded compatibility sources.")
+        try:
+            with tempfile.TemporaryDirectory(prefix="renframe-katawa-") as temporary:
+                migrated = migrate_profile(profile, source_path, work_root=Path(temporary),
+                                           cache_dir=manager.cache_dir / "profiles", log=progress)
+                result = build_game(migrated, output=output_path, runtime=runtime, force=force,
+                                    progress=progress, runtime_manager=manager)
+                result.source_path = source_path
+                result.source_version = detect_legacy_version(source_path)
+                result.warnings.append(f"Experimental {profile.profile.id} ({profile.variant}) migration; test gameplay and saves.")
+                return result
+        except ProfileError as exc:
+            raise BuildError(str(exc)) from exc
 
     warnings: list[str] = []
     game_inspection = inspect_game(source_path)
+    if ddlc_753_migration and not original_ddlc_candidate(game_inspection):
+        raise BuildError("Experimental DDLC 7.5.3 migration requires original DDLC 1.1.1 layout and Ren'Py 6.99.12 engine evidence.")
     warnings.extend(
         _validate_source_inspection(
             game_inspection,
@@ -565,6 +675,33 @@ def build_game(
         )
     )
     warnings.extend(game_inspection.warnings)
+    from renframe.prerelease import prerelease_853_candidate
+    prerelease = prerelease_853_candidate(source_path)
+    if prerelease_853_migration and (not prerelease or runtime is not None or legacy_arm64_fallback or ddlc_753_migration):
+        raise BuildError("Prerelease migration requires an identified Ren'Py 8.4/8.5 nightly with Python 3.12 and no other runtime override.")
+    if prerelease and runtime is None and not prerelease_853_migration:
+        raise BuildError("This game uses a Ren'Py 8.4/8.5 nightly, whose engine may differ from the stable release. Use --experimental-renpy-prerelease-migration for a complete matched 8.5.3 engine/runtime, or supply a matching full runtime.")
+
+    ddlc_candidate = original_ddlc_candidate(game_inspection)
+    if ddlc_753_migration:
+        if runtime is not None or legacy_arm64_fallback:
+            raise BuildError("Choose DDLC 7.5.3 migration or a manual runtime/7.4 fallback, not both.")
+        if not ddlc_candidate:
+            raise BuildError("Experimental DDLC 7.5.3 migration requires original DDLC 1.1.1 layout and Ren'Py 6.99.12 engine evidence.")
+    if legacy_arm64_fallback or ddlc_753_migration or (runtime is not None and ddlc_candidate):
+        # Reject links anywhere in local game data before copying: even an
+        # internal link can expose the original to in-game writes/deletes.
+        for path in source_path.rglob("*"):
+            if path.is_symlink() or getattr(path, "is_junction", lambda: False)():
+                profile = "DDLC" if ddlc_candidate else "Legacy Ren'Py"
+                raise BuildError(f"{profile} migration refuses source symlinks/junctions; use a separate regular-file copy.")
+
+    full_engine_migration = legacy_arm64_fallback or ddlc_753_migration or prerelease_853_migration
+    if legacy_arm64_fallback and runtime is not None:
+        raise BuildError(
+            "Choose either a manual Ren'Py runtime or the experimental "
+            "7.5.0 fallback, not both."
+        )
 
     automatic_runtime = runtime is None
     runtime_inspection: RuntimeInspection | None = None
@@ -577,15 +714,60 @@ def build_game(
             )
         try:
             release = normalize_release_version(game_inspection.renpy_version)
-            python_tag = python_tag_for_generation(game_inspection.generation)
-            manager = runtime_manager or RuntimeManager()
-            runtime_path = manager.platform_path(release, python_tag)
-            if not dry_run:
-                runtime_path = manager.ensure_platform(
-                    release,
-                    python_tag,
-                    progress=progress,
+            python_tag = "py2" if ddlc_753_migration else python_tag_for_generation(game_inspection.generation)
+            if prerelease_853_migration:
+                release = "8.5.3"
+                warnings.append("EXPERIMENTAL: replacing a Ren'Py 8.4/8.5 nightly with the complete matched 8.5.3 Python 3 engine/runtime; nightly APIs and saves require gameplay testing.")
+            if ddlc_753_migration:
+                release = "7.5.3"
+                warnings.append("EXPERIMENTAL unofficial personal-use DDLC 1.1.1 conversion: source Ren'Py 6.99.12 -> matched official 7.5.3 Python 2 engine/ARM64 runtime. Story, saves, character transitions and restart behavior require Steam Frame verification. No game scripts or filesystem patches are applied.")
+            if legacy_arm64_fallback:
+                fallback_release = experimental_arm64_fallback(
+                    game_inspection.renpy_version, game_inspection.generation,
+                    inspection=game_inspection,
                 )
+                if fallback_release is None:
+                    raise BuildError(
+                        "Experimental Ren'Py 7.5.0 ARM64 fallback is only "
+                        "available for identified Ren'Py 7.4.x or authoritative exact 7.3.5 Python 2 games."
+                    )
+                release = fallback_release
+                warnings.append(
+                    f"EXPERIMENTAL: game uses Ren'Py {game_inspection.renpy_version}; "
+                    f"using Ren'Py {release} Python 2 ARM64 runtime instead. "
+                    "Gameplay compatibility has not been verified."
+                )
+                if progress:
+                    progress(
+                        f"Experimental Ren'Py {game_inspection.renpy_version} to {release} ARM64 fallback "
+                        "(explicitly approved)"
+                    )
+            manager = runtime_manager or RuntimeManager()
+            if full_engine_migration:
+                runtime_path = manager.full_sdk_path(release, python_tag)
+                validate_output_paths(source_path, output_path, runtime_path)
+                if output_path.exists() and not force and not dry_run:
+                    raise BuildError(f"Output already exists: {output_path}. Pass --force to replace it.")
+                if not dry_run:
+                    runtime_path = manager.ensure_full_sdk(
+                        release, python_tag, progress=progress
+                    )
+                warnings.append(
+                    "Experimental compatibility mode replaces the source "
+                    f"Ren'Py engine with the matching official Ren'Py {release} "
+                    f"engine and {python_tag} ARM64 runtime while preserving game/ assets."
+                )
+            else:
+                runtime_path = manager.platform_path(release, python_tag)
+                validate_output_paths(source_path, output_path, runtime_path)
+                if output_path.exists() and not force and not dry_run:
+                    raise BuildError(f"Output already exists: {output_path}. Pass --force to replace it.")
+                if not dry_run:
+                    runtime_path = manager.ensure_platform(
+                        release,
+                        python_tag,
+                        progress=progress,
+                    )
         except RuntimeDownloadError as exc:
             raise BuildError(str(exc)) from exc
 
@@ -599,6 +781,10 @@ def build_game(
         runtime_path = normalize_path(runtime)
         if not runtime_path.exists() or not runtime_path.is_dir():
             raise BuildError(f"Runtime path is not a directory: {runtime_path}")
+        try:
+            validate_copy_tree(runtime_path)
+        except ValueError as exc:
+            raise BuildError(str(exc)) from exc
 
         runtime_inspection = inspect_runtime(runtime_path)
         warnings.extend(_validate_runtime_inspection(runtime_inspection))
@@ -621,12 +807,22 @@ def build_game(
         runtime_version = runtime_inspection.version
         runtime_architecture = runtime_inspection.architecture
 
+    from renframe import live2d
+    live2d_core = None
+    if live2d.required(source_path):
+        try:
+            live2d_core = live2d.find_core(source_path, runtime_path)
+        except (OSError, ValueError) as exc:
+            raise BuildError(f"Invalid Live2D ARM64 dependency: {exc}") from exc
+        if live2d_core is None:
+            raise BuildError("This game requires Live2D Cubism Core for Linux ARM64. Download the Cubism SDK for Native under its vendor terms from " + live2d.DOWNLOAD_URL + " and keep its ZIP in Downloads, or import it through the GUI. Windows/x64 and Android libraries cannot replace the Linux ARM64 library.")
+
     validate_output_paths(source_path, output_path, runtime_path)
 
     display_name, fs_name = _resolve_names(game_inspection, source_path)
     launcher_path = (
         output_path / "launch.sh"
-        if automatic_runtime
+        if automatic_runtime and not full_engine_migration
         else output_path / f"{fs_name}.sh"
     )
 
@@ -663,11 +859,12 @@ def build_game(
         shutil.rmtree(staging)
 
     try:
-        if automatic_runtime:
+        if automatic_runtime and not full_engine_migration:
             built_launcher = _copy_source_and_arm_platform(
                 source=source_path,
                 platform=runtime_path,
                 staging=staging,
+                progress=progress,
             )
         else:
             built_launcher = _copy_runtime_and_game(
@@ -675,7 +872,10 @@ def build_game(
                 source=source_path,
                 staging=staging,
                 launcher_fs_name=fs_name,
+                preserve_ddlc_sidecars=ddlc_753_migration or ddlc_candidate,
             )
+        if live2d_core is not None:
+            live2d.install(live2d_core, staging)
         _replace_output(staging, output_path, force=force)
         result.launcher_path = output_path / built_launcher.name
     except BuildError:

@@ -20,6 +20,11 @@ class UnifiedInspection:
     buildable: bool
     warnings: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
+    renpy_generation: int | None = None
+    renpy_ddlc_753_candidate: bool = False
+    renpy_legacy_arm64_candidate: bool = False
+    renpy_prerelease_853_candidate: bool = False
+    renpy_live2d_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,3 +38,7 @@ class UnifiedBuildResult:
     engine_version: str | None
     game_name: str | None
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    remote_output: str | None = None
+    steam_launch_command: str | None = None
+    remote_job: str | None = None
+    requires_frame_install: bool = False

@@ -1,0 +1,59 @@
+diff --git a/MonoGame.Framework/Audio/Xact/AudioCategory.cs b/MonoGame.Framework/Audio/Xact/AudioCategory.cs
+index 5a98b60..29d8598 100644
+--- a/MonoGame.Framework/Audio/Xact/AudioCategory.cs
++++ b/MonoGame.Framework/Audio/Xact/AudioCategory.cs
+@@ -12,7 +12,7 @@ namespace Microsoft.Xna.Framework.Audio
+     /// <summary>
+     /// Provides functionality for manipulating multiple sounds at a time.
+     /// </summary>
+-    public struct AudioCategory : IEquatable<AudioCategory>
++    public class AudioCategory : IEquatable<AudioCategory>
+     {
+         readonly string _name;
+         readonly AudioEngine _engine;
+diff --git a/MonoGame.Framework/Graphics/SpriteBatch.cs b/MonoGame.Framework/Graphics/SpriteBatch.cs
+index e15b0f9..3489e64 100644
+--- a/MonoGame.Framework/Graphics/SpriteBatch.cs
++++ b/MonoGame.Framework/Graphics/SpriteBatch.cs
+@@ -102,6 +102,9 @@ namespace Microsoft.Xna.Framework.Graphics
+             _rasterizerState = rasterizerState ?? RasterizerState.CullCounterClockwise;
+             _effect = effect;
+             _spriteEffect.TransformMatrix = transformMatrix;
++            if (globalMatrix.HasValue)
++                _spriteEffect.TransformMatrix = transformMatrix.HasValue
++                    ? globalMatrix.Value * transformMatrix.Value : globalMatrix;
+
+             // Setup things now so a user can change them.
+             if (sortMode == SpriteSortMode.Immediate)
+diff --git a/MonoGame.Framework/Platform/Input/Mouse.SDL.cs b/MonoGame.Framework/Platform/Input/Mouse.SDL.cs
+index f558a71..5be27b1 100644
+--- a/MonoGame.Framework/Platform/Input/Mouse.SDL.cs
++++ b/MonoGame.Framework/Platform/Input/Mouse.SDL.cs
+@@ -28,7 +28,11 @@ namespace Microsoft.Xna.Framework.Input
+
+             if ((winFlags & Sdl.Window.State.MouseFocus) != 0)
+             {
+-                // Window has mouse focus, position will be set from the motion event
++                // Poll SDL's window-relative position as well as buttons. Motion
++                // events alone can leave cached coordinates stale under compositors.
++                state = Sdl.Mouse.GetState(out x, out y);
++                window.MouseState.X = x;
++                window.MouseState.Y = y;
+                 window.MouseState.LeftButton = (state & Sdl.Mouse.Button.Left) != 0 ? ButtonState.Pressed : ButtonState.Released;
+                 window.MouseState.MiddleButton = (state & Sdl.Mouse.Button.Middle) != 0 ? ButtonState.Pressed : ButtonState.Released;
+                 window.MouseState.RightButton = (state & Sdl.Mouse.Button.Right) != 0 ? ButtonState.Pressed : ButtonState.Released;
+diff --git a/MonoGame.Framework/Platform/SDL/SDLGamePlatform.cs b/MonoGame.Framework/Platform/SDL/SDLGamePlatform.cs
+index 5558550..c9448c0 100644
+--- a/MonoGame.Framework/Platform/SDL/SDLGamePlatform.cs
++++ b/MonoGame.Framework/Platform/SDL/SDLGamePlatform.cs
+@@ -130,8 +130,8 @@ namespace Microsoft.Xna.Framework
+                         break;
+                     case Sdl.EventType.MouseMotion:
+                     // TODO: Mouse input is broken, maybe fix it?
+-                       // Window.MouseState.X = ev.Motion.X;
+-                       // Window.MouseState.Y = ev.Motion.Y;
++                       Window.MouseState.X = ev.Motion.X;
++                       Window.MouseState.Y = ev.Motion.Y;
+                         break;
+                     case Sdl.EventType.KeyDown:
+                     {

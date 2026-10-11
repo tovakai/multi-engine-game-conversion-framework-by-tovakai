@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Multi-engine game runtime conversion tooling for Linux ARM64."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "GPL-3.0-only" }
+license = { text = "GPL-3.0-only AND AGPL-3.0-only" }
 authors = [{ name = "Tovakai" }]
 keywords = ["renpy", "rpg-maker", "godot", "arm64", "linux", "steam-frame"]
 classifiers = [
@@ -17,6 +17,7 @@ classifiers = [
     "Environment :: Win32 (MS Windows)",
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
@@ -26,7 +27,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
-gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.4.2"]
+gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.6.3"]
 build = ["pyinstaller>=6.3.0"]
 
 [project.scripts]
@@ -36,8 +37,18 @@ renframe = "renframe.cli:main"
 rpgmframe = "rpgmframe.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["megcfbt*", "renframe*", "rpgmframe*"]
+include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*", "monoframe*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.setuptools.package-data]
+megcfbt = ["native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
+gamemakerframe = ["patches/*.patch"]
+rpgmframe = ["godot_runtime_index.json"]
+monoframe = ["runtime_index.json", "runtime_support/*.c", "patches/*.patch"]
+
+[tool.setuptools.data-files]
+'share/megcfbt/sts2' = ['experiments/sts2-steamworks/prepare_handoff.py', 'experiments/sts2-steamworks/frame_install.py', 'experiments/sts2-steamworks/steam_installation.py', 'experiments/sts2-steamworks/build_progress.py', 'experiments/sts2-steamworks/package_converter.py', 'experiments/sts2-steamworks/convert_sts2.py', 'experiments/sts2-steamworks/converter_io.py', 'experiments/sts2-steamworks/converter_profile_v1.json', 'experiments/sts2-steamworks/fetch_converter_runtimes.py', 'experiments/sts2-steamworks/verify_output.py', 'experiments/sts2-steamworks/prepare_managed.py', 'experiments/sts2-steamworks/patch_accessors.py', 'experiments/sts2-steamworks/patch_stats.py', 'experiments/sts2-steamworks/patch_pack.py', 'experiments/sts2-steamworks/adapt_packed_manifests.py', 'experiments/sts2-steamworks/adapt_deployment_graph.py', 'experiments/sts2-steamworks/inspect_dependency_graph.py', 'experiments/sts2-steamworks/inventory_package.py', 'experiments/sts2-steamworks/STANDALONE.md', 'experiments/sts2-steamworks/HANDOFF.md', 'experiments/sts2-steamworks/pipeline.py', 'experiments/sts2-steamworks/preflight.py', 'experiments/sts2-steamworks/build_native.py', 'experiments/sts2-steamworks/adapt_fmod_build_sources.py', 'experiments/sts2-steamworks/fmod_sdk_headers_v1.json', 'experiments/sts2-steamworks/sdk_archive.py', 'experiments/sts2-steamworks/SOURCE_PIPELINE.md', 'experiments/sts2-steamworks/RELEASE_BLOCKERS.md', 'experiments/sts2-steamworks/steam_launch.py', 'experiments/sts2-steamworks/steam_entry.py', 'experiments/sts2-steamworks/native_cache.py', 'experiments/sts2-steamworks/remote_worker.py', 'experiments/sts2-steamworks/retail_107.py', 'experiments/sts2-steamworks/retail_107_managed_recipe.json', 'experiments/sts2-steamworks/retail_107_pack_recipe.json', 'experiments/sts2-steamworks/converter_profile_v107.json', 'experiments/sts2-steamworks/LICENSE']
+'share/megcfbt/sts2/licenses' = ['experiments/sts2-steamworks/licenses/GODOT-LICENSE.txt', 'experiments/sts2-steamworks/licenses/GODOT-COPYRIGHT.txt', 'experiments/sts2-steamworks/licenses/SENTRY-LICENSE.md', 'experiments/sts2-steamworks/licenses/SPINE-LICENSE.txt']

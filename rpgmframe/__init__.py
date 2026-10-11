@@ -1,6 +1,6 @@
 """RPGMFrame package."""
 
 from rpgmframe.models import EngineFamily, EngineVariant, GameInspection
+from megcfbt import __version__
 
 __all__ = ["EngineFamily", "EngineVariant", "GameInspection"]
-__version__ = "0.0.1"

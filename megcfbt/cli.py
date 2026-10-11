@@ -6,12 +6,13 @@ import argparse
 import json
 from pathlib import Path
 
-from megcfbt import APP_NAME
+from megcfbt import APP_NAME, __version__
 from megcfbt.router import ConversionError, build_source, inspect_source
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="multi-engine-game-conversion-framework-by-tovakai")
+    parser.add_argument('--version', action='version', version=f'{APP_NAME} {__version__}')
     sub = parser.add_subparsers(dest="command", required=True)
 
     inspect_cmd = sub.add_parser("inspect", help="detect engine and compatibility")
@@ -20,6 +21,14 @@ def _parser() -> argparse.ArgumentParser:
 
     build_cmd = sub.add_parser("build", help="convert a supported game to Linux ARM64")
     build_cmd.add_argument("source", type=Path)
+    build_cmd.add_argument("--experimental-legacy-arm64-fallback", action="store_true",
+                           help="opt in: authoritative 7.3.5 or 7.4.x Python 2; matched full 7.5.0 ARM64 engine; experimental")
+    build_cmd.add_argument("--experimental-ddlc-753-migration", action="store_true",
+                           help="opt in: original DDLC 1.1.1 / Ren'Py 6.99.12 only; full 7.5.3 Python 2 engine; hardware unverified")
+    build_cmd.add_argument("--dry-run", action="store_true",
+                           help="Ren'Py only: validate and report without downloads or output")
+    build_cmd.add_argument("--experimental-renpy-prerelease-migration", action="store_true",
+                           help="opt in: identified Ren'Py 8.5 nightlies; complete matched 8.5.3 Python 3 engine/runtime")
     build_cmd.add_argument("-o", "--output", type=Path)
     build_cmd.add_argument(
         "--renpy-runtime",
@@ -32,16 +41,63 @@ def _parser() -> argparse.ArgumentParser:
     build_cmd.add_argument(
         "--runtime",
         type=Path,
-        help=(
-            "manual backend runtime override for RPG Maker/Godot; eligible "
-            "Godot 3.7 custom + GodotSteam exports can build a compatibility "
-            "runtime automatically on Linux ARM64"
-        ),
+        help="optional manually supplied ARM64 runtime for RPG Maker/Godot",
     )
+    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2")
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
-    build_cmd.add_argument("--no-archive", action="store_true")
+    build_cmd.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="do not create the portable Steam Frame ZIP package",
+    )
+    build_cmd.add_argument(
+        "--steam-cover",
+        type=Path,
+        help="optional PNG/JPEG portrait artwork to bundle for Steam",
+    )
     build_cmd.add_argument("--allow-renpy-version-mismatch", action="store_true")
+    build_cmd.add_argument(
+        "--steamgriddb-id",
+        type=int,
+        help="optional exact SteamGridDB game ID when title lookup is ambiguous",
+    )
+
+    artwork_cmd = sub.add_parser(
+        "artwork",
+        help="fetch art standalone or refresh an existing converted Frame game",
+    )
+    artwork_cmd.add_argument(
+        "build", nargs="?", type=Path,
+        help="optional converted game folder; omit with --name and --output",
+    )
+    artwork_cmd.add_argument(
+        "-o", "--output", type=Path,
+        help="standalone destination for artwork-only downloads, no converted game needed",
+    )
+    artwork_cmd.add_argument("--name", help="manual game title override for SteamGridDB lookup")
+    artwork_cmd.add_argument("--steamgriddb-id", type=int, help="specific SteamGridDB game ID")
+    artwork_cmd.add_argument(
+        "--repackage", action="store_true",
+        help="refresh the Frame ZIP after adding art (original converted builds only)",
+    )
+    artwork_cmd.add_argument("--force", action="store_true", help="overwrite existing Frame ZIP")
+
+    frame_control_cmd = sub.add_parser(
+        "frame-control-limit",
+        help="inspect, patch, or restore Frame Control's local upload-size guard",
+    )
+    frame_control_cmd.add_argument(
+        "action",
+        choices=("status", "patch", "restore"),
+        nargs="?",
+        default="status",
+    )
+    frame_control_cmd.add_argument(
+        "--path",
+        type=Path,
+        help="Frame Control server.py, Frame Control.exe, or install directory",
+    )
 
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
@@ -56,6 +112,88 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "artwork":
+            from megcfbt.artwork import complete_frame_artwork
+            from megcfbt.frame_package import create_frame_zip, load_frame_metadata
+
+            if args.build is None:
+                if not args.name or not args.output:
+                    raise RuntimeError(
+                        "Standalone artwork requires --name GAME and --output DIRECTORY"
+                    )
+                if args.repackage:
+                    raise RuntimeError(
+                        "--repackage requires a converted game directory; "
+                        "standalone artwork contains no game runtime"
+                    )
+                root = args.output.expanduser().resolve()
+                if root.exists() and not root.is_dir():
+                    raise RuntimeError(f"Artwork output exists but is not a directory: {root}")
+                root.mkdir(parents=True, exist_ok=True)
+                metadata = None
+                name = args.name
+                print(f"Standalone artwork destination: {root}")
+            else:
+                if args.output:
+                    raise RuntimeError(
+                        "--output is only for standalone downloads; "
+                        "omit the positional game directory"
+                    )
+                root = args.build.expanduser().resolve()
+                metadata = load_frame_metadata(root)
+                name = args.name or metadata.get("name") or root.name
+            art = complete_frame_artwork(
+                root,
+                game_name=name,
+                steamgriddb_game_id=args.steamgriddb_id,
+                progress=print,
+            )
+            print(f"Artwork slots present: {', '.join(sorted(art)) if art else 'none'}")
+            if art:
+                print(f"Artwork files: {root / '.megcfbt' / 'artwork'}")
+            if args.repackage:
+                if metadata.get("payload"):
+                    raise RuntimeError(
+                        "Cannot repackage an extracted Frame ZIP wrapper; "
+                        "use the original converted build directory."
+                    )
+                package = create_frame_zip(root, force=args.force)
+                print(f"Updated Frame package: {package}")
+            return 0
+
+        if args.command == "frame-control-limit":
+            from megcfbt.frame_control_patch import (
+                FrameControlPatchError,
+                inspect_frame_control,
+                patch_upload_limit,
+                restore_upload_limit,
+            )
+
+            try:
+                if args.action == "patch":
+                    status = patch_upload_limit(args.path)
+                elif args.action == "restore":
+                    status = restore_upload_limit(args.path)
+                else:
+                    status = inspect_frame_control(args.path)
+            except FrameControlPatchError as exc:
+                print(f"ERROR: {exc}")
+                return 1
+
+            state = (
+                "patched"
+                if status.is_patched
+                else "stock"
+                if status.is_stock
+                else "custom"
+            )
+            print(f"Frame Control: {status.server_path}")
+            print(f"Upload limit:  {status.limit_gib} GiB ({state})")
+            print(f"Backup:        {status.backup_path if status.has_backup else 'none'}")
+            if args.action in ("patch", "restore"):
+                print("Restart Frame Control before using the changed limit.")
+            return 0
+
         if args.command == "inspect":
             result = inspect_source(args.source)
             payload = {
@@ -96,20 +234,27 @@ def main(argv: list[str] | None = None) -> int:
             args.source,
             output=args.output,
             renpy_runtime=args.renpy_runtime,
+            renpy_ddlc_753_migration=args.experimental_ddlc_753_migration,
+            renpy_prerelease_853_migration=args.experimental_renpy_prerelease_migration,
+            renpy_legacy_arm64_fallback=args.experimental_legacy_arm64_fallback,
+            dry_run=args.dry_run,
             backend_runtime=args.runtime,
+            sts2_sdk=args.fmod_sdk,
             force=args.force,
             archive=not args.no_archive,
+            steam_cover=args.steam_cover,
+            steamgriddb_game_id=args.steamgriddb_id,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
             progress=print,
             **kwargs,
         )
-        print(f"Built:   {result.output_path}")
+        print(f"{'Planned' if args.dry_run else 'Built'}:   {result.output_path}")
         if result.archive_path:
-            print(f"Archive: {result.archive_path}")
+            print(f"Package: {result.archive_path}")
         for warning in result.warnings:
             print(f"Warning: {warning}")
         return 0
-    except ConversionError as exc:
+    except (ConversionError, RuntimeError) as exc:
         print(f"ERROR: {exc}")
         return 1
 
