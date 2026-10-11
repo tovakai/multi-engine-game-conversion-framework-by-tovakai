@@ -23,7 +23,7 @@ def release(tmp_path, monkeypatch):
     (root / 'THIRD_PARTY_NOTICES.md').write_text('notice fixture')
     notes = root / 'docs/releases/0.1.0.md'
     notes.parent.mkdir(parents=True)
-    notes.write_text('release scope fixture')
+    notes.write_text('release scope fixture [support](../monoframe.md)')
     monkeypatch.setattr(module, 'ROOT', root)
     monkeypatch.setattr(module.subprocess, 'check_output', lambda *a, **k: 'a' * 40)
     monkeypatch.setattr(module.subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a, 0))
@@ -54,7 +54,10 @@ def test_release_archive_provenance_notices_and_checksum(release):
         assert metadata['platform'] == 'windows-x64'
         assert packaged.read(module.APP_NAME + '/LICENSE') == b'license fixture'
         assert packaged.read(module.APP_NAME + '/THIRD_PARTY_NOTICES.md') == b'notice fixture'
-        assert packaged.read(module.APP_NAME + '/RELEASE-NOTES.md') == b'release scope fixture'
+        notes = packaged.read(module.APP_NAME + '/RELEASE-NOTES.md').decode()
+        assert 'release scope fixture' in notes
+        assert f'/blob/{"a" * 40}/docs/monoframe.md' in notes
+        assert '](../' not in notes
 
 
 def test_release_refuses_mislabeled_executable_architecture(release):
