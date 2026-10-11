@@ -5,6 +5,9 @@ MonoFrame prepares the unmodified Steam Windows installation of Stardew Valley
 game, GameData and MonoGame assembly hashes before applying the compatibility
 profile. Modified installations, SMAPI and other game versions are not covered.
 
+SMAPI possibilities and a proposed implementation plan are recorded in
+[SMAPI ARM64 research](smapi-arm64-research-and-plan.md). Implementation is deferred.
+
 Preparation runs against a copied installation. The SDK includes a self-contained
 Windows x64 preparation tool, so conversion does not require an installed .NET SDK
 or compilation on Windows. Frame packages contain the Linux runtime and supporting
