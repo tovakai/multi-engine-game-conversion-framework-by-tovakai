@@ -1,5 +1,47 @@
 # Repository cleanup and 0.1.0 readiness audit
 
+## Current status: 2026-10-12
+
+The current candidate includes automatic GodotSteam/native runtime provisioning,
+the user-feedback fixes, the integrated experimental STS2 workflow and the
+hardware-tested MonoFrame Stardew profile. SMAPI implementation is deferred.
+
+Completed cleanup:
+
+- Audited 38 remote heads, preserved a verified private recovery bundle, and
+  pruned 31 redundant/superseded branches with user approval and exact-head leases.
+- Closed superseded PRs #2, #9, #14, #16, #17 and #21. Unique work in #1, #11,
+  #18 and #41 remains preserved; the remaining STS2 audit branch is excluded.
+- Unified backend application versions at 0.1.0 and added CLI version reporting.
+- Included MonoFrame in CI/build coverage; added Windows tests and frozen GUI
+  build/startup checks alongside native ARM64 build/startup checks.
+- Added shared versioned archive packaging, architecture validation, commit/dirty
+  provenance, checksums, licenses, third-party notices and release notes.
+- Ignored local worktree/cache/egg-info artifacts without deleting their contents.
+
+See [exact branch heads and cleanup evidence](branch-cleanup-2026-10-12.md) and
+[0.1.0 candidate scope and gates](releases/0.1.0.md). No release tag or promotion
+to main is performed by branch cleanup.
+
+Remaining decisions and work:
+
+1. Finish and review the clean Windows/native ARM64 candidate builds and CI results.
+2. Complete representative end-user conversion/install acceptance against the
+   final candidate; preserve the distinction between existing hardware reports,
+   startup checks and full gameplay compatibility.
+3. Reconcile main's separate README history through a promotion PR; review that
+   PR, then merge, build the exact release commit and deliberately tag/publish.
+4. Review completed issues #35/#39 for closure. Keep #37's deeper DDLC validation
+   separate; #32 artwork provenance remains a loose end rather than a reason to
+   reintroduce old packaging branches.
+5. Preserve/defer old mod tooling, diagnostics and Space Rescue performance work.
+   No SMAPI/Unity/WOLF/backend expansion is part of this release cleanup.
+
+## Historical audit: 2026-10-10
+
+The snapshot below records the earlier investigation. Its branch counts,
+provisioning status and outstanding work are superseded by the current status above.
+
 Audit date: 2026-10-10. Baseline: `integration/working-main` at `7f17b10`.
 
 This is an audit and proposed cleanup, not a branch-deletion record. No remote

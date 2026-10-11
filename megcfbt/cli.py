@@ -6,12 +6,13 @@ import argparse
 import json
 from pathlib import Path
 
-from megcfbt import APP_NAME
+from megcfbt import APP_NAME, __version__
 from megcfbt.router import ConversionError, build_source, inspect_source
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="multi-engine-game-conversion-framework-by-tovakai")
+    parser.add_argument('--version', action='version', version=f'{APP_NAME} {__version__}')
     sub = parser.add_subparsers(dest="command", required=True)
 
     inspect_cmd = sub.add_parser("inspect", help="detect engine and compatibility")

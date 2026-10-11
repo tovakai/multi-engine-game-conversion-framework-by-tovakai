@@ -6,6 +6,10 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
+The `integration/working-main` branch is being prepared for **0.1.0**. See the
+[release candidate scope and remaining gates](docs/releases/0.1.0.md) and
+[repository cleanup record](docs/repository-cleanup-0.1.0.md).
+
 The GUI also includes the experimental [STS2 two-stage workflow](docs/sts2-integrated-workflow.md):
 Windows prepares a verified transfer ZIP using your FMOD Linux SDK, then the Frame
 installer builds the native components. This follows a separate packaging path
@@ -84,8 +88,8 @@ runtime selection or Frame connection is needed for conversion. Cassette Beasts
 has native title-screen evidence; input, full gameplay and saves still need testing.
 See [downloadable GodotSteam runtimes](docs/downloadable-godotsteam-runtime.md).
 
-Ren'Py bytecode-only exports are recognized, with static version inspection when
-their Python bytecode matches the converter's Python version. Identified Katawa
+Ren'Py bytecode-only exports are recognized using bounded, non-executing metadata
+inspection for supported bytecode formats, independently of the host Python version. Identified Katawa
 Shoujo 6.10.2 distributions use the recovered legacy compatibility profile,
 including pinned HD source and UI fixes. Identified Ren'Py 8.5 nightlies offer an
 experimental complete 8.5.3 engine/runtime migration in the GUI or with
@@ -124,7 +128,10 @@ Multi-Engine Game Conversion Framework by Tovakai
           Steam Frame ZIP package
 ```
 
-The current import points are recorded under `docs/backends/`.
+The router also dispatches GameMakerFrame, LOVEFrame, ConstructFrame, AGSFrame and
+MonoFrame through the same packaging flow. The experimental STS2 two-stage path
+has its own device-side finishing contract. Current import points are recorded
+under `docs/backends/`; experimental status is listed in the backend table above.
 
 ## Install for development
 
@@ -359,6 +366,8 @@ event loop doesn't necessarily mean its window is visible on your headset.
 
 See the [2026-10-11 Steam Frame user test report](docs/hardware-feedback-2026-10-11.md)
 for 23 working packages and the reported input/rendering/conversion limitations.
+The subsequent [Stardew Valley MonoFrame validation](docs/monoframe.md) also records
+pointer/gamepad input, early gameplay and save/load through Steam.
 
 This table tracks **real game tests on Linux ARM64 hardware**, not games that
 merely pass engine detection or produce a build. It is a growing test log,

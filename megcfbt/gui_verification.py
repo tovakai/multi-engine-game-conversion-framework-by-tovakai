@@ -11,18 +11,33 @@ import sys
 from pathlib import Path
 import time
 from types import SimpleNamespace
-from megcfbt import gui
+from megcfbt import gui, APP_NAME, __version__
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--verify-gui-conversion',type=Path,required=True)
-    parser.add_argument('--output-dir',type=Path,required=True)
+    mode=parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--verify-gui-conversion',type=Path)
+    mode.add_argument('--verify-gui-startup',action='store_true')
+    parser.add_argument('--output-dir',type=Path)
     parser.add_argument('--receipt',type=Path,required=True)
     parser.add_argument('--timeout',type=int,default=900)
     parser.add_argument('--approve-renpy-prerelease-migration',action='store_true',
                         help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
+    if args.verify_gui_startup:
+        app=gui.ConverterApp()
+        try:
+            app.root.withdraw()
+            app.root.update_idletasks()
+            args.receipt.parent.mkdir(parents=True,exist_ok=True)
+            args.receipt.write_text(json.dumps({'state':'complete','app_name':APP_NAME,
+                'version':__version__,'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
+        finally:
+            app.root.destroy()
+        return 0
+    if args.output_dir is None:
+        parser.error('--output-dir is required for conversion verification.')
     source=args.verify_gui_conversion.expanduser().resolve()
     output=args.output_dir.expanduser().resolve()
     receipt=args.receipt.expanduser().resolve()

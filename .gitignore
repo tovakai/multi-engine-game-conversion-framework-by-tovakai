@@ -7,3 +7,6 @@ dist/
 build/
 *.spec
 .DS_Store
+*.egg-info/
+.prototype-cache/
+.worktrees/

@@ -15,7 +15,7 @@ fi
 
 "$PY" -m pip install -e ".[gui,build]"
 
-APP_NAME="Multi-Engine Game Conversion Framework by Tovakai"
+APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
 
 "$PY" -m PyInstaller \
   --noconfirm \
@@ -40,16 +40,6 @@ if [[ -d "dist/$APP_NAME" ]]; then
   cp -a "dist/$APP_NAME/." "$RELEASE/"
 fi
 
-cat > "$RELEASE/README.txt" <<'EOF'
-Multi-Engine Game Conversion Framework by Tovakai
-=================================================
-
-Run:
-./Multi-Engine\ Game\ Conversion\ Framework\ by\ Tovakai
-
-The application detects Ren'Py, RPG Maker, and Godot builds and routes each game
-to its corresponding Linux ARM64 conversion backend.
-EOF
-
 chmod +x "$RELEASE/$APP_NAME" 2>/dev/null || true
+"$PY" build/release_metadata.py --application "$RELEASE" --platform linux-aarch64
 echo "Built: $RELEASE/$APP_NAME"
