@@ -1,0 +1,13 @@
+{
+  "api/core/inc/fmod.h": {"sha256": "6f32d439b351e321bf15b931ec93a37a9e3e9a516f19298dec7f7df52e7266aa", "size_bytes": 50737},
+  "api/core/inc/fmod.hpp": {"sha256": "e62d69359415868b1178a565fa1d53fd32f262ab1c93d3b31b3024c67759a132", "size_bytes": 37124},
+  "api/core/inc/fmod_codec.h": {"sha256": "755810b2686e929d60717412696c36b57ce464864c2ee0544597b6519c5fa487", "size_bytes": 6824},
+  "api/core/inc/fmod_common.h": {"sha256": "18960a8bf603290d9650b2d4c2869c167b399d78b06cb91f03deed9a4a442847", "size_bytes": 38634},
+  "api/core/inc/fmod_dsp.h": {"sha256": "fba637592601152cd5bc72da3286c744a1593e3bb85a347fe3d287ee40b9e492", "size_bytes": 24440},
+  "api/core/inc/fmod_dsp_effects.h": {"sha256": "33b1ef5a7aa9615c8b858867584a8a599368623e4f4210bbef3e18873ab44fee", "size_bytes": 17705},
+  "api/core/inc/fmod_errors.h": {"sha256": "8a575bdce8881d1bd31447e23754628cb3f395394ed07e99b9e29628a811fa5f", "size_bytes": 12510},
+  "api/core/inc/fmod_output.h": {"sha256": "44b772f14b0ea084a4ead50a7b733d265fc7faa642f66fec1e8a20ab5be2a4f8", "size_bytes": 7263},
+  "api/studio/inc/fmod_studio.h": {"sha256": "5442a79427b33fa3bcbae420914fbe1f8dd5a190f39264fd830061b49c84e88f", "size_bytes": 25234},
+  "api/studio/inc/fmod_studio.hpp": {"sha256": "10dec2e10fcf123af6e5c227f3887ee329f6a79a95e92b1ef0a6901aeccb4063", "size_bytes": 19462},
+  "api/studio/inc/fmod_studio_common.h": {"sha256": "8b06fc81879a482d10f8f8c9ecc988cb8489068250c10687bc81b78476366847", "size_bytes": 13921}
+}

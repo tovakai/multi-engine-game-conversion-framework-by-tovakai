@@ -6,6 +6,11 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
+The GUI also includes the experimental [STS2 two-stage workflow](docs/sts2-integrated-workflow.md):
+Windows prepares a verified transfer ZIP using your FMOD Linux SDK, then the Frame
+installer builds the native components. This follows a separate packaging path
+from the other engines and requires installation on the Frame before play.
+
 ## Contents
 
 - [Why should I care?](#why-should-i-care)
@@ -402,4 +407,6 @@ source payloads intact unless a generic compatibility repair is justified.
 
 ## License
 
-GNU GPLv3. See `LICENSE`.
+Existing framework components use GNU GPLv3 (`LICENSE`); the integrated STS2
+backend retains GNU AGPLv3 (`experiments/sts2-steamworks/LICENSE`). Combined
+distributions carry the AGPL requirements described in `THIRD_PARTY_NOTICES.md`.

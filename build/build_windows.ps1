@@ -52,6 +52,7 @@ foreach ($path in @(
   --collect-data megcfbt `
   --collect-data gamemakerframe `
   --collect-data rpgmframe `
+  --add-data "experiments/sts2-steamworks;sts2-tools" `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 

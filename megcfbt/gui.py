@@ -10,7 +10,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from megcfbt import APP_NAME
+from megcfbt import APP_NAME, sts2
 from megcfbt.frame_control_patch import (
     PATCHED_LIMIT_GIB,
     STOCK_LIMIT_GIB,
@@ -131,6 +131,7 @@ class ConverterApp:
         self.inspection: UnifiedInspection | None = None
         self.renpy_runtime: Path | None = None
         self.backend_runtime: Path | None = None
+        self.sts2_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
@@ -529,6 +530,8 @@ class ConverterApp:
     def _conversion_allowed(self) -> bool:
         if self.inspection is None:
             return False
+        if self.inspection.backend == "sts2":
+            return self.inspection.compatibility == "needs_testing"
         if self.inspection.buildable:
             return True
         if automatic_custom_godot_runtime_available(self.inspection):
@@ -635,7 +638,10 @@ class ConverterApp:
             ),
         )
 
-        if result.engine == "renpy":
+        if result.backend == "sts2":
+            self.sts2_sdk = sts2.find_sdk()
+            self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
+        elif result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
             elif result.runtime_kind and result.runtime_kind.startswith("Katawa Shoujo"):
@@ -722,6 +728,8 @@ class ConverterApp:
             self.notes_box.configure(state="disabled")
         for warning in result.warnings:
             self._log("Inspect: " + warning)
+        if result.backend == "sts2" and result.compatibility == "needs_testing" and self.sts2_sdk is None:
+            self._pick_runtime()
 
     def _inspection_failed(self, message: str) -> None:
         self.activity_progress.stop()
@@ -760,6 +768,10 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
+        if self.inspection and self.inspection.backend == "sts2":
+            from megcfbt.sts2_sdk_setup import Sts2SdkDialog
+            self.sts2_sdk_dialog = Sts2SdkDialog(self)
+            return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
@@ -818,6 +830,18 @@ class ConverterApp:
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
+        if self.inspection.backend == "sts2":
+            if self.inspection.compatibility != "needs_testing":
+                return
+            from megcfbt import sts2
+            try:
+                self.sts2_sdk = sts2.validate_sdk(self.sts2_sdk) if self.sts2_sdk else sts2.find_sdk()
+            except (OSError, ValueError):
+                self.sts2_sdk = sts2.find_sdk()
+            if self.sts2_sdk is None:
+                self.runtime_button.configure(text="GET FMOD SDK â€¢ STS2")
+                self._pick_runtime()
+                return
         legacy_arm64_approved = False
         ddlc_753_approved = False
         prerelease_853_approved = False
@@ -921,6 +945,8 @@ class ConverterApp:
                     renpy_ddlc_753_migration=ddlc_753_approved,
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
+                    **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
+                       if self.inspection.backend == "sts2" else {}),
                     force=force,
                     archive=archive,
                     steam_cover=self.steam_cover,
@@ -939,6 +965,24 @@ class ConverterApp:
         threading.Thread(target=worker, daemon=True).start()
 
     def _done(self, result: UnifiedBuildResult) -> None:
+        self._set_progress(1.0, "Complete")
+        self.last_output = result.output_path
+        self.last_archive = result.archive_path
+        self.last_result = result
+        self._set_busy(False)
+        if result.requires_frame_install:
+            self._set_status('TRANSFER PACKAGE READY â€” INSTALL ON FRAME', C_OK)
+            messagebox.showinfo(APP_NAME,
+                'Windows preparation is complete. Additional compilation is required on the Frame.\n\n'
+                + ('Copy this ZIP to the Frame and extract it:\n' + str(result.archive_path)
+                   if result.archive_path else 'Copy this entire folder to the Frame:\n' + str(result.output_path))
+                + '\n\nOpen a terminal in the extracted folder and run:\nsh ./install.sh\n\n'
+                'First install Slay the Spire 2 through Steam on the Frame and let its download finish. '
+                'The installer checks that its Steam entry is ready before compiling. '
+                'It shows compilation activity and elapsed time, verifies the game, then prints the Steam launch option. '
+                'First installation requires internet access and the Frame build prerequisites. '
+                'See INSTALL-ON-FRAME.txt inside the package.')
+            return
         self._set_progress(1.0, "Complete")
         self.last_output = result.output_path
         self.last_archive = result.archive_path

@@ -30,6 +30,7 @@ APP_NAME="Multi-Engine Game Conversion Framework by Tovakai"
   --collect-data megcfbt \
   --collect-data gamemakerframe \
   --collect-data rpgmframe \
+  --add-data "experiments/sts2-steamworks:sts2-tools" \
   app/main.py
 
 RELEASE="dist/linux-aarch64/$APP_NAME"

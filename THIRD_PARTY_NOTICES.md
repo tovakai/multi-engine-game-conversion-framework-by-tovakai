@@ -114,3 +114,14 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+
+# Integrated STS2 source backend
+
+The software-only backend in `experiments/sts2-steamworks` is imported from the
+working STS2 two-stage checkout and retains its AGPL v3 license in that directory.
+The existing framework components retain their GPL v3 license. GPL v3 section 13
+permits combination with AGPL v3 software; AGPL requirements apply to the combined
+work. Both license texts must accompany combined distributions. This does not
+license or redistribute retail game files, FMOD SDK inputs, or proprietary Steam
+libraries. The backend includes its own dependency notices and redistribution
+checks. Conversion uses the user's separately obtained, checksum-verified SDK.

@@ -31,6 +31,7 @@ from rpgmframe.runtime import DEFAULT_NWJS_VERSION
 from rpgmframe.source import SourceError, prepare_source, PreparedSource
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
+from megcfbt import sts2
 from renframe.utils import sanitize_fs_name
 from renframe.detector import looks_like_renpy_game
 from megcfbt.native_backend import NativeBuildError
@@ -233,6 +234,11 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
     # seeing each candidate, but its own detector remains the authority for its engines.
     candidates = list(_candidate_roots(root))
 
+    for candidate in candidates:
+        summary = sts2.summary(candidate)
+        if summary is not None:
+            return summary
+
     renpy_roots = _renpy_root_candidates(root)
     if len(renpy_roots) > 1:
         return UnifiedInspection(source_path=root, backend=None, engine="renpy",
@@ -389,6 +395,10 @@ def build_source(
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
+    sts2_sdk: Path | str | None = None,
+    sts2_frame=None,
+    sts2_retry: bool = False,
+    sts2_handoff: bool | None = None,
     _prepared_source: PreparedSource | None = None,
 ) -> UnifiedBuildResult:
     options = locals().copy()
@@ -425,10 +435,14 @@ def build_source(
         and backend_runtime is not None
     )
     custom_godot_auto = automatic_custom_godot_runtime_available(inspection)
+    handoff = sts2_handoff if sts2_handoff is not None else sts2.platform.system() == 'Windows'
+    sts2_ready = bool(inspection.backend == 'sts2' and inspection.compatibility == 'needs_testing'
+                      and (handoff or sts2_frame is not None or sts2.available(sts2_sdk or backend_runtime)))
     if (
         not inspection.buildable
         and not custom_godot_override
         and not custom_godot_auto
+        and not sts2_ready
     ) or inspection.backend is None:
         extra = (
             " Supply a matching custom ARM64 runtime to continue. "
@@ -455,7 +469,53 @@ def build_source(
 
     try:
         stage(0.20, "Building ARM64 package")
-        if inspection.backend == "renframe":
+        if inspection.backend == "sts2":
+            if handoff and sts2_frame is None:
+                with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
+                    selected = _inspect_prepared(prepared.root)
+                    try:
+                        report = sts2.prepare_transfer(selected.source_path, output_path,
+                            sdk=sts2_sdk or backend_runtime, archive=archive, progress=progress, stage=stage)
+                    except (OSError, ValueError, RuntimeError) as exc:
+                        raise ConversionError(str(exc)) from exc
+                return UnifiedBuildResult(source_path=path, output_path=output_path,
+                    launcher_path=output_path/'install.sh', archive_path=Path(report['archive']) if report.get('archive') else None,
+                    backend='sts2', engine='godot', engine_version=inspection.engine_version,
+                    game_name=inspection.game_name, warnings=tuple(report['limitations']), requires_frame_install=True)
+            if sts2_frame is not None:
+                from megcfbt.sts2_remote import RemoteBuild, RemoteError
+                try:
+                    with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
+                        selected=_inspect_prepared(prepared.root)
+                        service=RemoteBuild(sts2_frame,progress,stage)
+                        retry=service.last_retry_job(output_path,selected.source_path) if sts2_retry else None
+                        report=service.build(selected.source_path,output_path,archive=archive,resume_job=retry)
+                    return UnifiedBuildResult(source_path=path,output_path=output_path,
+                        launcher_path=None,archive_path=Path(report['local_archive']) if report.get('local_archive') else None,
+                        backend='sts2',engine='godot',engine_version=inspection.engine_version,game_name=inspection.game_name,
+                        warnings=('STS2 remote conversion is experimental; Steam launch and gameplay acceptance are required.',),
+                        remote_output=report['output'],steam_launch_command=report['launch_command'],remote_job=report['job'])
+                except (RemoteError,OSError,ValueError) as e: raise ConversionError(str(e)) from e
+            with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
+                selected = _inspect_prepared(prepared.root)
+                if selected.backend != "sts2":
+                    raise ConversionError("STS2 source disappeared after extraction")
+                try:
+                    report = sts2.build(selected.source_path, output_path,
+                                        sdk=sts2_sdk or backend_runtime,
+                                        progress=progress)
+                except (OSError, RuntimeError) as exc:
+                    raise ConversionError(str(exc)) from exc
+            launcher_path = output_path / "launch.sh"
+            warnings = tuple(report.get("limitations", []))
+            game_name = inspection.game_name
+            engine_version = inspection.engine_version
+            return UnifiedBuildResult(source_path=path, output_path=output_path,
+                launcher_path=launcher_path,
+                archive_path=Path(report['archive']) if report.get('archive') else None,
+                backend='sts2', engine='godot', engine_version=engine_version,
+                game_name=game_name, warnings=warnings)
+        elif inspection.backend == "renframe":
             with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
                 prepared_inspection = _inspect_prepared(prepared.root)
                 if prepared_inspection.backend != "renframe":
