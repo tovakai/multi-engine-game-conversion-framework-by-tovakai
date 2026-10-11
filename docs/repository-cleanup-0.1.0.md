@@ -2,6 +2,13 @@
 
 ## Current status: 2026-10-12
 
+After cleanup, PR #42 was promoted and the application release
+[v0.1.0](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0)
+was published from `81fa457690ee0c0a2ac04c40ff2d105ac70b812e`. Tagged Windows
+and native ARM64 builds, regression checks and frozen GUI startup passed. Uploaded
+archive hashes match the verified CI artifacts. The [0.1.1 maintenance plan](releases/0.1.1-plan.md)
+records follow-up priorities; the 0.1.0 tag remains immutable.
+
 The current candidate includes automatic GodotSteam/native runtime provisioning,
 the user-feedback fixes, the integrated experimental STS2 workflow and the
 hardware-tested MonoFrame Stardew profile. SMAPI implementation is deferred.
@@ -23,14 +30,13 @@ See [exact branch heads and cleanup evidence](branch-cleanup-2026-10-12.md) and
 [0.1.0 candidate scope and gates](releases/0.1.0.md). No release tag or promotion
 to main is performed by branch cleanup.
 
-Remaining decisions and work:
+Historical candidate gates and post-release loose ends:
 
-1. Finish and review the clean Windows/native ARM64 candidate builds and CI results.
+1. Completed: clean Windows/native ARM64 release builds and CI verification.
 2. Complete representative end-user conversion/install acceptance against the
    final candidate; preserve the distinction between existing hardware reports,
    startup checks and full gameplay compatibility.
-3. Reconcile main's separate README history through a promotion PR; review that
-   PR, then merge, build the exact release commit and deliberately tag/publish.
+3. Completed: main history reconciliation, promotion, exact-tag builds and publication.
 4. Review completed issues #35/#39 for closure. Keep #37's deeper DDLC validation
    separate; #32 artwork provenance remains a loose end rather than a reason to
    reintroduce old packaging branches.
