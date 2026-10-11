@@ -73,7 +73,8 @@ def import_sdk(archive_path: Path) -> Path:
 
 def find_core(*roots: Path) -> Path | None:
     for root in roots:
-        for relative in ('lib/py3-linux-aarch64/' + NAME, 'py3-linux-aarch64/' + NAME, NAME):
+        for relative in ('lib/py3-linux-aarch64/' + NAME, 'lib/py2-linux-aarch64/' + NAME,
+                         'py3-linux-aarch64/' + NAME, 'py2-linux-aarch64/' + NAME, NAME):
             path = root / relative
             if path.is_file():return validate(path)
     try:
@@ -92,13 +93,15 @@ def find_core(*roots: Path) -> Path | None:
 
 
 def install(core: Path, output: Path) -> None:
-    target = output / 'lib/py3-linux-aarch64' / NAME
+    platform = 'py2-linux-aarch64' if (output / 'lib/py2-linux-aarch64').is_dir() and not (output / 'lib/py3-linux-aarch64').is_dir() else 'py3-linux-aarch64'
+    relative = 'lib/' + platform + '/' + NAME
+    target = output / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(validate(core), target)
     notice = core.parent / 'LICENSE.Live2D.md'
     if notice.is_file():shutil.copyfile(notice, output / 'LICENSE.Live2D.md')
     (output / 'LIVE2D-RUNTIME.json').write_text(json.dumps({
-        'architecture':'aarch64','library':'lib/py3-linux-aarch64/' + NAME,
+        'architecture':'aarch64','library':relative,
         'sha256':hashlib.sha256(target.read_bytes()).hexdigest(),
         'provider':'User-supplied Cubism SDK for Native', 'license_url':DOWNLOAD_URL,
     },indent=2) + '\n')

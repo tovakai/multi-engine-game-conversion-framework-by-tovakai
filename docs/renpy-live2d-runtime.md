@@ -17,7 +17,7 @@ Live2D dependency.
 The importer selects only the Linux ARM64 Core and its Core license notice.
 Android ARM64, Linux x64 and Windows libraries are incompatible and rejected.
 The accepted Core is hashed, cached and rechecked before reuse, then copied into
-`lib/py3-linux-aarch64` in each converted output. Its notice and a runtime manifest
+`lib/py3-linux-aarch64` (or `lib/py2-linux-aarch64` for Python 2) in each converted output. Its notice and a runtime manifest
 accompany that copy. The original installation and downloaded SDK remain intact.
 The converter executable/ZIP contains no vendor Core or SDK payload.
 

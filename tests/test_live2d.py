@@ -49,6 +49,14 @@ def test_required_models_and_game_engine_are_independent(tmp_path):
     assert live2d.required(tmp_path)
 
 
+def test_python2_runtime_receives_core_in_its_own_platform(tmp_path):
+    core=tmp_path/live2d.NAME;core.write_bytes(elf())
+    output=tmp_path/'output';(output/'lib/py2-linux-aarch64').mkdir(parents=True)
+    live2d.install(core,output)
+    assert (output/'lib/py2-linux-aarch64'/live2d.NAME).is_file()
+    assert not (output/'lib/py3-linux-aarch64').exists()
+
+
 def test_gui_missing_core_opens_sdk_popup_before_worker(tmp_path,monkeypatch):
     from megcfbt import gui,live2d_setup
     app=SimpleNamespace(_busy=False,source=tmp_path,renpy_runtime=None,inspection=SimpleNamespace(engine='renpy',renpy_live2d_required=True))
