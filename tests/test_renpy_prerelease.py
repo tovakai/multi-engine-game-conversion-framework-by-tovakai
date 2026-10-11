@@ -35,6 +35,15 @@ def test_stable_release_does_not_enable_prerelease_migration(tmp_path):
         build_game(source, output=tmp_path / 'output', prerelease_853_migration=True)
 
 
+@pytest.mark.parametrize('version', ['8.4.1.25071908', '8.4.2.25082901'])
+def test_84_nightly_uses_explicit_full_engine_migration(tmp_path, version):
+    source = nightly(tmp_path / 'source', version=version)
+    assert prerelease_853_candidate(source)
+    assert inspect_source(source).renpy_prerelease_853_candidate
+    with pytest.raises(BuildError, match='nightly'):
+        build_game(source, output=tmp_path / 'output')
+
+
 @pytest.mark.parametrize('choice', [True, False, None])
 def test_prerelease_gui_choice_is_forwarded(tmp_path, monkeypatch, choice):
     app = app_for_inspection(tmp_path)

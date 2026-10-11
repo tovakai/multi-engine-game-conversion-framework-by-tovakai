@@ -24,6 +24,7 @@ class UnifiedInspection:
     renpy_ddlc_753_candidate: bool = False
     renpy_legacy_arm64_candidate: bool = False
     renpy_prerelease_853_candidate: bool = False
+    renpy_live2d_required: bool = False
 
 
 @dataclass(frozen=True)

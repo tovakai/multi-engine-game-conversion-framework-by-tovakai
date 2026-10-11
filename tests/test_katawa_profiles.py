@@ -31,6 +31,19 @@ def test_katawa_profile_matches_without_folder_name(tmp_path: Path) -> None:
     assert match.profile.id == KATAWA_PROFILE.id
     assert match.variant == 'vanilla'
 
+
+def test_steam_katawa_tuple_version_uses_vanilla_upgrade(tmp_path: Path) -> None:
+    root = _katawa_root(tmp_path, 'renamed-steam-install')
+    (root / 'python25.dll').unlink()
+    (root / 'renpy.code').unlink()
+    (root / 'lib/pythonlib2.7').mkdir(parents=True)
+    (root / 'renpy/__init__.py').write_text('version_tuple = (6, 16, 5, vc_version)\nversion = "Ren\'Py " + ".".join(str(i) for i in version_tuple)\n')
+    assert detect_legacy_version(root) == '6.16.5'
+    match = detect_profile(root)
+    assert match is not None and match.variant == 'vanilla'
+    (root / 'game/imachine.rpyc').unlink()
+    assert detect_profile(root) is None
+
 def test_katawa_hd_profile_matches_name(tmp_path: Path) -> None:
     root = _katawa_root(tmp_path, 'Katawa Shoujo HD')
     match = detect_profile(root)

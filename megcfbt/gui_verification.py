@@ -20,6 +20,8 @@ def main(argv=None) -> int:
     parser.add_argument('--output-dir',type=Path,required=True)
     parser.add_argument('--receipt',type=Path,required=True)
     parser.add_argument('--timeout',type=int,default=900)
+    parser.add_argument('--approve-renpy-prerelease-migration',action='store_true',
+                        help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
     source=args.verify_gui_conversion.expanduser().resolve()
     output=args.output_dir.expanduser().resolve()
@@ -51,6 +53,14 @@ def main(argv=None) -> int:
             write()
             app.root.after_idle(app.root.destroy)
     old_info,old_error=gui.messagebox.showinfo,gui.messagebox.showerror
+    old_choice=gui.messagebox.askyesnocancel
+    if args.approve_renpy_prerelease_migration:
+        def approve_nightly(title,message,*a,**kw):
+            if app.inspection and app.inspection.renpy_prerelease_853_candidate and 'nightly' in message:
+                state['prerelease_migration_approved']=True
+                return True
+            return old_choice(title,message,*a,**kw)
+        gui.messagebox.askyesnocancel=approve_nightly
     def failed(title,message,*a,**kw):
         state.update(state='failed',error=str(message))
         stop()
@@ -96,4 +106,5 @@ def main(argv=None) -> int:
         app.run()
     finally:
         gui.messagebox.showinfo,gui.messagebox.showerror=old_info,old_error
+        gui.messagebox.askyesnocancel=old_choice
     return 0 if state['state']=='complete' else 1

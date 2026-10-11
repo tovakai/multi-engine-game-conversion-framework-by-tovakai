@@ -356,6 +356,9 @@ event loop doesn't necessarily mean its window is visible on your headset.
 
 ## Tested game compatibility
 
+See the [2026-10-11 Steam Frame user test report](docs/hardware-feedback-2026-10-11.md)
+for 23 working packages and the reported input/rendering/conversion limitations.
+
 This table tracks **real game tests on Linux ARM64 hardware**, not games that
 merely pass engine detection or produce a build. It is a growing test log,
 not a promise that every game using an engine will work.

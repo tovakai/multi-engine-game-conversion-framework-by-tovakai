@@ -32,6 +32,7 @@ from rpgmframe.source import SourceError, prepare_source, PreparedSource
 
 from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 from megcfbt import sts2
+from renframe.live2d import required as requires_live2d
 from renframe.utils import sanitize_fs_name
 from renframe.detector import looks_like_renpy_game
 from megcfbt.native_backend import NativeBuildError
@@ -164,7 +165,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
     from renframe.prerelease import prerelease_853_candidate
     prerelease = prerelease_853_candidate(root)
     if prerelease:
-        runtime_kind = "experimental Ren'Py 8.5 nightly to matched 8.5.3 full-engine migration"
+        runtime_kind = "experimental Ren'Py 8.4/8.5 nightly to matched 8.5.3 full-engine migration"
     elif ddlc_candidate:
         runtime_kind = "experimental original DDLC 1.1.1 Ren'Py 7.5.3 full-engine migration (requires user approval; menu/launch tested on Frame; story unverified)"
     elif fallback:
@@ -196,6 +197,7 @@ def _renpy_summary(root: Path) -> UnifiedInspection | None:
         renpy_ddlc_753_candidate=ddlc_candidate,
         renpy_legacy_arm64_candidate=bool(fallback),
         renpy_prerelease_853_candidate=prerelease,
+        renpy_live2d_required=requires_live2d(root),
     )
 
 
@@ -371,6 +373,7 @@ def inspect_source(source: Path | str) -> UnifiedInspection:
                 renpy_ddlc_753_candidate=result.renpy_ddlc_753_candidate,
                 renpy_legacy_arm64_candidate=result.renpy_legacy_arm64_candidate,
                 renpy_prerelease_853_candidate=result.renpy_prerelease_853_candidate,
+                renpy_live2d_required=result.renpy_live2d_required,
             )
     except SourceError as exc:
         raise ConversionError(str(exc)) from exc

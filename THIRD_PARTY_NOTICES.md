@@ -125,3 +125,13 @@ work. Both license texts must accompany combined distributions. This does not
 license or redistribute retail game files, FMOD SDK inputs, or proprietary Steam
 libraries. The backend includes its own dependency notices and redistribution
 checks. Conversion uses the user's separately obtained, checksum-verified SDK.
+
+## Optional Live2D runtime inputs
+
+RenFrame can import Linux ARM64 Cubism Core from a user-downloaded Cubism SDK for
+Native. The user must accept Live2D's agreements on its download page. The
+converter application and public repository contain no Cubism Core binary or SDK.
+Personal converted outputs include the selected library and its SDK license
+notice. Live2D remains proprietary software under its vendor agreement; the
+framework's GPL/AGPL licenses do not apply to it. Cached Core files are hashed and
+architecture-checked before reuse. See https://www.live2d.com/en/sdk/download/native/.

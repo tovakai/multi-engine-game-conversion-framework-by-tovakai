@@ -678,9 +678,9 @@ def build_game(
     from renframe.prerelease import prerelease_853_candidate
     prerelease = prerelease_853_candidate(source_path)
     if prerelease_853_migration and (not prerelease or runtime is not None or legacy_arm64_fallback or ddlc_753_migration):
-        raise BuildError("Prerelease migration requires an identified Ren'Py 8.5 nightly with Python 3.12 and no other runtime override.")
+        raise BuildError("Prerelease migration requires an identified Ren'Py 8.4/8.5 nightly with Python 3.12 and no other runtime override.")
     if prerelease and runtime is None and not prerelease_853_migration:
-        raise BuildError("This game uses a Ren'Py 8.5 nightly, whose engine may differ from the stable release. Use --experimental-renpy-prerelease-migration for a complete matched 8.5.3 engine/runtime, or supply a matching full runtime.")
+        raise BuildError("This game uses a Ren'Py 8.4/8.5 nightly, whose engine may differ from the stable release. Use --experimental-renpy-prerelease-migration for a complete matched 8.5.3 engine/runtime, or supply a matching full runtime.")
 
     ddlc_candidate = original_ddlc_candidate(game_inspection)
     if ddlc_753_migration:
@@ -717,7 +717,7 @@ def build_game(
             python_tag = "py2" if ddlc_753_migration else python_tag_for_generation(game_inspection.generation)
             if prerelease_853_migration:
                 release = "8.5.3"
-                warnings.append("EXPERIMENTAL: replacing a Ren'Py 8.5 nightly with the complete matched 8.5.3 Python 3 engine/runtime; newer nightly APIs and saves require gameplay testing.")
+                warnings.append("EXPERIMENTAL: replacing a Ren'Py 8.4/8.5 nightly with the complete matched 8.5.3 Python 3 engine/runtime; nightly APIs and saves require gameplay testing.")
             if ddlc_753_migration:
                 release = "7.5.3"
                 warnings.append("EXPERIMENTAL unofficial personal-use DDLC 1.1.1 conversion: source Ren'Py 6.99.12 -> matched official 7.5.3 Python 2 engine/ARM64 runtime. Story, saves, character transitions and restart behavior require Steam Frame verification. No game scripts or filesystem patches are applied.")
@@ -807,6 +807,16 @@ def build_game(
         runtime_version = runtime_inspection.version
         runtime_architecture = runtime_inspection.architecture
 
+    from renframe import live2d
+    live2d_core = None
+    if live2d.required(source_path):
+        try:
+            live2d_core = live2d.find_core(source_path, runtime_path)
+        except (OSError, ValueError) as exc:
+            raise BuildError(f"Invalid Live2D ARM64 dependency: {exc}") from exc
+        if live2d_core is None:
+            raise BuildError("This game requires Live2D Cubism Core for Linux ARM64. Download the Cubism SDK for Native under its vendor terms from " + live2d.DOWNLOAD_URL + " and keep its ZIP in Downloads, or import it through the GUI. Windows/x64 and Android libraries cannot replace the Linux ARM64 library.")
+
     validate_output_paths(source_path, output_path, runtime_path)
 
     display_name, fs_name = _resolve_names(game_inspection, source_path)
@@ -864,6 +874,8 @@ def build_game(
                 launcher_fs_name=fs_name,
                 preserve_ddlc_sidecars=ddlc_753_migration or ddlc_candidate,
             )
+        if live2d_core is not None:
+            live2d.install(live2d_core, staging)
         _replace_output(staging, output_path, force=force)
         result.launcher_path = output_path / built_launcher.name
     except BuildError:

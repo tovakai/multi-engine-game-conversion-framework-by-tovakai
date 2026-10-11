@@ -830,6 +830,15 @@ class ConverterApp:
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
+        if self.inspection.engine == "renpy" and self.inspection.renpy_live2d_required:
+            from renframe.live2d import find_core
+            roots = [self.source]
+            if self.renpy_runtime is not None:
+                roots.append(self.renpy_runtime)
+            if find_core(*roots) is None:
+                from megcfbt.live2d_setup import Live2DSdkDialog
+                self.live2d_dialog = Live2DSdkDialog(self)
+                return
         if self.inspection.backend == "sts2":
             if self.inspection.compatibility != "needs_testing":
                 return
@@ -847,7 +856,7 @@ class ConverterApp:
         prerelease_853_approved = False
         if self.inspection.renpy_prerelease_853_candidate and self.renpy_runtime is None:
             choice = messagebox.askyesnocancel(
-                APP_NAME, "This game uses a Ren'Py 8.5 nightly, whose engine can differ from the stable runtime.\n\n"
+                APP_NAME, "This game uses a Ren'Py 8.4/8.5 nightly, whose engine can differ from the stable runtime.\n\n"
                 "YES: Convert using the complete matched official 8.5.3 engine and ARM64 runtime.\n"
                 "NO: Select a matching full ARM64 runtime.\nCANCEL: Do nothing.\n\n"
                 "This migration is experimental. Newer nightly APIs and saves need gameplay testing.", icon="warning")

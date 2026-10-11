@@ -219,7 +219,12 @@ def detect_legacy_version(game_dir: Path) -> Optional[str]:
         r"""(?m)^\s*version\s*=\s*["']([^"']+)["']""",
         text,
     )
-    return match.group(1).strip() if match else None
+    if match:
+        value = match.group(1).strip()
+        if re.match(r"^\d+\.\d+\.\d+", value):
+            return value
+    match = re.search(r"(?m)^\s*version_tuple\s*=\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", text)
+    return ".".join(match.groups()) if match else None
 
 
 def is_legacy_renpy_game(game_dir: Path) -> bool:
@@ -237,16 +242,19 @@ def is_legacy_renpy_game(game_dir: Path) -> bool:
 
 def _looks_like_katawa(game_dir: Path) -> bool:
     version = detect_legacy_version(game_dir)
-    if not version or not version.startswith("6.10.2"):
+    if not version or not (version.startswith("6.10.2") or version == "6.16.5"):
         return False
 
     required = (
-        game_dir / "python25.dll",
-        game_dir / "renpy.code",
         game_dir / "game" / "imachine.rpyc",
         game_dir / "game" / "ui_settings.rpyc",
     )
     if not all(p.exists() for p in required):
+        return False
+    if version.startswith("6.10.2"):
+        if not (game_dir / "python25.dll").is_file() or not (game_dir / "renpy.code").is_file():
+            return False
+    elif not (game_dir / "lib" / "pythonlib2.7").is_dir():
         return False
 
     # A second distinctive route file makes accidental matching of another
@@ -413,6 +421,8 @@ def _overlay_user_katawa_archives(
     source_game: Path,
     modern_game: Path,
     log: Optional[LogFn],
+    *,
+    prefix: str = "zz-renframe-hd-",
 ) -> int:
     """Copy legacy Katawa resource archives into the normalized game.
 
@@ -462,7 +472,7 @@ def _overlay_user_katawa_archives(
             _log(log, f"Skipping unrecognized archive: {src.name}")
             continue
 
-        dest = target_payload / f"zz-renframe-hd-{src.name}"
+        dest = target_payload / f"{prefix}{src.name}"
         shutil.copy2(src, dest)
         copied += 1
 
@@ -651,6 +661,8 @@ def migrate_profile(
     modern_game = _find_modern_game(extract_root)
 
     _overlay_user_katawa_assets(source_game, modern_game, log)
+    if match.variant == "vanilla":
+        _overlay_user_katawa_archives(source_game, modern_game, log, prefix="zz-renframe-original-")
 
     hd_archive_count = 0
     hd_ui_count = 0
