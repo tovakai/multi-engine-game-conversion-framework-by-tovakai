@@ -1,0 +1,7 @@
+# Keep hash-pinned source/notices and POSIX scripts byte-identical across hosts.
+* text=auto eol=lf
+*.so binary
+*.dll binary
+*.exe binary
+*.zip binary
+*.gz binary

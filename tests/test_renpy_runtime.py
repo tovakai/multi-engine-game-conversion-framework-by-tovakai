@@ -120,7 +120,7 @@ def test_windows_only_game_launcher_uses_supplied_bootstrap(tmp_path: Path, name
     (runtime / "renpy").write_text("#!/bin/bash\nexit 99\n", encoding="utf-8", newline="\n")
     launcher = _write_grafted_launcher(tmp_path, source_launcher=None, platform_name=runtime.name)
     result = subprocess.run(
-        ["bash", launcher.as_posix(), "forwarded-argument"], cwd=tmp_path.parent,
+        [shutil.which("bash"), launcher.as_posix(), "forwarded-argument"], cwd=tmp_path.parent,
         capture_output=True, text=True, check=False,
     )
     assert result.returncode == 0, result.stderr
@@ -521,7 +521,7 @@ def test_legacy_full_engine_generated_launcher_executes_sdk_script(tmp_path: Pat
         legacy_arm64_fallback=True,
     )
     completed = subprocess.run(
-        ["bash", str(result.launcher_path)],
+        [shutil.which("bash"), str(result.launcher_path)],
         cwd=out,
         capture_output=True,
         text=True,
