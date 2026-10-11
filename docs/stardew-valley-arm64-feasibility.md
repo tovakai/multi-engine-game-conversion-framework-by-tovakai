@@ -1,6 +1,9 @@
 # Stardew Valley native ARM64 feasibility
 
-Research date: 2026-10-10. Status: promising candidate; not implemented or tested on Steam Frame in this investigation.
+Research date: 2026-10-10. This is the original feasibility investigation.
+Update 2026-10-12: MonoFrame now implements the guarded vanilla Steam 1.6.15
+profile. Pointer/gamepad input, early gameplay and save/load are user-confirmed
+through Steam. See [current support and validation](monoframe.md).
 
 ## Local installation
 

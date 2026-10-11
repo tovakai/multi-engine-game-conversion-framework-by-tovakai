@@ -41,6 +41,8 @@ _PORTABLE_EXECUTABLES = frozenset(
         "chrome-sandbox",
         "mkxp-z.aarch64",
         "godot.arm64",
+        "dotnet",
+        "createdump",
         "python",
         "python3",
         "pythonw",

@@ -4,6 +4,10 @@ GameMakerFrame, LÖVEFrame, ConstructFrame and AGSFrame are routed through the
 same inspection, GUI, package metadata, artwork and ZIP flow as RenFrame.
 Detection and a successful package build are distinct from gameplay validation.
 
+MonoFrame uses the same conversion and packaging flow for the guarded vanilla
+Steam Stardew Valley 1.6.15 profile. It downloads a verified SDK containing an
+ARM64 runtime and Windows preparation tool. See [MonoFrame support and validation](monoframe.md).
+
 | Backend | Accepted exports | Runtime | Current hardware evidence |
 | --- | --- | --- | --- |
 | GameMakerFrame | FORM/GEN8 data with VM CODE, WAD 8–17 | Automatically downloaded ARM64 Butterscotch | Undertale, Balatro and Void Stranger user-confirmed working; Desert Child works with graphical glitches; Cook, Serve, Delicious! 3 has performance/input issues |

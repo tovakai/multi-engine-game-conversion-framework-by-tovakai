@@ -1,5 +1,6 @@
-"""Shared verified download and atomic installation for flat runtime bundles."""
-from pathlib import Path
+"""Shared verified download and atomic installation for allowlisted runtime bundles."""
+from pathlib import Path, PurePosixPath
+import re
 import hashlib,shutil,tarfile,tempfile,urllib.error,urllib.request
 
 
@@ -8,6 +9,14 @@ class RuntimeDownloadError(RuntimeError):
 
 
 def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, download_progress=None) -> Path:
+    names=entry.get('archive_files',[])
+    for name in names:
+        if (not isinstance(name,str) or PurePosixPath(name).is_absolute()
+            or any(part in {'.','..'} or not re.fullmatch(r'[A-Za-z0-9_+.-]+',part)
+                   or part.endswith('.') for part in name.split('/'))):
+            raise RuntimeDownloadError('Unsafe runtime manifest member path')
+    if len(set(names)) != len(names):
+        raise RuntimeDownloadError('Duplicate runtime manifest member path')
     if validate(target):
         if progress:progress('Using cached verified ARM64 runtime')
         return target
@@ -39,7 +48,9 @@ def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, downloa
                     if member.size>512*1024**2:raise RuntimeDownloadError('Runtime member exceeds 512 MiB limit')
                     seen.add(member.name);stream=tar.extractfile(member)
                     if stream is None:raise RuntimeDownloadError('Unreadable runtime archive member')
-                    with stream,(stage/member.name).open('wb') as destination:shutil.copyfileobj(stream,destination)
+                    destination_path=stage/member.name
+                    destination_path.parent.mkdir(parents=True,exist_ok=True)
+                    with stream,destination_path.open('wb') as destination:shutil.copyfileobj(stream,destination)
             if seen!=allowed:raise RuntimeDownloadError('Runtime archive is missing required files')
         except (OSError,tarfile.TarError,EOFError) as exc:
             raise RuntimeDownloadError(f'Could not unpack verified runtime archive: {exc}') from exc

@@ -48,7 +48,8 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
                  engine_version: str | None, prepare_game, arguments: list[str],
                  warnings: tuple[str, ...] = (), force: bool = False,
                  progress=None, steam_app_id: str | None = None,
-                 runtime_file_arguments: tuple[tuple[str,str], ...] = ()) -> NativeBuildResult:
+                 runtime_file_arguments: tuple[tuple[str,str], ...] = (),
+                 prepare_runtime=None, launcher_environment: str = '') -> NativeBuildResult:
     source, output = source.resolve(), output.expanduser().resolve()
     if output == source or output in source.parents or source in output.parents:
         raise NativeBuildError('Output must be separate from the source directory.')
@@ -69,7 +70,10 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
         stage.mkdir()
         if progress:
             progress(f'Copying {engine} runtime and game data')
-        shutil.copytree(runtime_root, stage / 'runtime', symlinks=False)
+        if prepare_runtime is None:
+            shutil.copytree(runtime_root, stage / 'runtime', symlinks=False)
+        else:
+            prepare_runtime(runtime_root, stage / 'runtime')
         try:
             install_steam_graphics_guard(stage)
         except ValueError as exc:
@@ -91,6 +95,7 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             'cd "$ROOT/game"\n'
             'export LD_LIBRARY_PATH="$ROOT/runtime:/opt/steamvr/bin/linuxarm64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'
             'export LUA_CPATH="$ROOT/runtime/?.so;${LUA_CPATH:-;;}"\n'
+            + launcher_environment +
             f'chmod +x "$ROOT/runtime/{executable}"\n'
             f'exec "$ROOT/runtime/{executable}" {command} "$@"\n',
             encoding='utf-8', newline='\n')

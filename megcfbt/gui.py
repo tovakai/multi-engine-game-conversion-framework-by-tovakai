@@ -659,7 +659,7 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.backend in {"gamemakerframe", "loveframe", "agsframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
@@ -775,7 +775,7 @@ class ConverterApp:
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:
@@ -795,7 +795,7 @@ class ConverterApp:
         if not folder:
             return
         runtime = Path(folder)
-        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags"}.get(self.inspection.backend, "godot.arm64")
+        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
         if not (runtime / executable).is_file():
             messagebox.showerror(
                 APP_NAME,

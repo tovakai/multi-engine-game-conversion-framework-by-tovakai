@@ -41,6 +41,9 @@ from megcfbt.native_runtime import automatic_runtime_available
 
 
 def automatic_native_runtime_available(inspection: UnifiedInspection) -> bool:
+    if inspection.backend=='monoframe':
+        from monoframe.runtime import automatic_runtime_available as mono_available
+        return inspection.buildable and mono_available()
     engine={'gamemakerframe':'gamemaker','loveframe':'love','agsframe':'ags'}.get(inspection.backend)
     if inspection.engine=='rpg2k':engine='easyrpg'
     if engine is None or not inspection.buildable:return False
@@ -53,8 +56,9 @@ def _native_backends():
     from loveframe import backend as love
     from agsframe import backend as ags
     from constructframe import backend as construct
+    from monoframe import backend as mono
     return {'gamemakerframe': gamemaker, 'loveframe': love,
-            'agsframe': ags, 'constructframe': construct}
+            'agsframe': ags, 'constructframe': construct, 'monoframe':mono}
 
 
 class ConversionError(RuntimeError):

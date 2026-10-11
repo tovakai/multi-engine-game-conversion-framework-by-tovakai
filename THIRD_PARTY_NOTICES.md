@@ -135,3 +135,17 @@ Personal converted outputs include the selected library and its SDK license
 notice. Live2D remains proprietary software under its vendor agreement; the
 framework's GPL/AGPL licenses do not apply to it. Cached Core files are hashed and
 architecture-checked before reuse. See https://www.live2d.com/en/sdk/download/native/.
+
+## MonoFrame runtime SDK
+
+The separately downloaded MonoFrame SDK includes Microsoft .NET 6.0.32 (MIT and
+component notices), the patched MonoGame framework (Ms-PL), the mainline Stardew
+preparation tool (MIT), Mono.Cecil (MIT), NVorbis (MIT), STB image helpers (public
+domain), controller mapping data, and SkiaSharp with its component notices.
+The SDK contains license texts, source revision links and compatibility patch
+source. See [MonoFrame provenance](docs/monoframe.md).
+
+The Frame graphics guard and legacy Steam API bridge are GPL-3.0-only with source
+included. They call the installed Frame Steam API; its proprietary library is
+not redistributed in the SDK. Retail game assemblies, assets and saves are
+never part of public runtime downloads.

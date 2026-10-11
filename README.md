@@ -71,6 +71,7 @@ it pretend it has one?**
 | GameMaker VM | GameMakerFrame / Butterscotch | automatically download a verified runner; validate VM data and retain assets | Experimental; Undertale gameplay through second savepoint and save/load confirmed; YYC/GMRT excluded |
 | LÖVE | LÖVEFrame | automatically download LÖVE 11.5 and supported modules; unpack game data | Experimental; Balatro menu and Gravity Circuit startup tested |
 | Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
+| MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain

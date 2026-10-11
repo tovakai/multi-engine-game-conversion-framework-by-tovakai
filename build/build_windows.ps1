@@ -52,6 +52,7 @@ foreach ($path in @(
   --collect-data megcfbt `
   --collect-data gamemakerframe `
   --collect-data rpgmframe `
+  --collect-data monoframe `
   --add-data "experiments/sts2-steamworks;sts2-tools" `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
@@ -75,6 +76,7 @@ Multi-Engine Game Conversion Framework by tovakai
 
 RPG Maker and Godot runtimes are resolved automatically.
 GameMaker VM, LÖVE 11.x, AGS and EasyRPG runtimes download and cache automatically.
+MonoFrame downloads a verified SDK for vanilla Steam Stardew Valley 1.6.15.
 The runtime chooser remains an optional override. Unknown native addons require matching builds.
 Ren'Py 7/8 runtimes resolve automatically, with a manual ARM64 override.
 Original DDLC 1.1.1 / Ren'Py 6.99.12 has an opt-in experimental 7.5.3
