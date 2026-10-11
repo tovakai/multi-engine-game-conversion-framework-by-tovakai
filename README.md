@@ -6,8 +6,8 @@ the Steam Frame.
 
 There is no short public product name. You have to say the whole thing.
 
-The `integration/working-main` branch is being prepared for **0.1.0**. See the
-[release candidate scope and remaining gates](docs/releases/0.1.0.md) and
+The **0.1.0 foundation release** brings the unified conversion and Frame packaging
+workflow together. See the [release scope and limitations](docs/releases/0.1.0.md) and
 [repository cleanup record](docs/repository-cleanup-0.1.0.md).
 
 The GUI also includes the experimental [STS2 two-stage workflow](docs/sts2-integrated-workflow.md):
