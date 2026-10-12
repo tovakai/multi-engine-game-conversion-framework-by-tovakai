@@ -1,34 +1,52 @@
-# Multi-Engine Game Conversion Framework by Tovakai
+# Multi-Engine Game Conversion Framework by tovakai
 
-A deliberately un-snappy desktop and command-line application for converting
-supported indie-game runtimes to ARM64 packages for Linux, initially targeting
-the Steam Frame. Most backends use native Linux runtimes; experimental UnityFrame
-uses a Windows ARM64 player under ARM64 Proton.
+**Convert supported PC games you already own into ARM64 packages for Linux.**
+Initially built for the **Steam Frame**, with portable AArch64 Linux output as the broader goal.
+Most backends use native Linux runtimes; experimental UnityFrame runs a matching
+Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-The **0.1.0 foundation release** brings the unified conversion and Frame packaging
-workflow together. See the [release scope and limitations](docs/releases/0.1.0.md) and
-[repository cleanup record](docs/repository-cleanup-0.1.0.md).
+## Download v0.1.0.1: Hollow Knight support
 
-The GUI also includes the experimental [STS2 two-stage workflow](docs/sts2-integrated-workflow.md):
-Windows prepares a verified transfer ZIP using your FMOD Linux SDK, then the Frame
-installer builds the native components. This follows a separate packaging path
-from the other engines and requires installation on the Frame before play.
+**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.1)**
+
+| Converter application | Download |
+| --- | --- |
+| Windows x64 | [v0.1.0.1 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.0.1 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-linux-aarch64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/SHA256SUMS.txt) |
+
+These downloads contain **the converter, not games**. The project does not distribute retail game files, proprietary SDKs or Steam client libraries. You supply your own game installation and any separately licensed dependencies a particular engine needs.
+
+### Quick start
+
+1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux ARM64.
+2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
+3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
+4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
+
+**Native does not mean universal.** Matching a supported engine is not a guarantee that every game built with it will work. Read the [0.1.0.1 scope and limitations](docs/releases/0.1.0.1.md), the [23-package Steam Frame test report](docs/hardware-feedback-2026-10-11.md), and [known issues](#known-issues-and-testing-limits).
+
+The existing [Slay the Spire 2 experimental workflow](docs/sts2-integrated-workflow.md) is different: Windows prepares a transfer package using a user-supplied FMOD Linux SDK, and the Frame finishes native components on-device. It is **not** the same one-step conversion path as the simpler engines.
 
 ## Contents
 
+- [Download v0.1.0.1](#download-v0101-hollow-knight-support)
+- [Quick start](#quick-start)
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
 - [Roadmap](#roadmap)
 - [Architecture](#architecture)
 - [Install for development](#install-for-development)
-- [Use the extremely reasonable executable name](#use-the-extremely-reasonable-executable-name)
+- [CLI](#cli)
+- [Steam Frame install flow](#steam-frame-install-flow)
+- [Optional SteamGridDB artwork](#optional-steamgriddb-artwork-for-non-steam-games)
 - [Ren'Py runtime resolution](#renpy-runtime-resolution)
 - [Custom Godot / GodotSteam compatibility runtime](#custom-godot--godotsteam-compatibility-runtime)
-- [Optional SteamGridDB artwork](#optional-steamgriddb-artwork-for-non-steam-games)
 - [Launching converted games on Linux ARM64](#launching-converted-games-on-linux-arm64)
 - [Tested game compatibility](#tested-game-compatibility)
+- [Known issues and testing limits](#known-issues-and-testing-limits)
 - [Support the project](#support-the-project-)
 - [Design rule](#design-rule)
 - [License](#license)
@@ -42,8 +60,8 @@ itself is already portable: it is the **bundled engine runtime** that was
 built for x86-64.
 
 This project takes a different route. When an engine is supported, it keeps
-your existing game files and substitutes a compatible **ARM64 runtime**. UnityFrame
-preserves Windows assets and runs its Windows ARM64 player under ARM64 Proton.
+your existing game files and substitutes a compatible **ARM64 runtime**.
+UnityFrame preserves Windows assets and runs its Windows ARM64 player under ARM64 Proton.
 
 Why bother?
 
@@ -78,7 +96,7 @@ it pretend it has one?**
 | Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
 | MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
-| Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame |
+| Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame; GUI-generated package installed and launched through Steam |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
@@ -97,14 +115,10 @@ including pinned HD source and UI fixes. Identified Ren'Py 8.5 nightlies offer a
 experimental complete 8.5.3 engine/runtime migration in the GUI or with
 `--experimental-renpy-prerelease-migration`; this requires gameplay/save testing.
 Encrypted Godot packs/scripts require an ARM64 runtime built with the game's key.
-Unity Windows exports now report exact-version metadata, managed/IL2CPP evidence
-and native-plugin architectures. [Hollow Knight development](docs/hollow-knight-conversion.md)
-now uses the regular CLI and GUI conversion flow for the exact tested Steam
-edition, with automatic verified downloads and a Windows ARM64 Proton package.
-Menu, controller gameplay, audio and bench save/load after relaunch are confirmed
-on Steam Frame. Other Unity exports remain gated; see
-[UnityFrame setup and limitations](docs/backends/unityframe.md). WOLF RPG Editor games
-are diagnosed as unsupported.
+The exact tested Hollow Knight Steam edition on Unity 6000.0.61f1 now uses the
+regular CLI/GUI conversion flow with automatic verified downloads and Windows
+ARM64 Proton packaging. See [UnityFrame setup and limits](docs/backends/unityframe.md).
+Other Unity exports and WOLF RPG Editor games remain gated as unsupported.
 
 New EasyRPG packages include a portable player and supporting libraries
 automatically. Older packages can still use the system player or
@@ -114,33 +128,37 @@ EasyRPG, and Windows engine plugins are not supported.
 
 ## Roadmap
 
-See [the release roadmap](docs/ROADMAP.md) for milestones from **v0.1.0 through v1.0.0**, including the **v0.2.0** GameMakerFrame and 35-title compatibility-testing target.
+[The roadmap](docs/ROADMAP.md) tracks work toward v1.0. **Several experimental backends arrived ahead of their original milestones**, notably GameMakerFrame, ConstructFrame and MonoFrame. Future milestones focus on **reproducible conversion, broader testing, compatibility improvements and less manual device setup**, not just adding a backend's name to the menu.
+
+The next coverage target documents **35 tested games** across Ren'Py, RPG Maker and Godot, alongside deeper GameMaker validation. These are testing goals, **not 35 promised compatible games**.
 
 ## Architecture
 
 ```text
-Multi-Engine Game Conversion Framework by Tovakai
-                     |
-              source preparation
-                     |
-               engine router
-          ___________|____________
-         |           |            |
-      Ren'Py      RPG Maker     Godot
-         |           |            |
-     RenFrame      RPGMFrame    RPGMFrame
-         |           |            |
-         +-----------+------------+
-                     |
-             Linux ARM64 build
-                     |
-          Steam Frame ZIP package
+Your game installation / archive (never included in the converter)
+                           |
+                inspection + engine detection
+                           |
+                   unified GUI / CLI
+                           |
+      +--------------------+-------------------------+
+      |                    |                         |
+   RenFrame             RPGMFrame           Other engine backends
+   Ren'Py          RPG Maker + Godot    GameMaker, LÖVE, Construct,
+                                       AGS, MonoGame / .NET
+      |                    |                         |
+      +--------------------+-------------------------+
+                           |
+           compatible ARM64 runtime / checked SDK
+                           |
+                 Linux AArch64 game ZIP
+                           |
+               transfer to ARM64 device
+                           |
+            Steam Frame shortcut (optional)
 ```
 
-The router also dispatches GameMakerFrame, LOVEFrame, ConstructFrame, AGSFrame and
-MonoFrame through the same packaging flow. The experimental STS2 two-stage path
-has its own device-side finishing contract. Current import points are recorded
-under `docs/backends/`; experimental status is listed in the backend table above.
+Supported runtime recipes are verified and cached; the source game is copied rather than altered in place. Each backend has its own compatibility constraints and test status in the table above. **STS2** remains a separate experimental two-stage path with device-side finalization. Implementation details live under [`docs/backends/`](docs/backends/) and in the [0.1.0 release scope](docs/releases/0.1.0.md).
 
 ## Install for development
 
@@ -159,7 +177,7 @@ py -m venv .venv-win
 pip install -e ".[dev,gui]"
 ```
 
-## Use the extremely reasonable executable name
+## CLI
 
 Inspect a game:
 
@@ -275,10 +293,11 @@ ID, never the SteamGridDB game ID. Artwork provenance is recorded in
 
 Original DDLC 1.1.1 / Ren'Py 6.99.12 has a separate opt-in **experimental**
 full-engine migration to official Ren'Py 7.5.3 Python 2 ARM64 in the main GUI.
-Steam Frame Stage A launch, menu, audio, controls, exit and graphical relaunch
-were confirmed on real hardware (2026-10-08). Story progression, poem game,
-saves, character-file transitions and in-story restarts still require deeper
-verification. Other Ren'Py 6 games remain unsupported automatically. See
+Steam Frame launch, menu, audio, controls, exit and graphical relaunch were
+confirmed on 2026-10-08; DDLC also appears in the later
+[working-package report](docs/hardware-feedback-2026-10-11.md).
+That report does **not** establish full-story, later-act, character-file or mod
+compatibility. Other Ren'Py 6 games remain unsupported automatically. See
 [the DDLC migration and Steam Frame test procedure](docs/ddlc-111-arm64-migration.md).
 
 Ren'Py now follows the same automatic-runtime philosophy as the other backends.
@@ -359,10 +378,13 @@ requirements.
 
 ## Launching converted games on Linux ARM64
 
-For Windows-to-Linux transfers, prefer extracting the generated `.tar.gz`
-package directly on the target device; its archive metadata restores executable
-permissions. The Ren'Py launch wrapper also attempts to repair executable bits
-on ARM64 runtime files when they were lost in a folder copy.
+The **converter application** is distributed as a Windows ZIP or Linux ARM64
+tarball. The standard **converted game** output is a separate ZIP. Do not
+confuse the application download with the game package: transfer and extract
+the converted game ZIP on the target device, then use its included launcher or
+Steam installer. If file copying loses executable permissions, restore the
+launcher/script executable bits; Ren'Py's launch wrapper also attempts to
+repair runtime permissions.
 
 When launching from **SSH**, no `DISPLAY` is normally set. Start the game from
 the graphical session, or explicitly set the display and matching X11 authority
@@ -373,36 +395,70 @@ event loop doesn't necessarily mean its window is visible on your headset.
 
 ## Tested game compatibility
 
-See the [2026-10-11 Steam Frame user test report](docs/hardware-feedback-2026-10-11.md)
-for 23 working packages and the reported input/rendering/conversion limitations.
-The subsequent [Stardew Valley MonoFrame validation](docs/monoframe.md) also records
-pointer/gamepad input, early gameplay and save/load through Steam.
+**23 converted game packages were reported working on a real Steam Frame on 2026-10-11.**
+This is a **hardware feedback snapshot**, not a certification of full playthroughs,
+every platform feature, or a fresh re-test of every title against the final v0.1.0
+application release. Game versions, exact test depth and converter builds are
+not recorded for every entry. See the [original hardware feedback](docs/hardware-feedback-2026-10-11.md).
 
-This table tracks **real game tests on Linux ARM64 hardware**, not games that
-merely pass engine detection or produce a build. It is a growing test log,
-not a promise that every game using an engine will work.
+| Working package | Evidence / qualification |
+| --- | --- |
+| A Date with Death | Reported working |
+| Balatro | Reported working (LÖVE backend) |
+| [Brotato 1.1.14.6](https://store.steampowered.com/app/1942280/Brotato/) | Completed a full run; pinned GodotSteam runtime required |
+| [Doki Doki Literature Club! 1.1.1 (original)](https://ddlc.moe/) | Reported working; later acts, character-file transitions and mods not certified |
+| [Everlasting Summer](https://store.steampowered.com/app/331470/Everlasting_Summer/) | Reported working; source variant not recorded in 23-package report |
+| Fear & Hunger | Reported working |
+| Fear & Hunger 2: TERMINA | Reported working |
+| Find Love or Die Trying | Reported working |
+| Grimm's Hollow | Reported working |
+| Help! I Married a Slut | Reported working |
+| her tears were my light | Reported working |
+| Imperial Bureaucracy Hero | Reported working |
+| Katawa Shoujo HD | Reported working; the non-HD release is tracked separately |
+| Maya's Mission | Reported working |
+| [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Reported working; Ren'Py ARM64 graphical-session considerations apply |
+| Silly Linguine Cat Simulator Deluxe Online | Reported working; online features not validated |
+| Slay the Spire 2 | Reported working; **experimental two-stage STS2 workflow**, not general one-click packaging |
+| [The Cat Lady](https://store.steampowered.com/app/253110/The_Cat_Lady/) | Works with keyboard/mouse; native controller input not confirmed |
+| The Sea Wolves | Reported working |
+| The Witch's House | Reported working |
+| To the Moon | Reported working |
+| [Undertale](https://store.steampowered.com/app/391540/Undertale/) | Gameplay through second savepoint and save/load confirmed; later routes unverified |
+| Void Stranger | Reported working |
 
-| Game | Engine | Tested device | Status | Notes |
-| --- | --- | --- | --- | --- |
-| [Brotato 1.1.14.6](https://store.steampowered.com/app/1942280/Brotato/) | Godot 3.7 custom / GodotSteam | Steam Frame | Playable (completed a full run without issues) | Requires the pinned GodotSteam compatibility runtime; not a standard Godot export |
-| [Undertale](https://store.steampowered.com/app/391540/Undertale/) | GameMaker VM / native ARM64 Butterscotch | Steam Frame | Playable (early gameplay and save/load user-confirmed) | 2026-10-10: user played through the second savepoint and successfully loaded saved progress. Exact game version and converter build were not recorded in the report. Full-game, later routes and Steam features remain unverified. |
-| [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Ren'Py 8.3.7 | Steam Frame | Playable (gameplay confirmed) | Native ARM64; requires an accessible graphical session. Tested with Frametop Xwayland after preserving Python bytecode and restoring executable permissions |
-| [Milk inside a bag of milk inside a bag of milk](https://store.steampowered.com/app/1392820/) | Ren'Py 7.x (exact version not recorded) | Steam Frame | Playable (user-confirmed) | Native ARM64 reported working; exact game/runtime version and depth of gameplay testing not recorded. |
-| [Everlasting Summer 1.6](https://store.steampowered.com/app/331470/Everlasting_Summer/) (original release) | Ren'Py 7.4.11 / Python 2; experimental full-engine migration to Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief skip-through; full testing pending) | Game launches, passes splash screen and progresses through dialogue. Requires the opt-in 7.5.0 engine/runtime fallback; the previous 7.4 engine + 7.5 graphics-library hybrid crashed at GL initialization. |
-| Everlasting Summer (author's Ren'Py 8 beta) | Ren'Py 8.x; exact beta/runtime version not recorded | Steam Frame | Playable (initial gameplay confirmed; full testing pending) | Standard conversion ran without observed issues during initial play. Upstream beta status relates to potential mod compatibility; mods were not tested. |
-| [Doki Doki Literature Club! 1.1.1](https://ddlc.moe/) (original, not Plus) | Ren'Py 6.99.12 / Python 2; experimental full-engine migration to official Ren'Py 7.5.3 ARM64 | Steam Frame | Launches (Stage A passed; gameplay verification pending) | Real-device native Steam shortcut: menu, audio, input, exit and relaunch reported working. The user's original files are preserved locally. Poem game, save/load, character-file transitions and later acts remain untested; mods not tested. |
-| [Pesterquest](https://store.steampowered.com/app/1144030/Pesterquest/) (installed Steam distribution) | Ren'Py 7.3.5 / Python 2; experimental full-engine migration to official Ren'Py 7.5.0 ARM64 | Steam Frame | Playable (brief gameplay; full testing pending) | 2026-10-09: Stages A/B passed. Menu, music, controls, route selection, dialogue/choices, save/load, normal quit, and correct saved-progress restoration after native Steam relaunch confirmed. Runtime process is AArch64; Proton is not forced. Several volumes, unusual transitions, deeper persistence, and Steam hooks remain unverified. |
+**Additional individually documented results, outside that 23-package snapshot:**
 
-**Status guide:** **Playable** = actual gameplay tested; **Launches** = starts
-but gameplay not yet validated; **Issues** = runs with notable problems;
-**Blocked** = conversion or launch currently fails. Include the game version,
-runtime/backend, device, and any workarounds in the notes whenever known.
+| Game | Hardware evidence |
+| --- | --- |
+| [Stardew Valley 1.6.15](docs/monoframe.md) | Experimental MonoFrame profile for a hash-verified vanilla Steam installation; character creation, movement, tools, pointer/gamepad input, saving and loading confirmed through Steam. SMAPI, other versions and multiplayer not established. |
+| [Pesterquest](docs/renpy-735-arm64-migration.md) | Experimental Ren'Py 7.3.5 → 7.5.0 migration; early gameplay, choices, save/load and saved-progress restoration after relaunch confirmed. |
+| [Milk inside a bag of milk inside a bag of milk](https://store.steampowered.com/app/1392820/) | Ren'Py native ARM64 gameplay reported working; exact runtime and depth not recorded. |
+| Everlasting Summer (author's Ren'Py 8 beta) | Separate beta build tested through initial gameplay; mod compatibility untested. |
 
-A successful conversion build alone is **not** a compatibility pass. Results
-may differ across game versions, ARM64 devices, graphics drivers, and runtime
-versions. To contribute a result, open a GitHub issue or pull request with
-the game name and version, engine, device/distro, status, reproduction steps,
-and relevant logs. **Do not upload or redistribute game files.**
+**Status means what was tested.** A successful engine detection, ZIP build or
+main-menu screenshot is not a gameplay pass. Even a working package does not
+guarantee end-to-end completion, online play, controller behavior, all game
+versions, or repeatable one-click conversion for every backend.
+
+To contribute a result, open a [GitHub issue](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues)
+with the game/version, detected engine, converter version, ARM64 device, launch
+context, gameplay/save-load result and relevant logs. **Never upload copyrighted
+game files or proprietary SDK binaries.**
+
+## Known issues and testing limits
+
+| Game / area | Known limitation |
+| --- | --- |
+| Cassette Beasts | Reaches startup, but sprites/tiles flicker or disappear; controller not recognized. Not counted as playable. |
+| Cook, Serve, Delicious! 3 | Launches, but performance and controller behavior remain problematic. |
+| Desert Child | Runs with graphical glitches; not a clean compatibility pass. |
+| Katawa Shoujo (non-HD) | A compatibility profile was added after a failed conversion report; do not count it as hardware-verified gameplay without a new test. |
+| Unsupported or unusual runtimes | Custom/encrypted exports, unsupported engine versions and missing native plugins can still fail inspection, conversion or launch. |
+
+For details and the follow-up fixes around Ren'Py nightlies and Live2D, see
+[the hardware feedback and investigation](docs/hardware-feedback-2026-10-11.md).
+For the supported release boundary, see [the v0.1.0 scope](docs/releases/0.1.0.md).
 
 ## Support the project ☕
 
