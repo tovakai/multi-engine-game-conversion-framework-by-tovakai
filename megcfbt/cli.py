@@ -11,10 +11,18 @@ from megcfbt.version import get_build_info
 from megcfbt.router import ConversionError, build_source, inspect_source
 
 
+class _BuildInfoAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # argparse's version formatter wraps text to the terminal width, which
+        # can insert control characters inside JSON strings in release builds.
+        print(json.dumps(get_build_info(), sort_keys=True))
+        parser.exit()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="multi-engine-game-conversion-framework-by-tovakai")
     parser.add_argument('--version', action='version', version=f'{APP_NAME} {__version__}')
-    parser.add_argument('--build-info', action='version', version=json.dumps(get_build_info(), sort_keys=True),
+    parser.add_argument('--build-info', action=_BuildInfoAction, nargs=0,
                         help='print detailed build provenance as JSON')
     sub = parser.add_subparsers(dest="command", required=True)
 
