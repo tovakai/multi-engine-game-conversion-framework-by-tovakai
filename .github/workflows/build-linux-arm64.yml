@@ -14,6 +14,7 @@ on:
       - "agsframe/**"
       - "monoframe/**"
       - "unityframe/**"
+      - "celesteframe/**"
       - "build/build_linux_aarch64.sh"
       - "build/release_metadata.py"
       - "build/build_identity.py"

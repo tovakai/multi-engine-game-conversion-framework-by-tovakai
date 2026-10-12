@@ -97,6 +97,7 @@ it pretend it has one?**
 | MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 | Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame; GUI-generated package installed and launched through Steam |
+| Celeste / XNA to FNA | CelesteFrame | verified Steam Windows XNA Celeste 1.4.0.0; FNA 23.10 / .NET 8 ARM64 runtime and separately supplied FMOD Linux SDK | Experimental; menu, music, controller gameplay and save/load confirmed on Steam Frame; select the desired primary controller through Steam. [Setup and limits](docs/backends/celesteframe.md) |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of

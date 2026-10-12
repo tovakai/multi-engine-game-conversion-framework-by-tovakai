@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from contextlib import contextmanager
 from pathlib import Path
 import json
 import shlex
 import shutil
 import tempfile
+import uuid
 
 from renframe.elf import read_elf_architecture
 from renframe.source_safety import validate_copy_tree
@@ -17,6 +19,20 @@ from megcfbt.frame_runtime import install_steam_graphics_guard
 
 class NativeBuildError(RuntimeError):
     pass
+
+
+@contextmanager
+def _publication_stage(output: Path):
+    # Windows TemporaryDirectory applies a private DACL. Moving its children
+    # retains that DACL and can make published packages inaccessible to ordinary
+    # tools. Create the package beside the output with inherited permissions.
+    stage = output.parent / f'.{output.name}-stage-{uuid.uuid4().hex}'
+    stage.mkdir()
+    try:
+        yield stage
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage)
 
 
 @dataclass(frozen=True)
@@ -74,9 +90,7 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
     if output == runtime_root or output in runtime_root.parents or runtime_root in output.parents:
         raise NativeBuildError('Output must be separate from the runtime directory.')
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix=f'.{output.name}-', dir=output.parent) as temporary:
-        stage = Path(temporary) / 'package'
-        stage.mkdir()
+    with tempfile.TemporaryDirectory(prefix=f'.{output.name}-', dir=output.parent) as temporary, _publication_stage(output) as stage:
         if progress:
             progress(f'Copying {engine} runtime and game data')
         if prepare_runtime is None:

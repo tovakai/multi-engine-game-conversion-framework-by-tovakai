@@ -25,6 +25,10 @@ def main(argv=None) -> int:
     parser.add_argument('--output-dir',type=Path)
     parser.add_argument('--receipt',type=Path,required=True)
     parser.add_argument('--timeout',type=int,default=900)
+    parser.add_argument('--backend-runtime', type=Path,
+                        help='Explicit runtime directory selected for this acceptance run')
+    parser.add_argument('--fmod-sdk', type=Path,
+                        help='Owner FMOD Linux SDK selected for Celeste acceptance')
     parser.add_argument('--approve-renpy-prerelease-migration',action='store_true',
                         help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
@@ -111,6 +115,11 @@ def main(argv=None) -> int:
             failed('Verification','GUI conversion timed out')
             return
         if app.inspection is not None and not initiated:
+            if args.backend_runtime is not None:
+                app.backend_runtime = args.backend_runtime.expanduser().resolve()
+                state['runtime_override'] = True
+            if args.fmod_sdk is not None and app.inspection.backend == 'celesteframe':
+                app.celeste_sdk = args.fmod_sdk.expanduser().resolve()
             state['inspection']={'engine':app.inspection.engine,'version':app.inspection.engine_version,
                                  'runtime_kind':app.inspection.runtime_kind,'evidence':app.inspection.evidence}
             state['convert_enabled']=app.convert_btn.cget('state')=='normal'

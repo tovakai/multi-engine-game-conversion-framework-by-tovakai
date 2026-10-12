@@ -46,7 +46,7 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="optional ARM64 runtime override; Unity accepts a folder containing the two pinned runtime archives",
     )
-    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2")
+    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2 or Celeste")
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
     build_cmd.add_argument(
@@ -243,6 +243,7 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             backend_runtime=args.runtime,
             sts2_sdk=args.fmod_sdk,
+            celeste_sdk=args.fmod_sdk,
             force=args.force,
             archive=not args.no_archive,
             steam_cover=args.steam_cover,

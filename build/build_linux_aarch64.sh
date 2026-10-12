@@ -35,6 +35,7 @@ APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
   --collect-data rpgmframe \
   --collect-data monoframe \
   --collect-all unityframe \
+  --collect-all celesteframe \
   --add-data "experiments/sts2-steamworks:sts2-tools" \
   app/main.py
 

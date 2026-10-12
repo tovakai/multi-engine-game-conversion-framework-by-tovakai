@@ -134,6 +134,7 @@ class ConverterApp:
         self.renpy_runtime: Path | None = None
         self.backend_runtime: Path | None = None
         self.sts2_sdk: Path | None = None
+        self.celeste_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
@@ -673,7 +674,7 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe", "celesteframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
@@ -789,7 +790,7 @@ class ConverterApp:
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe", "celesteframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:
@@ -809,7 +810,7 @@ class ConverterApp:
         if not folder:
             return
         runtime = Path(folder)
-        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
+        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet", "celesteframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
         if not (runtime / executable).is_file():
             messagebox.showerror(
                 APP_NAME,
@@ -945,6 +946,25 @@ class ConverterApp:
             if self.backend_runtime is None:
                 return
 
+        if self.inspection.backend == 'celesteframe':
+            from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
+            if self.backend_runtime is None:
+                self._pick_backend_runtime()
+                if self.backend_runtime is None:
+                    return
+            try:
+                self.celeste_sdk = validate_fmod_sdk(self.celeste_sdk) if self.celeste_sdk else find_fmod_sdk()
+                if self.celeste_sdk is None:
+                    selected_sdk = filedialog.askopenfilename(
+                        title='Select FMOD Studio API 2.03.15 Linux SDK for Celeste',
+                        filetypes=[('FMOD Linux SDK', '*.tar.gz')])
+                    if not selected_sdk:
+                        return
+                    self.celeste_sdk = validate_fmod_sdk(Path(selected_sdk))
+            except (OSError, RuntimeError, ValueError) as error:
+                messagebox.showerror(APP_NAME, str(error))
+                return
+
         source = self.source
         output = output_path_for_source(source, self.output_dir, self.inspection.game_name)
         force = bool(self.force_var.get())
@@ -968,6 +988,7 @@ class ConverterApp:
                     renpy_ddlc_753_migration=ddlc_753_approved,
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
+                    **({'celeste_sdk': self.celeste_sdk} if self.inspection.backend == 'celesteframe' else {}),
                     **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
                        if self.inspection.backend == "sts2" else {}),
                     force=force,
