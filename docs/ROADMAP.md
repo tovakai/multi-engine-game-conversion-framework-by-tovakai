@@ -1,215 +1,138 @@
-# Roadmap to v1.0
+# Roadmap: from proof of concept to dependable ARM64 conversions
 
-**Project:** Multi-Engine Game Conversion Framework by Tovakai  
-**Primary reference device:** Steam Frame  
-**Target format:** Native Linux AArch64 game packages
+**Project:** Multi-Engine Game Conversion Framework by tovakai  
+**Reference device:** Steam Frame  
+**Output goal:** native Linux AArch64 game packages  
+**Last revised:** 2026-10-12
 
-> This roadmap sets release goals, not promises or dates. A feature only counts as supported after repeatable conversion and real-device testing. Existing working functionality may be improved before its planned milestone.
+> This is a living plan, not a list of engines that must be invented in a particular version or a promise of dates. The next release is **v0.1.1: stability testing**. Beyond that, milestones can change when real hardware evidence changes our priorities.
 
-## Mission
+## Mission and current position
 
-Let users provide their own legitimately acquired PC games, detect the engine and runtime requirements, and produce native Linux AArch64 packages without rewriting or distributing the original game. Keep one coherent GUI and CLI, favor reusable engine-level fixes, and report unsupported cases accurately.
+Let people provide their own legally obtained games, detect compatible engine/runtime requirements, and produce portable native Linux AArch64 packages while leaving original installations untouched. Prefer reusable engine and platform compatibility work over game-specific hacks, and be exact about what has actually been verified.
 
-## Release overview
+**v0.1.0, Foundation, shipped on 2026-10-12.** It includes a unified Windows x64 / Linux ARM64 GUI and CLI, verified runtime downloads, native game ZIP packaging, and a Steam Frame install workflow.
 
-| Version | Theme | Primary outcome |
+Several capabilities arrived earlier than the original roadmap predicted:
+
+- **RenFrame:** supported Ren'Py 7/8 paths plus explicitly approved legacy migrations.
+- **RPGMFrame:** supported RPG Maker and Godot paths, including specialized GodotSteam recipes.
+- **Experimental backends:** GameMakerFrame, ConstructFrame, LÖVEFrame, AGSFrame, and MonoFrame already exist; they are not blanket support for their entire engine families.
+- **Experimental STS2:** a separate two-stage device-finishing workflow, not the standard one-step game conversion path.
+
+The [2026-10-11 Steam Frame report](hardware-feedback-2026-10-11.md) lists **23 user-reported working game packages**. That is excellent feasibility evidence, but not 23 independent end-to-end conversions re-tested from the **tagged 0.1.0 application build**, and not 23 full-game certifications. The distinction drives our next steps.
+
+## Release outlook
+
+| Milestone | Focus | Practical outcome |
 | --- | --- | --- |
-| **0.1.0** | Foundation | Reliable existing backends and consistent GUI-to-device workflow |
-| **0.2.0** | GameMakerFrame + coverage baseline | GameMaker support and a 35-title test matrix |
-| **0.3.0** | WebFrame | Construct and compatible packaged HTML5 game support |
-| **0.4.0** | Compatibility Engine | Reusable, versioned repair recipes and local compatibility data |
-| **0.5.0** | Device Integration | Convert, transfer and install on Steam Frame without terminal work |
-| **0.6.0** | Mods & Saves | Safe mod profiles and verified save migration |
-| **0.7.0** | Compatibility Marathon | Broader hardware coverage, regressions and community test reports |
-| **0.8.0** | Experimental Expansion | Investigate harder engine families behind isolated feature gates |
-| **0.9.0** | Public Beta | Stable builds, distribution, documentation and external testing |
-| **1.0.0** | Stable Release | Dependable, documented ARM64 game conversion platform |
+| **v0.1.0** (released) | Foundation | Downloadable converter, core routing, native packaging, runtime provenance |
+| **v0.1.1** (next) | **Stability and regression testing** | Confirm the actual release-style workflow works repeatedly, catch regressions, document limits |
+| **v0.1.x** (as needed) | Maintenance | Small high-confidence bug, security, packaging, and compatibility fixes |
+| **v0.2.0** (candidate) | Reproducible conversions and coverage | A repeatable GUI-to-Frame experience for reference games and a documented 35-title test matrix |
+| **Later milestones** | Compatibility infrastructure, deployment, mods/saves, broader ARM64 devices | Prioritized from test evidence rather than assigned rigid version numbers prematurely |
+| **v1.0.0** (long-term) | Stable supported workflows | Reliable, documented conversions for a declared scope, **not** every game on every engine |
 
 ---
 
-## v0.1.0 — Foundation
+## v0.1.1: Stability first
 
-**Goal:** Make the existing engine paths dependable before expanding.
+**Intent:** Test what we shipped. Avoid major architecture changes or adding engines just to raise the backend count.
 
-- Stabilize RenFrame, RPGMFrame and Godot conversion/routing in the unified application.
-- Preserve supported Ren'Py 7/8 workflows and explicit, opt-in legacy migrations.
-- Maintain RPG Maker XP/VX/VX Ace (mkxp-z), MV/MZ (NW.js), and compatible Godot runtime replacement.
-- Standardize inspection, GUI/CLI behavior, build output, errors and diagnostics.
-- Keep official runtime downloads validated and cached; preserve original game files.
-- Stabilize existing Linux AArch64 packaging, Steam Frame installation instructions, and native launching.
-- Add representative automated regression tests for every advertised stable backend.
-- Keep experimental or manually provisioned backends clearly labeled; they do not block 0.1.0.
+### Test the user journey, not only the runtime
 
-**Release gate:** Each advertised stable backend has an end-to-end GUI conversion, regression coverage, and at least one real-hardware gameplay check. A successful build alone does not count as playable. **Portable device-side finishing for STS2, automatic on-device compilation and zero-SSH installation are explicitly out of scope for 0.1.0.**
+- Start with **clean, released-style Windows x64 and Linux ARM64 application archives**; verify extraction, frozen GUI startup, CLI entry points, dependencies, notices, architectures, and checksum/provenance metadata.
+- Exercise **GUI selection/drop → correct inspection → runtime resolution/download → conversion → Linux ARM64 game ZIP → transfer/extract → native launch or Steam Frame install**.
+- Repeat representative conversions with **empty and warm runtime caches**. Test missing/corrupt downloads, offline behavior where supported, paths with spaces/non-ASCII characters, ZIP extraction, and permissions.
+- Confirm **source files and installations remain unchanged**. Ensure output manifests describe the actual source game, selected ARM64 runtime, applied migration, converter version, and source commit without bundling user secrets or game files in any public artifact.
+- On real hardware, distinguish **launch/menu**, **input**, **short gameplay**, **save/load**, **quit/relaunch**, and **longer gameplay** as separate checkpoints. Test Steam Input through a real Steam shortcut instead of assuming a controller device is exposed to ordinary Linux processes.
+- Retest a **representative subset** of the existing working catalogue with packages produced by the release candidate, and log any difference from earlier manually tuned builds. The existing 23 reports are a starting point, **not a mandatory full 23-game certification gate**.
+- Cover representative supported Ren'Py 7/8, legacy migration, RPG Maker, and Godot paths, plus sample existing experimental backends where inputs/dependencies are available. Test the pinned Stardew Valley profile and two-stage STS2 as **separate** scoped paths; do not mark the normal one-step converter broken because a documented experimental backend requires extra steps.
+- Convert repeated crashes, packaging errors, missing assets, controller regressions, and runtime-resolution failures into reproducible tests and clear issue reports.
 
-## v0.2.0 — GameMakerFrame + coverage baseline
+### Fix in priority order
 
-**Goal:** Add GameMaker Studio support while proving the existing backends across a meaningful set of games.
+1. **Release blockers:** source mutation/data loss, unsafe extraction, compromised provenance or checksum handling, broken published application archives, or a regression in a previously supported conversion path.
+2. **High-value stability bugs:** GUI crashes, stale/corrupt caches, non-reproducible game ZIPs, installer/launcher failures, save/load regression, misleading error messages.
+3. **Documented limitations:** title-dependent performance, input, graphics, native plugins, online play, and unusually version-sensitive migrations. Fix them when evidence supports a contained change; do not turn this patch into an expansion milestone.
 
-### GameMakerFrame
+The known Cassette Beasts rendering/input issues, Cook, Serve, Delicious! 3 performance/input issues, Desert Child graphics issues, and partial certification of legacy Ren'Py/STS2 are **not silently reclassified as solved**.
 
-- Detect GameMaker generation and distinguish VM bytecode from native-code/YYC constraints where possible.
-- Evaluate and integrate Butterscotch as a candidate open-source ARM64 runner.
-- Evaluate GMLoader-Next as an alternative where its runtime dependencies and distribution terms permit.
-- Select compatible runtimes, prepare game data, and package native AArch64 launchers.
-- Provide clear diagnostics for incompatible versions, extensions and YYC-only builds.
-- Use Undertale and Pizza Tower as initial compatibility candidates, subject to successful on-device verification.
+**Release gate for v0.1.1:** Windows and native ARM64 build/startup checks and regression CI pass; clean-cache and cached-path end-to-end conversion/packaging checks pass on representative games; at least a scoped set of fresh Steam Frame gameplay/input/save/relaunch results is recorded; serious newly identified release blockers are resolved; known experimental limitations are clearly listed. Do not delay this maintenance release merely to finish every unsupported game or complete a 23-title playthrough.
 
-### Coverage target
+## v0.2.0: Make successful conversions reproducible
 
-Test and document **35 distinct game titles**, using user-provided game installations:
+**Intent:** The application should recreate what an expert got working manually, without rediscovering game-specific fixes in a terminal every time.
 
-- **20 Ren'Py titles**
-- **10 RPG Maker titles**, spread across relevant engine generations
-- **5 Godot titles**
+- Maintain the existing **35-distinct-title coverage target** as a testing matrix: **20 Ren'Py**, **10 RPG Maker** across its major generations, and **5 Godot**. Count reported failures as *tested* when diagnosis/reproduction is recorded; do not call them *playable*.
+- Record source game version, source engine version, converter version/commit, selected ARM64 runtime, migration or recipe, target device, GUI/CLI conversion outcome, native launch, input, gameplay, save/load, and known caveats.
+- Prioritize the gap between **working manually patched prototypes** and **repeatable conversions from an original user-supplied installation**. STS2 is an important case, but retain its separately documented two-stage installation requirements until that route is genuinely simplified.
+- Increase depth for existing GameMaker, LÖVE, Construct, AGS, MonoGame/.NET and custom Godot cases **before** advertising broad support for additional engines. Verify what the app can reproduce, not just what has booted once.
+- Keep runtime pins and checksums, game-version recognition, compatibility recipes, build manifests, and regression fixtures in sync. Prefer common backend/platform fixes; use exact, opt-in title/version profiles when genuinely required.
+- Treat controller mapping and native rendering as compatibility test dimensions. A title-screen screenshot alone does not establish success.
 
-For each title, record the game version, detected engine/runtime, conversion outcome, Steam Frame launch or gameplay result, required fixes and outstanding issues. Titles that fail are still useful test coverage when the failure is reproduced and documented; the target is **35 tested titles, not 35 guaranteed successes**.
+**Candidate release gate:** A published compatibility matrix for the 35 requested title tests, backed by repeatable conversion evidence for representative supported engines; working reference games can be rebuilt through the actual public interface without manual patching of output files. This is **not** a guarantee of 35 playable games.
 
-**Release gate:** At least two GameMaker games convert through the GUI and launch on Steam Frame without manual patching; the 35-title Ren'Py/RPG Maker/Godot test matrix is documented with real hardware outcomes.
+## Next, without premature version numbers
 
-## v0.3.0 — WebFrame
+The following are **workstreams**, not a fixed 0.3.0–0.9.0 calendar. Choose among them once stability and conversion reproducibility tell us where the biggest problems are.
 
-**Goal:** Support compatible packaged browser-game runtimes.
+| Workstream | Why it matters |
+| --- | --- |
+| **Compatibility recipes and diagnostics** | Improve the existing engine/version detection and pinned recipes; add safe, version-scoped repairs, portable diagnostic bundles, and regression tracking rather than repeating investigative work title by title. |
+| **Older Ren'Py games** | Expand RenFrame's coverage of legacy Ren'Py releases (especially 6.x and early 7.x, with older generations assessed separately). Prioritize safe detection, compatible Python 2 ARM64 runtime/migration paths, script/bytecode compatibility, media and saves; reuse existing narrow migration profiles instead of silently upgrading incompatible projects. |
+| **Steam Frame and device integration** | Improve transfer, install, repair, uninstall, artwork, and controller guidance. Aim for a non-terminal path where feasible without making SSH, Steam settings changes, or online access mandatory. |
+| **Device-side finalization** | Generalize the experimental STS2-style two-stage contract for engines requiring native components, vendor SDKs, or final ARM64 builds; keep licensing and ownership boundaries intact. |
+| **Mods, saves, and libraries** | Revisit the existing Ren'Py mod-library prototype; offer reversible profiles, save-location discovery/migration, and clear handling of native x86-only mod dependencies. |
+| **Broader ARM64 Linux hardware** | Move beyond a single Steam Frame baseline to handhelds, laptops, and low-power boards where games are viable; measure performance and memory honestly rather than assuming native automatically means faster. |
+| **New engine research** | Investigate XNA/FNA/MonoGame generalization, Unity/VR, WOLF RPG Editor, and other candidates only behind explicit experimental scopes. MonoFrame already exists for one pinned Stardew Valley version; that does **not** imply general managed-game compatibility. |
+| **Community verification** | Build a useful compatibility catalogue, reproducible issue templates, opt-in diagnostics, contributor docs, and clear distinctions between reported working, reproducibly converted, and fully played. |
 
-- Add a separate WebFrame backend, starting with Construct 2 and Construct 3 exports.
-- Detect HTML5/NW.js packaging and distinguish recognized engines from arbitrary websites.
-- Reuse relevant NW.js compatibility work already present in RPG Maker MV/MZ support.
-- Replace incompatible host runtimes with suitable Linux AArch64 alternatives.
-- Handle local file access, audio, input, fullscreen behavior and save storage.
-- Report unsupported wrappers, obfuscation or native extensions instead of guessing.
+## Older Ren'Py compatibility: dedicated research and implementation track
 
-**Release gate:** At least three representative packaged games, including Construct 2 and Construct 3 cases, convert and reach playable gameplay on Steam Frame.
+**Goal:** Bring more games built with pre-ARM64 Ren'Py releases to native Linux AArch64 without treating a single successful migration as proof of universal legacy support.
 
-## v0.4.0 — Compatibility Engine
+- **Inventory legacy generations:** Map relevant Ren'Py 6.x and pre-7.5 7.x releases, then investigate even older releases (including 5.x) separately where practical. Record each game's exact engine version, Python generation, archives, bytecode-only scripts, extensions, and external binaries.
+- **Build on existing evidence:** Preserve the narrowly scoped experimental paths for original **DDLC 6.99.12 → 7.5.3** and **Ren'Py 7.3.5 / 7.4.x → 7.5.0**, plus existing title-specific Katawa Shoujo compatibility research. These are starting points, **not generic support for all 6.x or early 7.x games**.
+- **Choose safe strategies per generation:** Evaluate full-engine migration, source/script transformation, or independently maintained compatible ARM64 runtimes as appropriate. Respect Python 2 vs Python 3, engine APIs, compiled bytecode formats, Python/native extensions, codecs, shaders, and other dependencies. Avoid mixing incompatible engine code with native runtime libraries.
+- **Keep migration explicit and reversible:** Detect unsupported combinations clearly; require opt-in for cross-version migrations; always preserve the source game. Do not guess a nearby engine release or distribute retail assets or proprietary binaries.
+- **Verify more than startup:** Test dialogue, choices, image/audio/video, rollback, save/load, exit/relaunch, and where relevant script/character-file behavior on actual ARM64 hardware. Add version-scoped automated fixtures and record regressions separately from game-specific failures.
 
-**Goal:** Make recurring fixes reproducible instead of repeatedly patching individual games.
+**Success criterion:** More independently tested legacy Ren'Py versions can be **reproducibly converted through the public application** using documented, narrowly scoped compatibility paths. This work is prioritized after the immediate v0.1.1 stability pass unless a contained regression fix belongs in that patch; no new blanket legacy-support promise is implied.
 
-- Introduce versioned compatibility profiles identified by engine signatures, runtime versions and relevant file hashes.
-- Separate generic engine/platform repairs from narrowly scoped title-specific overrides.
-- Support safe, declarative repair recipes with dry-run inspection and rollback.
-- Record runtime selections, applied fixes, dependencies and test provenance in package manifests.
-- Maintain a local compatibility database and optionally fetch reviewed profile updates.
-- Never apply a recipe when version or identity checks do not match.
+## What v1.0 would actually mean
 
-**Release gate:** Previously manual conversions work through reviewed profiles without editing package contents by hand or adding per-game branches to the application's core routing logic.
+A stable converter for **explicitly supported engine/game-version combinations**, not universal compatibility. The bar should be:
 
-## v0.5.0 — Device Integration & Device-Side Finalization
+- The published GUI and CLI consistently inspect, convert, package, and report errors for the documented supported scope.
+- Supported reference builds reproduce on clean hosts, using verified dependencies and traceable artifacts, without unpublished manual intervention.
+- Original game data remains untouched. The project never distributes users' games or unlicensed proprietary SDKs.
+- Installation and launch are documented and tested on specified ARM64 Linux targets, with known controller, graphics, online, and save limitations disclosed.
+- Regression tests, hardware reports, compatibility status definitions, release provenance, and security fixes are maintained well enough for outside users and contributors to trust the result.
 
-**Goal:** Support a portable, offline-first "Convert on PC → copy ZIP → finish on ARM64 device → play" experience, without requiring remote access to the device during conversion.
-
-- Introduce a reusable **Device-Side Finalization** contract for backends whose final ARM64 dependencies or builds must be completed on the target device.
-- **STS2 reference workflow:** On Windows, identify and validate a supported game version, perform platform-independent transformations, and produce a self-contained **software-only installer + user-supplied game-data ZIP**, without requiring a Frame IP address, SSH, Steam settings changes or FMOD SDK at this PC preparation stage.
-- After the user manually copies and extracts the ZIP on Steam Frame, provide an obvious graphical/desktop installer (and CLI fallback) that performs remaining native ARM64 build work, validates hashes/architectures and reports actionable failures.
-- Find and reuse previously supplied/cached FMOD 2.03.15 Linux SDK inputs; if missing, link to the [official FMOD download page](https://www.fmod.com/download) and guide the user through providing the exact compatible archive. Do not redistribute proprietary SDK files or assume unattended downloads behind sign-in.
-- Build/install required native libraries on-device only when toolchain and permissions allow; provide transparent prerequisite diagnostics and resumable work rather than modifying system partitions.
-- Offer explicit, reversible **Connect Steam / Restore Steam** where a game technically depends on an existing Steam launch context; never demand a purchase declaration, spoof Steam identity or alter Steam settings without consent.
-- Preserve the current STS2 Windows-to-Frame remote-build workflow as an optional advanced/developer path during migration.
-- Optionally discover/configure devices over SSH and transfer packages directly; direct device access is an enhancement, not a requirement for ZIP creation.
-- Support repair, updates, uninstall, source protection, package manifests, output verification, and portable Linux AArch64 output beyond Steam Frame.
-
-**Release gate:** A user can select supported STS2 source files on Windows and create a transferable ZIP **without a Frame connection**. On a compatible Frame with necessary build prerequisites, the extracted installer finishes and verifies a native build, then offers reversible Steam integration. At least one clean-device install and one cached reinstall pass gameplay/save-relaunch testing. Missing vendor SDK or unsupported toolchain produces a specific, recoverable diagnostic. Existing simple-engine ZIP conversions remain unchanged.
-
-## v0.6.0 — Mods & Saves
-
-**Goal:** Preserve more of the user's existing game experience.
-
-- Incorporate the existing Ren'Py mod-library work into the unified application.
-- Add compatible RPG Maker plugin/mod workflows where feasible.
-- Provide per-game mod profiles, backups, conflict detection and reversible changes.
-- Identify native x86 dependencies in mods and explain when they cannot run on ARM64.
-- Detect and migrate compatible save paths/formats between source and ARM64 installations.
-- Keep modded builds separate from clean base-game conversions.
-
-**Release gate:** At least two engine families demonstrate safe mod/profile handling, and representative save transfers are verified after relaunch.
-
-## v0.7.0 — Compatibility Marathon
-
-**Goal:** Improve depth, resilience and confidence across supported backends.
-
-- Expand testing across engine generations, runtime versions, game genres and troublesome edge cases.
-- Prioritize shared engine-level fixes over one-off workarounds.
-- Track conversion, launch, brief gameplay and deeper gameplay as distinct statuses.
-- Turn real hardware failures into reproducible tests and reviewed compatibility profiles.
-- Establish a contributor-friendly format for reports with version, device, runtime, logs and reproduction steps.
-- Re-run known-working titles against new releases to catch regressions.
-
-**Release gate:** A maintained compatibility catalogue and regression suite demonstrate broad, reproducible testing; known compatibility limits are documented, not hidden.
-
-## v0.8.0 — Experimental Expansion
-
-**Goal:** Explore harder engine families without destabilizing supported paths.
-
-- Investigate XNA, FNA and MonoGame and determine where ARM64 runtime replacement is feasible.
-- Prototype managed-assembly detection and native dependency analysis.
-- Research Unity Mono portability, IL2CPP limitations, engine binaries, plugins and VR/OpenXR constraints.
-- Keep speculative backends behind explicit experimental gates.
-- Write technical feasibility assessments when a dependable generic conversion path cannot be established.
-
-**Release gate:** At least one isolated new-engine proof of concept or a documented technical assessment of what prevents practical support. No experimental backend is advertised as stable merely because a prototype boots.
-
-## v0.9.0 — Public Beta
-
-**Goal:** Make the converter usable by people who did not develop it.
-
-- Publish verifiable application builds and practical Windows/Linux installation instructions.
-- Polish unified GUI conversion, library, settings and diagnostics flows.
-- Provide progress reporting, actionable errors and easy export of opt-in diagnostic reports.
-- Test clean installations without developer toolchains.
-- Automate builds, package verification and regression CI.
-- Document supported engines, exact limitations, compatible devices and troubleshooting.
-- Audit licensing, attribution, dependency verification, source integrity and safe file handling.
-- Address release-blocking issues raised by external testers.
-
-**Release gate:** Independent testers complete documented conversion-to-device workflows without developer intervention; no known critical data-loss or destructive-source-file defects remain.
-
-## v1.0.0 — Stable Release
-
-**Goal:** Deliver a trustworthy, extensible Linux ARM64 game conversion platform.
-
-- Consistent GUI and CLI for all advertised stable backends.
-- Reproducible engine/version detection, runtime selection and native packaging.
-- Reliable source preservation and explicit handling of unsupported games.
-- Safe compatibility recipes, versioned package manifests and stable backend contracts.
-- Verified Steam Frame deployment plus portable offline archives.
-- Public, evidence-based game compatibility catalogue.
-- Automated regression and release processes.
-- Complete user and contributor documentation.
-
-**Release gate:** All documented stable workflows work reliably on clean supported systems, with no critical unresolved packaging or source-integrity defects. **1.0 means a stable converter for supported games, not universal compatibility.**
+**Being public is not the same as being stable.** v0.1.0 is already a public release; v1.0 is a quality threshold rather than a future download button.
 
 ---
 
-## Beyond 1.0 (candidates, not commitments)
+## Project-wide engineering rules
 
-- Broader Unity conversion research, including VR titles.
-- Additional small and open game engines.
-- More ARM64 Linux devices and distributions.
-- Community-maintained compatibility recipes and reports.
-- Android portability for selected compatible engines.
-- Performance analysis and automated optimization profiles.
+1. **Preserve sources.** Never modify the input game installation; work in independent outputs and verify preservation.
+2. **No game redistribution.** Users provide their own acquired files; vendor SDKs and Steam client binaries remain separately licensed.
+3. **Exactness beats guesswork.** Do not substitute engine versions, libraries, or migration paths silently. Validate compatibility and require approval for experimental cross-version changes.
+4. **Support claims require evidence.** Keep **Detected**, **Built**, **Launches**, **Playable**, **Reproducibly Converted**, and **Deeper Tested** distinct. A failure that is carefully diagnosed still counts toward test coverage.
+5. **Native means native.** Report when ARM64 execution is real and when compatibility/translation or special Steam context is still involved.
+6. **Fix common problems first.** Prefer engine/platform repairs over per-title branches; keep exceptional title/version profiles narrowly bounded.
+7. **Keep experiments isolated.** Protect working paths, treat regression tests as release gates, and never force experimental dependencies on unrelated backends.
+8. **CLI is first-class.** GUI improvements cannot remove headless/scripted compatibility.
+9. **Small releases beat imaginary milestones.** Ship scoped fixes when verified; rewrite upcoming priorities when results justify it.
 
-## Project-wide rules
+## Versioning and release traceability
 
-1. **Never modify source installations.** Work from a separate copy/output.
-2. **Never redistribute game files.** Users provide their own legally obtained installations.
-3. **Fix engine and platform problems first.** A specific game is a test case, not the architectural unit.
-4. **Report evidence precisely.** Builds, Launches, Playable and Fully Tested are different claims.
-5. **Be honest about native execution.** Distinguish ARM64 binaries from x86 translation/emulation.
-6. **Keep experimental work isolated.** New engines must not destabilize supported backends.
-7. **Protect working games.** Maintain regression tests as the framework grows.
-8. **Keep the CLI first-class.** GUI conveniences must not break headless and scripted use.
+- Keep **v0.1.0** as the immutable tagged foundation baseline. Plan the next normal maintenance release as **v0.1.1**; use further `0.1.x` releases as needed, not as feature-count targets.
+- Keep the application version consistent across GUI/CLI/package metadata, `pyproject.toml`, release assets, and converted-game manifests. Record the **full commit hash** independently for exact provenance.
+- Include **converter version** in generated game ZIP naming and metadata, separately from the source game's version. Maintain backward compatibility with old package names and installation scripts.
+- The earlier **four-component micro-revision** idea (`0.1.1.1`, `0.1.1.2`) remains an optional policy to implement consistently if useful. Do not promise that format until release tooling, version parsing, artifact names, and tests all support it.
+- Publish application releases separately from checksum-pinned runtime bundles. Verified CI builds and archive checks are necessary, but never a substitute for real-device acceptance.
+- Keep release notes honest about experimental workflows and open defects; no schedule or version number automatically elevates an entire engine family to stable support.
 
-## Release management
-
-Version milestones are **scope targets**, not release dates. Features can move if hardware testing, licensing or compatibility constraints demand it. A release is complete only when its acceptance criteria and regression checks pass.
-
-### Fine-grained versioning and traceable ZIP output
-
-After the v0.1.0 candidate's existing-game regression retest, establish a single authoritative application version and **four-component** release identifiers for subsequent revisions: `MAJOR.MINOR.PATCH.REVISION`. Keep `0.1.0` as the initial baseline; use `0.1.0.1`, `0.1.0.2`, etc. for tightly scoped follow-up releases. Larger planned releases can use identifiers such as `0.1.1.0` and `0.2.0.0`. Increment versions deliberately for published changes, not on every developer build; record the Git commit separately for exact traceability.
-
-- Name packaged Windows releases `multi-engine-game-conversion-framework-by-tovakai-v<version>-windows-x64.zip` (and version any future application release archives).
-- Name **all** converted-game ZIPs `<game>-frame-conv-v<version>-linux-aarch64.zip` or an equivalent sanitized, clearly labeled convention; the embedded version means **converter version**, not source-game version. Preserve the `-linux-aarch64.zip` suffix for existing distribution/install consumers.
-- Include converter version and source Git commit in portable game metadata/manifests and application build metadata. Preserve source-game version as an independent field.
-- Use the same version source in GUI About/status, CLI `--version`, package metadata and build scripts. Do not hardcode conflicting versions across backends.
-- Handle old unversioned ZIPs gracefully and never silently overwrite a different release's package. Update packaging, repackage/artwork commands, Frame installation/manifests, and automated tests together.
-- **Do not change the converter code or release version during the immediate working-main regression retest.** Implement this versioning policy after recording those results, then test clean builds and all backend ZIP names before release.
+See [release process](release-process.md), [v0.1.0 scope](releases/0.1.0.md), [hardware feedback](hardware-feedback-2026-10-11.md), and [MonoFrame validation](monoframe.md).
