@@ -106,4 +106,4 @@ See the [experiment journal](../experiments/cassette-rendering/README.md) for
 private reproduction tools, runtime/pack hashes and unsuccessful trials. Private
 game files, saves, screenshots and raw shader diagnostics are excluded from Git
 and release artifacts. The existing working conversion and runtime release are
-preserved. This feature branch has not been merged or published.
+preserved. This compatibility profile is included in the 0.1.0.3 release.
