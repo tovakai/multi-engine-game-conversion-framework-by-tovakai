@@ -48,6 +48,9 @@ def test_gamemaker_preserves_external_assets_and_source(tmp_path):
     assert (output/'game/music.ogg').read_bytes() == b'music'
     assert (source/'data.win').exists()
     assert 'exec "$ROOT/runtime/butterscotch" data.win' in result.launcher_path.read_text()
+    from megcfbt.frame_package import load_frame_metadata
+    from megcfbt.version import get_build_info
+    assert load_frame_metadata(output)['conversion']['converter'] == get_build_info()
 
 
 def test_wrong_runtime_rejected_before_replacing_output(tmp_path):
@@ -114,7 +117,8 @@ def test_force_cannot_replace_original_archive(tmp_path):
 
 
 def test_generated_zip_cannot_replace_original_archive(tmp_path):
-    path = tmp_path/'Game-linux-aarch64.zip'
+    from megcfbt.frame_package import default_zip_path
+    path = default_zip_path(tmp_path/'Game-frame')
     path.write_bytes(b'original archive bytes')
     with pytest.raises(ConversionError,match='original source archive'):
         build_source(path,output=tmp_path/'Game-frame',force=True)

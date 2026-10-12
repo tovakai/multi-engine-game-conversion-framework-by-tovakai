@@ -36,7 +36,8 @@ def test_frame_zip_is_drop_in_and_preserves_linux_modes(tmp_path):
     )
 
     archive = create_frame_zip(build, launcher_path=launcher)
-    assert archive.name == "Example-linux-aarch64.zip"
+    identity = frame_package.load_frame_metadata(build)['conversion']['converter']
+    assert archive.name == f"Example-frame-conv-v{identity['version']}-linux-aarch64.zip"
 
     with zipfile.ZipFile(archive) as zf:
         names = set(zf.namelist())

@@ -17,6 +17,7 @@ from verify_output import inspect
 from package_converter import FILES
 from frame_install import KIND, HANDOFF
 import retail_107  # Available in-process in frozen Windows builds too.
+from provenance import build_identity, conversion_identity, bundled_identity_bytes
 
 INSTALL = b'''#!/bin/sh
 set -eu
@@ -78,7 +79,8 @@ def prepare(source, output, *, sdk, cache, archive=True, progress=None, stage=No
     for path in (source, sdk, cache):
         if output == path or path in output.parents or output in path.parents:
             raise ValueError('Transfer output must be separate from inputs and cache.')
-    archive_path = output.with_name(output.name + '.zip') if archive else None
+    version = build_identity().get('version') or 'unknown'
+    archive_path = output.with_name(output.name + '-prep-conv-v' + version + '-linux-aarch64.zip') if archive else None
     if archive_path is not None and archive_path.exists():
         raise ValueError('Transfer ZIP already exists; choose a new output folder.')
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -110,11 +112,13 @@ def prepare(source, output, *, sdk, cache, archive=True, progress=None, stage=No
         if not license_path.exists():
             license_path = here.parents[1] / 'LICENSE'
         shutil.copyfile(license_path, temporary / 'backend/LICENSE')
+        write_new(temporary / 'backend/_build_info.json', bundled_identity_bytes())
         write_new(temporary / 'install.sh', INSTALL, 0o755)
         write_new(temporary / 'INSTALL-ON-FRAME.txt', INSTRUCTIONS.encode())
         files = [{'path': path.relative_to(temporary).as_posix(), **inspect(path)}
                  for path in sorted(temporary.rglob('*')) if path.is_file()]
         handoff = {'kind': KIND, 'release': profile['release'], 'commit': profile['commit'],
+                   'preparation': conversion_identity(),
                    'files': files, 'source_validation': report,
                    'scope': 'Prepared transfer package; native installation on the Frame is required.'}
         write_new(temporary / HANDOFF, (json.dumps(handoff, indent=2, sort_keys=True) + '\n').encode())

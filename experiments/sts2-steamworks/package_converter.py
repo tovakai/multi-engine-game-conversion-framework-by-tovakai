@@ -10,9 +10,11 @@ import zipfile
 
 from converter_io import safe, publish_new
 from verify_output import inspect
+from provenance import bundled_identity_bytes
 
 
 FILES = (
+    "provenance.py",
     "prepare_handoff.py", "frame_install.py", "steam_installation.py", "build_progress.py",
     "package_converter.py",
     "convert_sts2.py", "converter_io.py", "converter_profile_v1.json", "fetch_converter_runtimes.py",
@@ -42,6 +44,7 @@ def package(destination):
         if not license_path.exists():
             license_path = here.parents[1] / 'LICENSE'
         with zipfile.ZipFile(temporary, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('sts2-converter/_build_info.json', bundled_identity_bytes())
             for name, path in [(name, here / name) for name in FILES] + [("LICENSE", license_path)]:
                 info = zipfile.ZipInfo("sts2-converter/" + name, date_time=(1980, 1, 1, 0, 0, 0))
                 info.create_system = 3

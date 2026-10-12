@@ -6,12 +6,15 @@ No runtime, detection, download or builder functions are replaced.
 """
 from __future__ import annotations
 import argparse
+import contextlib
+import io
 import json
 import sys
 from pathlib import Path
 import time
 from types import SimpleNamespace
 from megcfbt import gui, APP_NAME, __version__
+from megcfbt.version import display_version, get_build_info
 
 
 def main(argv=None) -> int:
@@ -22,17 +25,36 @@ def main(argv=None) -> int:
     parser.add_argument('--output-dir',type=Path)
     parser.add_argument('--receipt',type=Path,required=True)
     parser.add_argument('--timeout',type=int,default=900)
+    parser.add_argument('--backend-runtime', type=Path,
+                        help='Explicit runtime directory selected for this acceptance run')
+    parser.add_argument('--fmod-sdk', type=Path,
+                        help='Owner FMOD Linux SDK selected for Celeste acceptance')
     parser.add_argument('--approve-renpy-prerelease-migration',action='store_true',
                         help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
     if args.verify_gui_startup:
+        from megcfbt.cli import main as cli_main
+        cli_output = io.StringIO()
+        with contextlib.redirect_stdout(cli_output):
+            try:
+                cli_main(['--build-info'])
+            except SystemExit as error:
+                if error.code != 0:
+                    raise
+        if json.loads(cli_output.getvalue()) != get_build_info():
+            raise RuntimeError('Frozen CLI and GUI build identities disagree')
         app=gui.ConverterApp()
         try:
             app.root.withdraw()
             app.root.update_idletasks()
             args.receipt.parent.mkdir(parents=True,exist_ok=True)
             args.receipt.write_text(json.dumps({'state':'complete','app_name':APP_NAME,
-                'version':__version__,'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
+                'version':__version__, 'build_info':get_build_info(),
+                'version_display':app.version_label.cget('text'),
+                'cli_build_info':json.loads(cli_output.getvalue()),
+                'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
+            if app.version_label.cget('text') != display_version():
+                raise RuntimeError('GUI version disagrees with build metadata')
         finally:
             app.root.destroy()
         return 0
@@ -93,6 +115,11 @@ def main(argv=None) -> int:
             failed('Verification','GUI conversion timed out')
             return
         if app.inspection is not None and not initiated:
+            if args.backend_runtime is not None:
+                app.backend_runtime = args.backend_runtime.expanduser().resolve()
+                state['runtime_override'] = True
+            if args.fmod_sdk is not None and app.inspection.backend == 'celesteframe':
+                app.celeste_sdk = args.fmod_sdk.expanduser().resolve()
             state['inspection']={'engine':app.inspection.engine,'version':app.inspection.engine_version,
                                  'runtime_kind':app.inspection.runtime_kind,'evidence':app.inspection.evidence}
             state['convert_enabled']=app.convert_btn.cget('state')=='normal'

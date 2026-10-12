@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Steamworks.NET</AssemblyName>
+    <RootNamespace>Steamworks</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefineConstants>STEAMWORKS_LIN_OSX;STEAMWORKS_X64</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SteamworksSource Condition="'$(SteamworksSource)' == ''">../../../Steamworks.NET</SteamworksSource>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SteamworksSource)/com.rlabrecque.steamworks.net/Runtime/**/*.cs" />
+    <Compile Include="$(SteamworksSource)/Standalone/Properties/AssemblyInfo.cs" />
+  </ItemGroup>
+</Project>

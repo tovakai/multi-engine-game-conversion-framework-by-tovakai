@@ -101,7 +101,7 @@ def test_windows_package_excludes_live_prefix_and_logs(tmp_path):
     write_frame_metadata(root, name='Hollow Knight', launcher_path=launcher,
                          engine='unity', target_platform='windows-arm64-proton')
     archive = create_frame_zip(root)
-    assert archive.name == 'HollowKnight-windows-arm64-proton.zip'
+    assert archive.name.startswith('HollowKnight-frame-conv-v') and archive.name.endswith('-windows-arm64-proton.zip')
     with zipfile.ZipFile(archive) as package:
         names = package.namelist()
         assert not any('/compatdata/' in name or '/logs/' in name for name in names)

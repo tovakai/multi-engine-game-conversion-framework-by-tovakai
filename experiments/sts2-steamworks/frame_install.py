@@ -13,6 +13,7 @@ import tempfile
 if __name__ == '__main__':
     sys.dont_write_bytecode = True  # Keep the sealed backend inventory unchanged.
 
+from provenance import conversion_identity
 from converter_io import safe, relative, read_verified, verified_stream, write_new, publish_new
 from convert_sts2 import load_profile, executable, require_elf
 from verify_output import MANIFEST, inspect, verify
@@ -94,6 +95,7 @@ def finish(prepared, output, native, profile, evidence):
         write_new(stage / 'native-build.json', (json.dumps(evidence, indent=2, sort_keys=True) + '\n').encode())
         manifest['native_bindings'] = validate_native_bindings(stage / 'SlayTheSpire2.pck', stage)
         manifest['converter_recipe'] = 'sts2-source-v1'
+        manifest['finalization'] = conversion_identity()
         manifest['scope'] = 'Prepared locally and compiled on Linux ARM64. Gameplay acceptance remains required.'
         manifest['files'] = [
             {'path': path.relative_to(stage).as_posix(),
@@ -172,6 +174,9 @@ def install(root, *, progress=print, build_progress=None):
 def installation_result(root, output, report):
     result = {'output': str(output), 'validation': report,
               'launch_command': shlex.quote(str(output / 'play-steam.sh')) + ' %command%'}
+    for key, path, field in [('preparation', root / HANDOFF, 'preparation'),
+                             ('finalization', output / MANIFEST, 'finalization')]:
+        result[key] = json.loads(path.read_bytes()).get(field) if path.is_file() else None
     (root / 'installation-result.json').write_text(json.dumps(result, indent=2) + '\n')
     return result
 
