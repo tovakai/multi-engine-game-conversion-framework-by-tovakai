@@ -15,7 +15,7 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 | Version | Theme | Primary outcome |
 | --- | --- | --- |
 | **0.1.0** | Foundation | Reliable existing backends and consistent GUI-to-device workflow |
-| **0.1.1** | Maintenance | Release-feedback fixes, actionable diagnostics, source artwork provenance and repeatable compatibility evidence |
+| **0.1.1** | Local installation + maintenance | One-operation installation on Frame, direct Steam patching/restoration, release-feedback fixes and diagnostics |
 | **0.2.0** | GameMakerFrame + coverage baseline | GameMaker support and a 35-title test matrix |
 | **0.3.0** | WebFrame | Construct and compatible packaged HTML5 game support |
 | **0.4.0** | Compatibility Engine | Reusable, versioned repair recipes and local compatibility data |
@@ -48,6 +48,12 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 0.1.0 is published. The next patch release prioritizes reproducible release
 feedback, conversion safety, actionable diagnostics, source artwork provenance,
 and compatibility records tied to exact game/runtime/application versions.
+
+The Linux ARM64 app will also coordinate local preparation, native compilation
+where needed (including STS2), verification and Steam registration in one
+operation. Direct Steam-installation patching will include backups, restoration
+and update detection; portable ZIP export remains available. Windows retains its
+prepare-and-transfer workflow.
 
 See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md).
 SMAPI, new engine families and major runtime migrations remain separate work.
