@@ -10,7 +10,7 @@
 
 ## Observed behavior
 
-The original release was included in the 23-package report. A separate Ren'Py 8 beta had initial gameplay confirmed. The historical user report lists a working package but does not provide a separate full-playthrough or per-title save/load log.
+An Everlasting Summer package was included in the 23-package report, but its exact release variant was not recorded. Separate earlier testing documented the original 1.6 release and an author's Ren'Py 8 beta with initial gameplay. The historical user report lists a working package but does not provide a separate full-playthrough or per-title save/load log.
 
 ## Scope and limitations
 
