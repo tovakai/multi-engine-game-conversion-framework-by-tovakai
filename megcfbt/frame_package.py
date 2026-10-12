@@ -52,10 +52,12 @@ _PORTABLE_EXECUTABLES = frozenset(
 )
 
 
-def default_zip_path(build_directory: Path) -> Path:
+def default_zip_path(build_directory: Path, *, target_platform: str = 'linux-aarch64') -> Path:
     name = build_directory.name
     base = name[:-6] if name.endswith("-frame") else name
-    return build_directory.parent / f"{base}-linux-aarch64.zip"
+    if target_platform not in {'linux-aarch64', 'windows-arm64-proton'}:
+        raise FramePackageError(f'Unsupported target platform: {target_platform}')
+    return build_directory.parent / f"{base}-{target_platform}.zip"
 
 
 def _relative_to_build(path: Path, build_directory: Path) -> str:
@@ -114,6 +116,7 @@ def write_frame_metadata(
     engine_version: str | None = None,
     runtime_engine_version: str | None = None,
     compatibility_profile: str | None = None,
+    target_platform: str = 'linux-aarch64',
 ) -> Path:
     """Write conversion metadata consumed by the on-device Steam installer."""
 
@@ -125,6 +128,8 @@ def write_frame_metadata(
         raise FramePackageError(f"Launcher does not exist: {launcher}")
 
     relative_launcher = _relative_to_build(launcher, root)
+    if target_platform not in {'linux-aarch64', 'windows-arm64-proton'}:
+        raise FramePackageError(f'Unsupported target platform: {target_platform}')
     metadata_directory = root / _METADATA_DIR
     metadata_directory.mkdir(parents=True, exist_ok=True)
     metadata_path = metadata_directory / _METADATA_FILE
@@ -135,11 +140,16 @@ def write_frame_metadata(
                 "name": name,
                 "launcher": relative_launcher,
                 "architecture": "aarch64",
-                "runtime": "SteamLinuxRuntime_4-arm64",
+                "runtime": "arm64-proton" if target_platform == 'windows-arm64-proton' else "SteamLinuxRuntime_4-arm64",
+                "target_platform": target_platform,
+                **({"operating_system": "windows", "proton_versions": ["proton-11.0-2c-arm64", "proton-11.0-2e-arm64"]}
+                   if target_platform == 'windows-arm64-proton' else {}),
                 "engine": engine,
                 "engine_version": engine_version,
                 **({"runtime_engine_version": runtime_engine_version} if runtime_engine_version else {}),
-                **({"compatibility_profile": compatibility_profile, "hardware_verification": "pending"} if compatibility_profile else {}),
+                **({"compatibility_profile": compatibility_profile,
+                    "hardware_verification": "initial-gameplay-save-load-tested" if target_platform == 'windows-arm64-proton' else "pending"}
+                   if compatibility_profile else {}),
             },
             indent=2,
             ensure_ascii=False,
@@ -220,6 +230,11 @@ def load_frame_metadata(build_directory: Path) -> dict:
     ):
         raise FramePackageError(f"Frame build metadata has an unsafe launcher path: {launcher!r}")
     payload["launcher"] = relative.as_posix()
+    platform = payload.get('target_platform', 'linux-aarch64')
+    if platform not in {'linux-aarch64', 'windows-arm64-proton'}:
+        raise FramePackageError(f'Unsupported package target platform: {platform}')
+    if platform == 'windows-arm64-proton' and payload.get('runtime') != 'arm64-proton':
+        raise FramePackageError('Windows ARM64 packages must declare the ARM64 Proton runtime')
     return payload
 
 
@@ -250,10 +265,12 @@ def create_frame_zip(
     if not source_launcher.is_file():
         raise FramePackageError(f"Converted launcher does not exist: {source_launcher}")
 
+    package_metadata = load_frame_metadata(source) if (source / _METADATA_DIR / _METADATA_FILE).is_file() else {}
+    target_platform = package_metadata.get('target_platform', 'linux-aarch64')
     archive = (
         output.expanduser().resolve()
         if output is not None
-        else default_zip_path(source)
+        else default_zip_path(source, target_platform=target_platform)
     )
     archive.parent.mkdir(parents=True, exist_ok=True)
     if archive.exists() and not force:
@@ -319,7 +336,7 @@ def create_frame_zip(
                 permissions=0o755,
             )
 
-            for relative_name, (data, permissions) in installer_files().items():
+            for relative_name, (data, permissions) in installer_files(target_platform=target_platform).items():
                 write_bytes(
                     zf,
                     sample=source_launcher,
@@ -342,6 +359,10 @@ def create_frame_zip(
 
             for path in sorted(source.rglob("*"), key=lambda p: p.as_posix()):
                 relative = path.relative_to(source)
+                if target_platform == 'windows-arm64-proton' and relative.parts[:2] in {
+                    ('.hk-arm64', 'compatdata'), ('.hk-arm64', 'logs')
+                }:
+                    continue
                 arcname = f"{payload_root}/{relative.as_posix()}"
 
                 if path.is_symlink():

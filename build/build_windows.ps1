@@ -50,6 +50,7 @@ foreach ($path in @(
   --collect-data gamemakerframe `
   --collect-data rpgmframe `
   --collect-data monoframe `
+  --collect-all unityframe `
   --add-data "experiments/sts2-steamworks;sts2-tools" `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }

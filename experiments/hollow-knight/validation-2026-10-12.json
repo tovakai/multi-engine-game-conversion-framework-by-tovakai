@@ -1,0 +1,46 @@
+{
+  "profile": "hollow-knight-steam-unity-6000.0.61f1-managed-input-v1",
+  "date": "2026-10-12",
+  "device": "Steam Frame",
+  "host_architecture": "aarch64",
+  "proton_version": "proton-11.0-2e-arm64",
+  "prepared_assembly_sha256": "d1f41ffede6d4845d766f7ac23604da7ebc623040a4fd783620ca3c38bfeac9d",
+  "retained_source_files_hash_matched": 1757,
+  "native_component_count": 12,
+  "managed_assembly_count": 134,
+  "process_evidence": {
+    "loaded_engine_mono_graphics_steam_pe_machine": "0xaa64",
+    "loaded_steam_unix_elf_machine": 183,
+    "fex_mappings_in_game_process": 0
+  },
+  "log_confirmed": [
+    "Unity 6000.0.61f1 (74a0adb02c31) initialized",
+    "Direct3D 11 renderer on Turnip Adreno 750",
+    "Unity Input System initialized",
+    "Steam initialized and SteamOnlineSubsystem selected",
+    "Steam stats received"
+  ],
+  "user_confirmed": [
+    "Hollow Knight menu visible",
+    "Controller menu navigation",
+    "Gameplay movement",
+    "Jumping",
+    "Audio",
+    "Bench save and quit",
+    "Relaunch of the same isolated copy",
+    "Continue loads the saved character at the bench",
+    "Controller input works after loading the save"
+  ],
+  "save_evidence": {
+    "prefix": "dedicated experiment prefix",
+    "slot": "user1.dat",
+    "file_size_after_save": 65178,
+    "backup_and_versioned_save_files_present": true
+  },
+  "pending": [
+    "Controller vibration and hotplug",
+    "Achievements",
+    "Longer gameplay and scene-transition coverage",
+    "Steam shortcut launch and standard framework package integration"
+  ]
+}

@@ -1,8 +1,9 @@
 # Multi-Engine Game Conversion Framework by Tovakai
 
 A deliberately un-snappy desktop and command-line application for converting
-supported indie-game runtimes to native Linux ARM64 packages, initially targeting
-the Steam Frame.
+supported indie-game runtimes to ARM64 packages for Linux, initially targeting
+the Steam Frame. Most backends use native Linux runtimes; experimental UnityFrame
+uses a Windows ARM64 player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
@@ -41,8 +42,8 @@ itself is already portable: it is the **bundled engine runtime** that was
 built for x86-64.
 
 This project takes a different route. When an engine is supported, it keeps
-your existing game files and substitutes a compatible **native Linux ARM64
-runtime**, rather than translating the original x86-64 runtime while playing.
+your existing game files and substitutes a compatible **ARM64 runtime**. UnityFrame
+preserves Windows assets and runs its Windows ARM64 player under ARM64 Proton.
 
 Why bother?
 
@@ -77,6 +78,7 @@ it pretend it has one?**
 | Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
 | MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
+| Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
@@ -95,7 +97,14 @@ including pinned HD source and UI fixes. Identified Ren'Py 8.5 nightlies offer a
 experimental complete 8.5.3 engine/runtime migration in the GUI or with
 `--experimental-renpy-prerelease-migration`; this requires gameplay/save testing.
 Encrypted Godot packs/scripts require an ARM64 runtime built with the game's key.
-Unity native exports and WOLF RPG Editor games are diagnosed as unsupported.
+Unity Windows exports now report exact-version metadata, managed/IL2CPP evidence
+and native-plugin architectures. [Hollow Knight development](docs/hollow-knight-conversion.md)
+now uses the regular CLI and GUI conversion flow for the exact tested Steam
+edition, with automatic verified downloads and a Windows ARM64 Proton package.
+Menu, controller gameplay, audio and bench save/load after relaunch are confirmed
+on Steam Frame. Other Unity exports remain gated; see
+[UnityFrame setup and limitations](docs/backends/unityframe.md). WOLF RPG Editor games
+are diagnosed as unsupported.
 
 New EasyRPG packages include a portable player and supporting libraries
 automatically. Older packages can still use the system player or

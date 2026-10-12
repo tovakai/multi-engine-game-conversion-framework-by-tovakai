@@ -641,6 +641,8 @@ class ConverterApp:
         if result.backend == "sts2":
             self.sts2_sdk = sts2.find_sdk()
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
+        elif result.backend == 'unityframe':
+            self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
         elif result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
@@ -1009,7 +1011,9 @@ class ConverterApp:
             f"Converted {result.game_name or result.output_path.name}.\n\n"
             f"Build directory:\n{result.output_path}\n\n"
             + (f"Steam Frame package:\n{result.archive_path}\n\n"
-              f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else ""),
+              f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else "")
+            + ('\nRequires ARM64 Proton 11.0 installed through Steam; the launcher selects a supported version automatically.\n'
+               if result.target_platform == 'windows-arm64-proton' else ''),
         )
 
     def _fail(self, message: str) -> None:

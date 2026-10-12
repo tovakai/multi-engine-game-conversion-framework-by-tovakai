@@ -42,3 +42,4 @@ class UnifiedBuildResult:
     steam_launch_command: str | None = None
     remote_job: str | None = None
     requires_frame_install: bool = False
+    target_platform: str = 'linux-aarch64'
