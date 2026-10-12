@@ -529,7 +529,13 @@ def test_legacy_full_engine_generated_launcher_executes_sdk_script(tmp_path: Pat
     )
     assert completed.returncode == 0, completed.stderr
     assert "full_sdk=7.5.0" in completed.stdout
-    expected_path = out.as_posix()
+    actual_path = completed.stdout.split('game=', 1)[1].strip()
     if out.drive:
-        expected_path = "/" + out.drive[0].lower() + expected_path[2:]
-    assert expected_path in completed.stdout
+        # Git Bash can represent Windows' temp directory as /tmp rather than
+        # /c/Users/... . Compare the resolved folder, not a mount spelling.
+        translated = subprocess.run(
+            [shutil.which('bash'), '-c', 'cygpath -w "$1"', 'bash', actual_path],
+            capture_output=True, text=True, check=True,
+        )
+        actual_path = translated.stdout.strip()
+    assert Path(actual_path).resolve() == out.resolve()

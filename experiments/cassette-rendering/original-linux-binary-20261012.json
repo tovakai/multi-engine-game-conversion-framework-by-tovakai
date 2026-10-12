@@ -1,0 +1,24 @@
+{
+  "filename": "CassetteBeasts.x86_64",
+  "architecture": "x86_64",
+  "sha256": "57b48157b5576abdd391b06a41548ce222cac574f5ae8dfb16f6b39bb22e034f",
+  "size": 46104344,
+  "version_strings": [
+    "3.5.1.stable",
+    "3.5.1.stable.custom_build"
+  ],
+  "diagnostic_source_paths": [
+    "drivers/gles3/rasterizer_canvas_base_gles3.cpp",
+    "drivers/gles3/rasterizer_canvas_gles3.cpp",
+    "drivers/gles3/rasterizer_gles3.cpp",
+    "drivers/gles3/rasterizer_scene_gles3.cpp",
+    "drivers/gles3/rasterizer_storage_gles3.cpp",
+    "drivers/gles3/rasterizer_storage_gles3.h",
+    "drivers/gles3/shader_cache_gles3.cpp",
+    "drivers/gles3/shader_compiler_gles3.cpp",
+    "drivers/gles3/shader_gles3.cpp",
+    "drivers/gles3/shader_gles3.h",
+    "modules/gridmap/grid_map.cpp"
+  ],
+  "scope": "Static strings do not establish which engine patches are present"
+}

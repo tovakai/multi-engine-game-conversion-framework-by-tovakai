@@ -1,0 +1,39 @@
+{
+  "sessions": {
+    "zink-norp-depth-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:34:29+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 375,
+      "fps_min": 1,
+      "fps_median": 35,
+      "fps_max": 60,
+      "diagnostics": [
+        "ERROR: Condition \"_first != nullptr\" is true.",
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "ERROR: Resources still in use at exit (run with --verbose for details).",
+        "ERROR: There are still MemoryPool allocs in use at exit!",
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    }
+  },
+  "probes": [
+    {
+      "variant": "zink-norp-depth",
+      "settings": {
+        "vendor": "Mesa",
+        "renderer": "zink Vulkan 1.4(Turnip Adreno (TM) 750 (MESA_TURNIP))",
+        "driver": "GLES3",
+        "prepass_setting": true,
+        "excluded_renderers": "",
+        "matched_exclusions": [],
+        "prepass_expected_from_source": true,
+        "override_path": "user://custom_settings.cfg",
+        "window_size": "(1920, 1080)"
+      }
+    }
+  ],
+  "graphical_correctness_requires_human_testing": true
+}

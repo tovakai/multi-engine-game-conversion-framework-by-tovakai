@@ -1,0 +1,47 @@
+{
+  "sessions": {
+    "turnip-sysmem-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:26:17+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 43,
+      "fps_min": 1,
+      "fps_median": 51,
+      "fps_max": 60,
+      "diagnostics": [
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    },
+    "zink-norp-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:30:44+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 43,
+      "fps_min": 1,
+      "fps_median": 52,
+      "fps_max": 60,
+      "diagnostics": [
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1)."
+      ]
+    },
+    "zink-sync-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:28:49+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 43,
+      "fps_min": 1,
+      "fps_median": 12,
+      "fps_max": 60,
+      "diagnostics": [
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    }
+  },
+  "probes": [],
+  "graphical_correctness_requires_human_testing": true
+}

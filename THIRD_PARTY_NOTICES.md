@@ -1,5 +1,34 @@
 # Third-party notices
 
+## Hollow Knight ARM64 experiment
+
+UnityFrame uses pefile 2024.8.26 (MIT, copyright 2004-2024 Ero Carrera) on the
+conversion host for PE architecture, CLR and export inspection. Its license is
+retained under `unityframe/licenses/pefile-MIT.txt` and included in the frozen
+converter. Target-side verification uses only the Python standard library.
+
+The experimental preparer uses the official Unity 6000.0.61f1 Windows ARM64 Mono
+player from Unity's target-support package. It fetches no game assets and the
+repository does not bundle the proprietary Unity runtime. The exact package
+URL and locally verified component hashes are recorded in
+`experiments/hollow-knight/profile.json`.
+
+The xar/gzip/cpio format approach in `experiments/hollow-knight/unity_package.py`
+is informed by DaVarga/bs-arm64's `tools/unity_pkg_extract.py`, pinned at
+`5a318356703ac3835ee62bba677ba0778c76c7c5` (MIT, copyright 2026 Daniel Varga).
+Its full notice is retained under
+`experiments/hollow-knight/licenses/bs-arm64-MIT.txt`.
+
+The preparer selects ARM64 graphics, Steam and runtime components from the
+unmodified bs-arm64 v0.3.2 release. Component licenses and `SOURCES.md` are
+retained in the owner's prepared output under `.hk-arm64/`; that source record
+identifies the exact Proton, Wine, DXVK, Mono and toolchain sources and patches.
+The repository does not bundle those downloaded binaries. The original game's
+Steamworks.NET notice is also preserved in the copied installation.
+
+Project: https://github.com/DaVarga/bs-arm64
+Pinned release: https://github.com/DaVarga/bs-arm64/releases/tag/v0.3.2
+
 ## Official Ren'Py compatibility SDK
 
 The experimental original DDLC 1.1.1 migration downloads the official Ren'Py

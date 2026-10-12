@@ -41,6 +41,8 @@ from megcfbt.native_runtime import automatic_runtime_available
 
 
 def automatic_native_runtime_available(inspection: UnifiedInspection) -> bool:
+    if inspection.backend == 'unityframe':
+        return inspection.buildable
     if inspection.backend=='monoframe':
         from monoframe.runtime import automatic_runtime_available as mono_available
         return inspection.buildable and mono_available()
@@ -57,8 +59,9 @@ def _native_backends():
     from agsframe import backend as ags
     from constructframe import backend as construct
     from monoframe import backend as mono
+    from unityframe import backend as unity
     return {'gamemakerframe': gamemaker, 'loveframe': love,
-            'agsframe': ags, 'constructframe': construct, 'monoframe':mono}
+            'agsframe': ags, 'constructframe': construct, 'monoframe':mono, 'unityframe':unity}
 
 
 class ConversionError(RuntimeError):
@@ -294,15 +297,11 @@ def _inspect_prepared(root: Path) -> UnifiedInspection:
         level = children
 
     for candidate in candidates:
+        from megcfbt.unity import inspect_game as inspect_unity_game
+        unity_summary = inspect_unity_game(candidate)
+        if unity_summary is not None:
+            return unity_summary
         names = {p.name.casefold(): p for p in candidate.iterdir() if p.is_file()}
-        if "unityplayer.dll" in names and any(p.is_dir() and p.name.endswith("_Data") for p in candidate.iterdir()):
-            il2cpp = "gameassembly.dll" in names
-            return UnifiedInspection(source_path=root, backend=None, engine="unity",
-                                     engine_label="Unity IL2CPP" if il2cpp else "Unity",
-                                     engine_version=None, game_name=candidate.name,
-                                     compatibility="unsupported", confidence="high", runtime_kind=None, buildable=False,
-                                     evidence=tuple(n for n in ("UnityPlayer.dll", "GameAssembly.dll") if n.casefold() in names),
-                                     warnings=("Unity Windows native engine/game code requires a Linux ARM64 build from the developer; runtime transplantation is unavailable.",))
         if "data.wolf" in names:
             return UnifiedInspection(source_path=root, backend=None, engine="wolf",
                                      engine_label="WOLF RPG Editor", engine_version=None, game_name=candidate.name,
@@ -469,7 +468,8 @@ def build_source(
         if output is not None
         else output_path_for_source(path, path.parent, inspection.game_name)
     )
-    if archive and default_zip_path(output_path).resolve() == path:
+    target_platform = 'windows-arm64-proton' if inspection.backend == 'unityframe' else 'linux-aarch64'
+    if archive and default_zip_path(output_path, target_platform=target_platform).resolve() == path:
         raise ConversionError('Generated ZIP would replace the original source archive; choose another output name.')
     if dry_run and inspection.backend != "renframe":
         raise ConversionError("--dry-run currently supports Ren'Py builds only.")
@@ -554,12 +554,17 @@ def build_source(
         elif inspection.backend in _native_backends():
             with prepare_source(_prepared_source.root if _prepared_source else path) as prepared:
                 selected = _inspect_prepared(prepared.root)
-                result = _native_backends()[inspection.backend].build_game(
-                    selected.source_path, output=output_path, runtime=backend_runtime,
-                    runtime_version=runtime_version, force=force, progress=progress,
-                    download_progress=download_progress,
-                    steam_app_id=steam_app_id_for_source(_prepared_source.root if _prepared_source else path),
-                )
+                try:
+                    result = _native_backends()[inspection.backend].build_game(
+                        selected.source_path, output=output_path, runtime=backend_runtime,
+                        runtime_version=(None if runtime_version == DEFAULT_NWJS_VERSION else runtime_version)
+                            if inspection.backend == 'unityframe' else runtime_version,
+                        force=force, progress=progress,
+                        download_progress=download_progress,
+                        steam_app_id=steam_app_id_for_source(_prepared_source.root if _prepared_source else path),
+                    )
+                except NativeBuildError as exc:
+                    raise ConversionError(str(exc)) from exc
             launcher_path = result.launcher_path
             warnings = tuple(result.warnings)
             game_name = result.game_name
@@ -591,7 +596,10 @@ def build_source(
             launcher_path=launcher_path,
             engine=inspection.engine,
             engine_version=engine_version,
-            **({"runtime_engine_version": result.runtime_version,
+            target_platform=target_platform,
+            **({'compatibility_profile': 'hollow-knight-steam-unity-6000.0.61f1-managed-input-v1'}
+               if inspection.backend == 'unityframe' else
+               {"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "experimental-ddlc-111-renpy-753"}
                if renpy_ddlc_753_migration else
                {"runtime_engine_version": result.runtime_version,
@@ -643,4 +651,5 @@ def build_source(
         engine_version=engine_version,
         game_name=game_name,
         warnings=warnings,
+        target_platform=target_platform,
     )

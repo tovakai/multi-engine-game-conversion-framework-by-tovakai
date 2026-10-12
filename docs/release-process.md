@@ -32,7 +32,7 @@ a mismatch. The CLI reports it with `--version`.
    main with a force push or merge obsolete feature implementations individually.
 3. Merge the reviewed PR. Build and verify both archives from the resulting exact
    main commit. Keep the full source commit in each artifact's provenance.
-4. After acceptance, create `v0.1.0` on that commit. The tag triggers both build
+4. After acceptance, create `v<version>` on that commit (for example `v0.1.0.1`). The tag triggers both build
    workflows; inspect their results before uploading application release assets.
 5. Publish the application release with reviewed notes, the Windows ZIP, native
    Linux ARM64 tarball, and checksums. Use a notes file with `gh release create`;

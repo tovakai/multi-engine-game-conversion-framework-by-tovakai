@@ -18,10 +18,10 @@ def release(tmp_path, monkeypatch):
     spec.loader.exec_module(module)
     root = tmp_path / 'project'
     root.mkdir()
-    (root / 'pyproject.toml').write_text('[project]\nversion="0.1.0"\n')
+    (root / 'pyproject.toml').write_text(f'[project]\nversion="{module.__version__}"\n')
     (root / 'LICENSE').write_text('license fixture')
     (root / 'THIRD_PARTY_NOTICES.md').write_text('notice fixture')
-    notes = root / 'docs/releases/0.1.0.md'
+    notes = root / f'docs/releases/{module.__version__}.md'
     notes.parent.mkdir(parents=True)
     notes.write_text('release scope fixture [support](../monoframe.md)')
     monkeypatch.setattr(module, 'ROOT', root)

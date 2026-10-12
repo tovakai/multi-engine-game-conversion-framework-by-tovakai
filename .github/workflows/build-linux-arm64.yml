@@ -13,6 +13,7 @@ on:
       - "constructframe/**"
       - "agsframe/**"
       - "monoframe/**"
+      - "unityframe/**"
       - "build/build_linux_aarch64.sh"
       - "build/release_metadata.py"
       - "docs/releases/**"

@@ -394,10 +394,17 @@ does not require shutting down the Steam Frame desktop session.
 """
 
 
-def installer_files() -> dict[str, tuple[bytes, int]]:
+def installer_files(*, target_platform: str = 'linux-aarch64') -> dict[str, tuple[bytes, int]]:
     """Files injected at the root of each portable Steam Frame package."""
+    guide = INSTALL_GUIDE
+    if target_platform == 'windows-arm64-proton':
+        guide += ('\nThis package contains Windows ARM64 binaries for ARM64 Proton.\n'
+                  'Install ARM64 Proton 11.0 through Steam before playing. The launcher\n'
+                  'finds a supported installed version and creates its own dedicated prefix.\n'
+                  'Keep Steam compatibility overrides disabled for this shell launcher.\n'
+                  'If needed, set HK_ARM64_PROTON to the supported Proton directory.\n')
     return {
         "install-to-steam.sh": (INSTALLER_SHELL.encode("utf-8"), 0o755),
         ".megcfbt/install-to-steam.py": (INSTALLER_PYTHON.encode("utf-8"), 0o755),
-        "INSTALL-ON-FRAME.txt": (INSTALL_GUIDE.encode("utf-8"), 0o644),
+        "INSTALL-ON-FRAME.txt": (guide.encode("utf-8"), 0o644),
     }

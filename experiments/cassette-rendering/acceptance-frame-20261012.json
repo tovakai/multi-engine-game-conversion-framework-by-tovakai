@@ -1,0 +1,65 @@
+{
+  "scope": "Bounded graphical acceptance on physical Steam Frame; not full-game certification",
+  "game": "Cassette Beasts 1.8.3",
+  "graphics_status": "resolved_in_tested_configuration",
+  "profile_id": "cassette-beasts-gles3-zink-norp-depth-v1",
+  "runtime_recipe": "godot-3.5.1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1",
+  "native_architecture": "aarch64",
+  "runtime_binary_sha256": "dff499fb712d0d8b0777d4171d0fcf89164dbf8bc6a841cc9ce9239d74bb9884",
+  "game_pack_sha256": "f086cdf559c3b0507c194d6cfac1b85453eb437911c4f225c720f346e382525e",
+  "tested_private_zip_sha256": "7aeda7ea1f6458e92acd9fb80ffbd3b3115c9ab93ed386ea80a5c705c23b8929",
+  "gl_vendor": "Mesa",
+  "gl_renderer": "zink Vulkan 1.4(Turnip Adreno (TM) 750 (MESA_TURNIP))",
+  "mesa_version": "26.3.0-devel (git-abc426bb62)",
+  "resolution": [1920, 1080],
+  "rendering_backend": "GLES3",
+  "configuration": {
+    "ZINK_DEBUG": "norp",
+    "rendering/quality/depth_prepass/enable": true,
+    "rendering/quality/depth_prepass/disable_for_vendors": ""
+  },
+  "combined_trial_user_confirmation": {
+    "movement_and_tutorial_battle": "Trial G looks flawless so far. Moved around for a couple of minutes and did the first tutorial battle",
+    "five_minutes_transition_save_load_and_performance": "Yeah, all is good"
+  },
+  "fresh_gui_zip_user_confirmation": {
+    "working_output": "Can confirm it's working",
+    "confirmation_after_requested_additional_two_minutes": "Sorry, kind of didn't track time properly. Now we should be clear",
+    "minimum_observed_process_duration_seconds": 407,
+    "clean_movement": true,
+    "area_transition": true,
+    "battle": true,
+    "save_load": true,
+    "at_least_five_minutes_actual_gameplay": true
+  },
+  "frozen_gui_verification": {
+    "real_drop_handler_and_convert_button": true,
+    "runtime_override": false,
+    "clean_cache_download": true,
+    "elapsed_seconds": 78.7,
+    "source_hashes_and_mtimes_unchanged": true,
+    "zip_crc_passed": true,
+    "required_runtime_profile_launcher_override_and_notices_present": true,
+    "post_extraction_package_edits": false,
+    "saves_isolated_outside_package": true
+  },
+  "regressions": {
+    "windows_tests_passed": 88,
+    "windows_tests_skipped": 1,
+    "skip_reason": "Windows symlink creation unavailable",
+    "equivalent_linux_symlink_guard_check": "passed_on_Frame_original_target_unchanged"
+  },
+  "final_source_frozen_gui_reverification": {
+    "clean_cache_conversion_passed": true,
+    "elapsed_seconds": 42.1,
+    "source_hashes_and_mtimes_unchanged": true,
+    "gameplay_file_bytes_and_permissions_match_tested_zip": true,
+    "only_raw_byte_difference": "Semantically identical artwork-slot ordering in package metadata JSON",
+    "functional_package_differences": []
+  },
+  "controller_compatibility": "separate_issue_not_investigated",
+  "exact_underlying_driver_defect": "not_established",
+  "engine_rebuilt_or_game_resources_rewritten": false,
+  "existing_control_and_runtime_release_preserved": true,
+  "merged_or_published": false
+}
