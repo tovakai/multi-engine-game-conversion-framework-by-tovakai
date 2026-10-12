@@ -656,6 +656,14 @@ class ConverterApp:
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
         elif result.backend == 'unityframe':
             self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
+        elif result.backend == 'celesteframe':
+            from celesteframe.runtime import find_fmod_sdk
+            try:
+                self.celeste_sdk = find_fmod_sdk()
+            except (OSError, ValueError, RuntimeError):
+                self.celeste_sdk = None
+            self.runtime_button.configure(state='normal',
+                text='FMOD SDK SELECTED' if self.celeste_sdk else 'GET FMOD SDK • CELESTE')
         elif result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
@@ -783,9 +791,9 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
-        if self.inspection and self.inspection.backend == "sts2":
-            from megcfbt.sts2_sdk_setup import Sts2SdkDialog
-            self.sts2_sdk_dialog = Sts2SdkDialog(self)
+        if self.inspection and self.inspection.backend in {'sts2', 'celesteframe'}:
+            from megcfbt.fmod_sdk_setup import FmodSdkDialog
+            self.fmod_sdk_dialog = FmodSdkDialog(self, self.inspection.backend)
             return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
@@ -955,14 +963,11 @@ class ConverterApp:
             try:
                 self.celeste_sdk = validate_fmod_sdk(self.celeste_sdk) if self.celeste_sdk else find_fmod_sdk()
                 if self.celeste_sdk is None:
-                    selected_sdk = filedialog.askopenfilename(
-                        title='Select FMOD Studio API 2.03.15 Linux SDK for Celeste',
-                        filetypes=[('FMOD Linux SDK', '*.tar.gz')])
-                    if not selected_sdk:
-                        return
-                    self.celeste_sdk = validate_fmod_sdk(Path(selected_sdk))
-            except (OSError, RuntimeError, ValueError) as error:
-                messagebox.showerror(APP_NAME, str(error))
+                    self._pick_runtime()
+                    return
+            except (OSError, RuntimeError, ValueError):
+                self.celeste_sdk = None
+                self._pick_runtime()
                 return
 
         source = self.source

@@ -17,8 +17,11 @@ python -m megcfbt build "C:\Program Files (x86)\Steam\steamapps\common\Celeste" 
   --output "C:\Conversions\Celeste-frame"
 ```
 
-The GUI detects Celeste, selects the runtime automatically, and finds the FMOD
-archive in Downloads or lets you select it. `--runtime` can select an optional
+The GUI detects Celeste, selects the runtime automatically, and opens the shared
+guided FMOD download dialog if the SDK is missing or invalid. The guide links to
+FMOD, explains the required Linux archive and lets you select or discover it.
+Validated selections are remembered for other compatible FMOD games, including
+STS2. `--runtime` can select an optional
 matching runtime directory override. `MEGCFBT_CELESTE_FMOD_SDK` can
 also select the archive. FMOD SDK archives with an unexpected checksum are
 rejected. The original installation and its saves remain untouched; an existing
