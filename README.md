@@ -110,9 +110,11 @@ turning the umbrella router into a giant conditional swamp.
 
 Supported GodotSteam 3.5.1, 4.6.0 and 4.7.2 exports now use automatic verified
 runtime downloads on Windows, alongside the existing Brotato recipe. No manual
-runtime selection or Frame connection is needed for conversion. Cassette Beasts
-has native title-screen evidence; input, full gameplay and saves still need testing.
-See [downloadable GodotSteam runtimes](docs/downloadable-godotsteam-runtime.md).
+runtime selection or Frame connection is needed for conversion. **Cassette Beasts
+1.8.3** passed physical Steam Frame movement, transitions, battle and save/load
+testing with the narrow graphics fix bundled in **v0.1.0.3**. Controller and
+full-game compatibility remain unverified. See [the Cassette Beasts test entry](games/cassette-beasts/README.md)
+and [downloadable GodotSteam runtimes](docs/downloadable-godotsteam-runtime.md).
 
 Ren'Py bytecode-only exports are recognized using bounded, non-executing metadata
 inspection for supported bytecode formats, independently of the host Python version. Identified Katawa
@@ -405,56 +407,34 @@ event loop doesn't necessarily mean its window is visible on your headset.
 
 ## Tested game compatibility
 
-**23 converted game packages were reported working on a real Steam Frame on 2026-10-11.**
-This is a **hardware feedback snapshot**, not a certification of full playthroughs,
-every platform feature, or a fresh re-test of every title against the final v0.1.0
-application release. Game versions, exact test depth and converter builds are
-not recorded for every entry. See the [original hardware feedback](docs/hardware-feedback-2026-10-11.md).
+These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizable games and different engine backends. The results come from real **Steam Frame hardware tests**, but not every older result was rerun with the exact v0.1.0.3 application binary. For **all 36 recorded games**, including less-famous gems, incomplete tests and known problems, see the [full game compatibility catalog](games/README.md). Every game has its own page under `games/<game-slug>/README.md`.
 
-| Working package | Evidence / qualification |
-| --- | --- |
-| A Date with Death | Reported working |
-| Balatro | Reported working (LÖVE backend) |
-| [Brotato 1.1.14.6](https://store.steampowered.com/app/1942280/Brotato/) | Completed a full run; pinned GodotSteam runtime required |
-| [Doki Doki Literature Club! 1.1.1 (original)](https://ddlc.moe/) | Reported working; later acts, character-file transitions and mods not certified |
-| [Everlasting Summer](https://store.steampowered.com/app/331470/Everlasting_Summer/) | Reported working; source variant not recorded in 23-package report |
-| Fear & Hunger | Reported working |
-| Fear & Hunger 2: TERMINA | Reported working |
-| Find Love or Die Trying | Reported working |
-| Grimm's Hollow | Reported working |
-| Help! I Married a Slut | Reported working |
-| her tears were my light | Reported working |
-| Imperial Bureaucracy Hero | Reported working |
-| Katawa Shoujo HD | Reported working; the non-HD release is tracked separately |
-| Maya's Mission | Reported working |
-| [My Pig Princess 0.10.1](https://www.patreon.com/CyanCapsule) | Reported working; Ren'Py ARM64 graphical-session considerations apply |
-| Silly Linguine Cat Simulator Deluxe Online | Reported working; online features not validated |
-| Slay the Spire 2 | Reported working; **experimental two-stage STS2 workflow**, not general one-click packaging |
-| [The Cat Lady](https://store.steampowered.com/app/253110/The_Cat_Lady/) | Works with keyboard/mouse; native controller input not confirmed |
-| The Sea Wolves | Reported working |
-| The Witch's House | Reported working |
-| To the Moon | Reported working |
-| [Undertale](https://store.steampowered.com/app/391540/Undertale/) | Gameplay through second savepoint and save/load confirmed; later routes unverified |
-| Void Stranger | Reported working |
+| Featured game | Backend | Steam Frame hardware result |
+| --- | --- | --- |
+| [Stardew Valley](games/stardew-valley/README.md) | MonoFrame | Playable, including input and save/load on exact vanilla 1.6.15 |
+| [Slay the Spire 2](games/slay-the-spire-2/README.md) | Experimental STS2 | Reported working; **two-stage** installation and Frame-side finishing required |
+| [Undertale](games/undertale/README.md) | GameMakerFrame | Playable through second savepoint; save/load confirmed |
+| [Balatro](games/balatro/README.md) | LÖVEFrame | Reported working; exact package/version depth not recorded |
+| [Brotato](games/brotato/README.md) | Godot / GodotSteam | Playable; full run completed with pinned custom runtime |
+| [Doki Doki Literature Club!](games/doki-doki-literature-club/README.md) | RenFrame | Original 1.1.1 reported working; later acts and file transitions not certified |
+| [Fear & Hunger](games/fear-and-hunger/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [Fear & Hunger 2: TERMINA](games/fear-and-hunger-2-termina/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [To the Moon](games/to-the-moon/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
+| [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
+| [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
+| [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
 
-**Additional individually documented results, outside that 23-package snapshot:**
+**Status is scoped to what was observed**, not a promise of full completion, all mods,
+Steam features, game updates or universal engine compatibility. A detected engine,
+successful ZIP build or menu screenshot alone is not a gameplay pass. Individual
+records distinguish *Playable*, *Reported working*, *Launches*, *Issues* and
+*Needs retest*, and identify which packages use experimental workflows.
 
-| Game | Hardware evidence |
-| --- | --- |
-| [Stardew Valley 1.6.15](docs/monoframe.md) | Experimental MonoFrame profile for a hash-verified vanilla Steam installation; character creation, movement, tools, pointer/gamepad input, saving and loading confirmed through Steam. SMAPI, other versions and multiplayer not established. |
-| [Pesterquest](docs/renpy-735-arm64-migration.md) | Experimental Ren'Py 7.3.5 → 7.5.0 migration; early gameplay, choices, save/load and saved-progress restoration after relaunch confirmed. |
-| [Milk inside a bag of milk inside a bag of milk](https://store.steampowered.com/app/1392820/) | Ren'Py native ARM64 gameplay reported working; exact runtime and depth not recorded. |
-| Everlasting Summer (author's Ren'Py 8 beta) | Separate beta build tested through initial gameplay; mod compatibility untested. |
-
-**Status means what was tested.** A successful engine detection, ZIP build or
-main-menu screenshot is not a gameplay pass. Even a working package does not
-guarantee end-to-end completion, online play, controller behavior, all game
-versions, or repeatable one-click conversion for every backend.
-
-To contribute a result, open a [GitHub issue](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues)
-with the game/version, detected engine, converter version, ARM64 device, launch
-context, gameplay/save-load result and relevant logs. **Never upload copyrighted
-game files or proprietary SDK binaries.**
+To contribute a result, follow the [per-game entry instructions](games/README.md#adding-or-updating-a-game)
+or open a [GitHub issue](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues)
+with the game version, engine, converter build, tested ARM64 device, gameplay/input/save
+results and sanitized logs. **Never upload proprietary SDKs, game assets or converted packages.**
 
 ## Known issues and testing limits
 
