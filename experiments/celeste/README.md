@@ -49,8 +49,9 @@ Windows CLI inspection and conversion passed with the officially built Linux
 Steamworks.NET wrapper. The ordinary Frame ZIP installer registered `Celeste`
 and applied all four artwork slots. The owner confirmed gameplay and save/reload
 through that installed copy. The frozen Windows GUI also completed real
-inspection, conversion and ZIP packaging. Public runtime distribution checks
-remain pending.
+inspection, conversion and ZIP packaging. The published runtime passed real
+download/checksum/cache validation, and the CI-built frozen GUI converted Celeste
+using automatic provisioning. The final test suite passed 444 tests, with 3 skips.
 
 ## Build the open runtime SDK
 

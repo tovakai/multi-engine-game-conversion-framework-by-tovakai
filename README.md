@@ -7,15 +7,15 @@ Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-## Download v0.1.0.1: Hollow Knight support
+## Download v0.1.0.2: Celeste support
 
-**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.1)**
+**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.2)**
 
 | Converter application | Download |
 | --- | --- |
-| Windows x64 | [v0.1.0.1 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-windows-x64.zip) |
-| Linux ARM64 / AArch64 | [v0.1.0.1 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-linux-aarch64.tar.gz) |
-| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/SHA256SUMS.txt) |
+| Windows x64 | [v0.1.0.2 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.2/multi-engine-game-conversion-framework-by-tovakai-0.1.0.2-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.0.2 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.2/multi-engine-game-conversion-framework-by-tovakai-0.1.0.2-linux-aarch64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.2/SHA256SUMS.txt) |
 
 These downloads contain **the converter, not games**. The project does not distribute retail game files, proprietary SDKs or Steam client libraries. You supply your own game installation and any separately licensed dependencies a particular engine needs.
 
@@ -26,13 +26,13 @@ These downloads contain **the converter, not games**. The project does not distr
 3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
 4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
 
-**Native does not mean universal.** Matching a supported engine is not a guarantee that every game built with it will work. Read the [0.1.0.1 scope and limitations](docs/releases/0.1.0.1.md), the [23-package Steam Frame test report](docs/hardware-feedback-2026-10-11.md), and [known issues](#known-issues-and-testing-limits).
+**Native does not mean universal.** Matching a supported engine is not a guarantee that every game built with it will work. Read the [0.1.0.2 scope and limitations](docs/releases/0.1.0.2.md), the [23-package Steam Frame test report](docs/hardware-feedback-2026-10-11.md), and [known issues](#known-issues-and-testing-limits).
 
 The existing [Slay the Spire 2 experimental workflow](docs/sts2-integrated-workflow.md) is different: Windows prepares a transfer package using a user-supplied FMOD Linux SDK, and the Frame finishes native components on-device. It is **not** the same one-step conversion path as the simpler engines.
 
 ## Contents
 
-- [Download v0.1.0.1](#download-v0101-hollow-knight-support)
+- [Download v0.1.0.2](#download-v0102-celeste-support)
 - [Quick start](#quick-start)
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
