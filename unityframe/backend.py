@@ -82,6 +82,11 @@ def _build_game(source, *, output, runtime=None, runtime_version=None, force=Fal
         shutil.rmtree(backup)
     write_steam_app_id('367520', output)
     launcher = output / 'launch-hollow-knight-arm64.sh'
+    from megcfbt.frame_package import write_frame_metadata
+    write_frame_metadata(output, name='Hollow Knight', launcher_path=launcher, engine='unity',
+                         engine_version=inspect_unity(source).engine_version,
+                         runtime_engine_version=profile()['engine_version'],
+                         compatibility_profile=profile()['id'], target_platform='windows-arm64-proton')
     return UnifiedBuildResult(source, output, launcher, None, 'unityframe', 'unity',
                               profile()['engine_version'], 'Hollow Knight',
                               ('Experimental Windows ARM64 build for ARM64 Proton; install a supported ARM64 Proton 11.0 on the target.',),

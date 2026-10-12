@@ -6,12 +6,15 @@ No runtime, detection, download or builder functions are replaced.
 """
 from __future__ import annotations
 import argparse
+import contextlib
+import io
 import json
 import sys
 from pathlib import Path
 import time
 from types import SimpleNamespace
 from megcfbt import gui, APP_NAME, __version__
+from megcfbt.version import display_version, get_build_info
 
 
 def main(argv=None) -> int:
@@ -26,13 +29,28 @@ def main(argv=None) -> int:
                         help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
     if args.verify_gui_startup:
+        from megcfbt.cli import main as cli_main
+        cli_output = io.StringIO()
+        with contextlib.redirect_stdout(cli_output):
+            try:
+                cli_main(['--build-info'])
+            except SystemExit as error:
+                if error.code != 0:
+                    raise
+        if json.loads(cli_output.getvalue()) != get_build_info():
+            raise RuntimeError('Frozen CLI and GUI build identities disagree')
         app=gui.ConverterApp()
         try:
             app.root.withdraw()
             app.root.update_idletasks()
             args.receipt.parent.mkdir(parents=True,exist_ok=True)
             args.receipt.write_text(json.dumps({'state':'complete','app_name':APP_NAME,
-                'version':__version__,'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
+                'version':__version__, 'build_info':get_build_info(),
+                'version_display':app.version_label.cget('text'),
+                'cli_build_info':json.loads(cli_output.getvalue()),
+                'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
+            if app.version_label.cget('text') != display_version():
+                raise RuntimeError('GUI version disagrees with build metadata')
         finally:
             app.root.destroy()
         return 0

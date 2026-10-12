@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import queue
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from megcfbt import APP_NAME, sts2
+from megcfbt.version import display_version, get_build_info
 from megcfbt.frame_control_patch import (
     PATCHED_LIMIT_GIB,
     STOCK_LIMIT_GIB,
@@ -451,12 +453,22 @@ class ConverterApp:
             font=ctk.CTkFont(family="Courier", size=11, weight="bold"),
         )
         self.status.pack(side="left")
-        ctk.CTkLabel(
+        self.version_label = ctk.CTkLabel(
             status_row,
-            text="tovakai // ARM64 conversion deck",
+            text=display_version(),
             text_color=C_DIM,
             font=ctk.CTkFont(family="Courier", size=10),
-        ).pack(side="right")
+        )
+        self.version_label.pack(side="right")
+        ctk.CTkButton(status_row, text="COPY BUILD INFO", width=110, height=22,
+                      fg_color=C_PANEL, hover_color=C_PANEL_2, text_color=C_MUTED,
+                      font=ctk.CTkFont(family="Courier", size=10),
+                      command=self._copy_build_info).pack(side="right", padx=10)
+
+    def _copy_build_info(self) -> None:
+        self.root.clipboard_clear()
+        self.root.clipboard_append(json.dumps(get_build_info(), indent=2))
+        self.status.configure(text="BUILD INFO COPIED")
 
     def _dispatch(self, callback) -> None:
         if threading.current_thread() is threading.main_thread():

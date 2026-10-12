@@ -25,6 +25,7 @@ from megcfbt.frame_package import (
     create_frame_zip,
     embed_steam_cover,
     write_frame_metadata,
+    load_frame_metadata,
     default_zip_path,
 )
 from rpgmframe.runtime import DEFAULT_NWJS_VERSION
@@ -590,14 +591,17 @@ def build_source(
             engine_version = result.engine_version
 
         stage(0.82, "Game build complete")
+        existing_metadata = (load_frame_metadata(output_path)
+                             if (output_path / '.megcfbt/package.json').is_file() else {})
         write_frame_metadata(
             output_path,
             name=game_name or inspection.game_name or source_base_name(path),
             launcher_path=launcher_path,
             engine=inspection.engine,
             engine_version=engine_version,
+            game_version=existing_metadata.get('game_version'),
             target_platform=target_platform,
-            **({'compatibility_profile': 'hollow-knight-steam-unity-6000.0.61f1-managed-input-v1'}
+            **({'runtime_engine_version': '6000.0.61f1', 'compatibility_profile': 'hollow-knight-steam-unity-6000.0.61f1-managed-input-v1'}
                if inspection.backend == 'unityframe' else
                {"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "experimental-ddlc-111-renpy-753"}
@@ -610,7 +614,9 @@ def build_source(
                if renpy_prerelease_853_migration else
                {"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "katawa-shoujo-legacy"}
-               if inspection.runtime_kind and inspection.runtime_kind.startswith("Katawa Shoujo") else {}),
+               if inspection.runtime_kind and inspection.runtime_kind.startswith("Katawa Shoujo") else
+               {'runtime_engine_version': getattr(result, 'runtime_version', None) or existing_metadata.get('runtime_engine_version'),
+                'compatibility_profile': existing_metadata.get('compatibility_profile')}),
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)

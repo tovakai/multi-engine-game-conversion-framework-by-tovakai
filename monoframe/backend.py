@@ -49,6 +49,7 @@ def build_game(source: Path,*,output: Path,runtime=None,runtime_version=None,for
             'smapi':False,'gameplay_verification':'pending'},indent=2)+'\n')
     return build_native(source,output=output,runtime=sdk,executable='dotnet/dotnet',
         engine='MonoFrame',game_name='Stardew Valley',engine_version='3.8.0.1641',
+        runtime_version='3.8.0.1641', game_version='1.6.15', compatibility_profile=STARDEW_PROFILE,
         prepare_game=prepare,arguments=['Stardew Valley.dll'],force=force,progress=progress,
         steam_app_id=steam_app_id or '413150',prepare_runtime=copy_game_runtime,
         launcher_environment='export DOTNET_ROOT="$ROOT/runtime/dotnet"\n'

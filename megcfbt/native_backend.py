@@ -26,6 +26,7 @@ class NativeBuildResult:
     game_name: str
     engine_version: str | None
     warnings: tuple[str, ...] = ()
+    runtime_version: str | None = None
 
 
 def validate_runtime(root: Path, executable: str) -> Path:
@@ -49,7 +50,9 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
                  warnings: tuple[str, ...] = (), force: bool = False,
                  progress=None, steam_app_id: str | None = None,
                  runtime_file_arguments: tuple[tuple[str,str], ...] = (),
-                 prepare_runtime=None, launcher_environment: str = '') -> NativeBuildResult:
+                 prepare_runtime=None, launcher_environment: str = '',
+                 runtime_version: str | None = None, game_version: str | None = None,
+                 compatibility_profile: str | None = None) -> NativeBuildResult:
     source, output = source.resolve(), output.expanduser().resolve()
     if output == source or output in source.parents or source in output.parents:
         raise NativeBuildError('Output must be separate from the source directory.')
@@ -60,6 +63,12 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
     try:
         validate_copy_tree(source)
         runtime_root = validate_runtime(Path(runtime), executable)
+        if runtime_version is None:
+            try:
+                capabilities = json.loads((runtime_root / 'engine-capabilities.json').read_text(encoding='utf-8'))
+                runtime_version = capabilities.get('engine_version')
+            except (OSError, ValueError, AttributeError):
+                pass
     except (OSError, ValueError) as exc:
         raise NativeBuildError(str(exc)) from exc
     if output == runtime_root or output in runtime_root.parents or runtime_root in output.parents:
@@ -100,6 +109,11 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             f'exec "$ROOT/runtime/{executable}" {command} "$@"\n',
             encoding='utf-8', newline='\n')
         launcher.chmod(0o755)
+        from megcfbt.frame_package import write_frame_metadata
+        write_frame_metadata(stage, name=game_name, launcher_path=launcher,
+                             engine=engine, engine_version=engine_version,
+                             runtime_engine_version=runtime_version, game_version=game_version,
+                             compatibility_profile=compatibility_profile)
         (stage / 'native-runtime.json').write_text(json.dumps({
             'engine': engine, 'source_engine_version': engine_version,
             'architecture': 'aarch64', 'executable': executable,
@@ -115,4 +129,4 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             if backup is not None:
                 backup.rename(output)
             raise
-    return NativeBuildResult(output, output / 'launch.sh', game_name, engine_version, warnings)
+    return NativeBuildResult(output, output / 'launch.sh', game_name, engine_version, warnings, runtime_version)

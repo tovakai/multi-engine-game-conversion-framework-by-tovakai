@@ -13,6 +13,7 @@ import sys
 import tarfile
 import tempfile
 import zipfile
+from provenance import conversion_identity
 
 from adapt_deployment_graph import adapt_deps
 from converter_io import safe, relative, verified_stream, read_verified, write_new, publish_new
@@ -241,6 +242,7 @@ def convert(source, output, native_dir, archives, *, _profile=None, _pack_transf
             name = path.relative_to(stage).as_posix()
             files.append({"path": name, "executable": executable(name), **inspect(path)})
         manifest = {"manifest_version": 1, "converter_recipe": "sts2-source-v1" if _native_build else "sts2-standalone-v1", "release": profile["release"],
+                    "conversion": conversion_identity(),
                     "commit": profile["commit"], "appid": profile["appid"], "files": files,
                     "native_bindings": native_bindings, "source_pack": profile["pack"], "pack_adaptation": pack_report, "deps_adaptation": deps_report,
                     "scope": "Locally staged conversion. No game execution, ownership, authentication, achievements or Frame validation claimed."}

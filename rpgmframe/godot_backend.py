@@ -358,6 +358,10 @@ def build_godot_game(
             newline="\n",
         )
         launcher.chmod(launcher.stat().st_mode | 0o755)
+        from megcfbt.frame_package import write_frame_metadata
+        write_frame_metadata(staging, name=inspection.game_name or output_path.name,
+                             launcher_path=launcher, engine='godot', engine_version=inspection.engine_version,
+                             runtime_engine_version=inspection.engine_version if runtime is None else None)
         _install(staging, output_path, force=force)
         stage(1.0, "Godot ARM64 package complete")
     except GodotBuildError:

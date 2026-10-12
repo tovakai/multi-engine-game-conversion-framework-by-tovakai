@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import errno
 import json
 import os
 import shlex
@@ -15,6 +16,7 @@ from pathlib import Path, PurePosixPath
 from collections.abc import Callable
 
 from megcfbt.nonsteam_package import installer_files
+from megcfbt.version import get_build_info, utc_now
 
 
 class FramePackageError(RuntimeError):
@@ -52,12 +54,16 @@ _PORTABLE_EXECUTABLES = frozenset(
 )
 
 
-def default_zip_path(build_directory: Path, *, target_platform: str = 'linux-aarch64') -> Path:
+def default_zip_path(build_directory: Path, *, target_platform: str = 'linux-aarch64', converter_version: str | None = None) -> Path:
     name = build_directory.name
     base = name[:-6] if name.endswith("-frame") else name
     if target_platform not in {'linux-aarch64', 'windows-arm64-proton'}:
         raise FramePackageError(f'Unsupported target platform: {target_platform}')
-    return build_directory.parent / f"{base}-{target_platform}.zip"
+    if converter_version is None:
+        converter_version = get_build_info()['version']
+    if not converter_version or any(c not in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.+-' for c in converter_version):
+        raise FramePackageError('Unsafe converter version in package metadata')
+    return build_directory.parent / f"{base}-frame-conv-v{converter_version}-{target_platform}.zip"
 
 
 def _relative_to_build(path: Path, build_directory: Path) -> str:
@@ -116,6 +122,7 @@ def write_frame_metadata(
     engine_version: str | None = None,
     runtime_engine_version: str | None = None,
     compatibility_profile: str | None = None,
+    game_version: str | None = None,
     target_platform: str = 'linux-aarch64',
 ) -> Path:
     """Write conversion metadata consumed by the on-device Steam installer."""
@@ -146,6 +153,8 @@ def write_frame_metadata(
                    if target_platform == 'windows-arm64-proton' else {}),
                 "engine": engine,
                 "engine_version": engine_version,
+                "game_version": game_version,
+                "conversion": {"converter": get_build_info(), "converted_utc": utc_now()},
                 **({"runtime_engine_version": runtime_engine_version} if runtime_engine_version else {}),
                 **({"compatibility_profile": compatibility_profile,
                     "hardware_verification": "initial-gameplay-save-load-tested" if target_platform == 'windows-arm64-proton' else "pending"}
@@ -267,16 +276,26 @@ def create_frame_zip(
 
     package_metadata = load_frame_metadata(source) if (source / _METADATA_DIR / _METADATA_FILE).is_file() else {}
     target_platform = package_metadata.get('target_platform', 'linux-aarch64')
-    archive = (
-        output.expanduser().resolve()
-        if output is not None
-        else default_zip_path(source, target_platform=target_platform)
-    )
+    if output is not None:
+        archive = output.expanduser().resolve()
+    elif package_metadata.get('conversion'):
+        archive = default_zip_path(source, target_platform=target_platform,
+                                   converter_version=package_metadata['conversion']['converter']['version'])
+    elif package_metadata:
+        # Legacy artwork refresh must not claim conversion by the current tool.
+        base = source.name[:-6] if source.name.endswith('-frame') else source.name
+        archive = source.parent / f'{base}-{target_platform}.zip'
+    else:
+        archive = default_zip_path(source, target_platform=target_platform)
     archive.parent.mkdir(parents=True, exist_ok=True)
     if archive.exists() and not force:
         raise FramePackageError(
             f"Frame package already exists: {archive}. Pass --force to replace it."
         )
+
+    # Packaging is distinct from conversion. Keep the source metadata unchanged;
+    # record the packager in the archive copies only (including legacy packages).
+    archive_metadata = {**package_metadata, 'packaging': {'tool': get_build_info(), 'packaged_utc': utc_now()}}
 
     temporary = archive.parent / f".{archive.name}.tmp-{uuid.uuid4().hex[:8]}"
     root_name = source.name
@@ -403,6 +422,9 @@ def create_frame_zip(
                 # archive itself has allowZip64=True.
                 info.file_size = path.stat().st_size
                 with path.open("rb") as src, zf.open(info, "w") as dst:
+                    if relative.as_posix() == f'{_METADATA_DIR}/{_METADATA_FILE}':
+                        dst.write((json.dumps(archive_metadata, indent=2, ensure_ascii=False) + '\n').encode('utf-8'))
+                        continue
                     while chunk := src.read(1 << 20):
                         dst.write(chunk)
                         streamed_bytes += len(chunk)
@@ -414,7 +436,7 @@ def create_frame_zip(
             # package can itself be fed to our native steam-install command.
             metadata_path = source / _METADATA_DIR / _METADATA_FILE
             if metadata_path.is_file():
-                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                metadata = archive_metadata.copy()
                 metadata["launcher"] = "launch.sh"
                 metadata["payload"] = "payload"
                 metadata["payload_launcher"] = launcher_relative
@@ -447,9 +469,26 @@ def create_frame_zip(
                         data=icon.read_bytes(),
                     )
 
-        if archive.exists():
-            archive.unlink()
-        temporary.replace(archive)
+        if force:
+            temporary.replace(archive)
+        else:
+            # Exclusive publication also closes the check/write overwrite race.
+            try:
+                os.link(temporary, archive)
+            except OSError as exc:
+                if exc.errno not in {errno.EPERM, errno.EXDEV, errno.ENOSYS, errno.ENOTSUP}:
+                    raise
+                # FAT/exFAT destinations may not support links. Exclusive creation
+                # still prevents overwrites; remove only our own partial on failure.
+                with archive.open('xb') as destination:
+                    try:
+                        with temporary.open('rb') as source_stream:
+                            shutil.copyfileobj(source_stream, destination, 1 << 20)
+                    except Exception:
+                        destination.close()
+                        archive.unlink()
+                        raise
+            temporary.unlink()
     except Exception as exc:
         temporary.unlink(missing_ok=True)
         if isinstance(exc, FramePackageError):

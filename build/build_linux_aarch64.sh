@@ -16,6 +16,7 @@ fi
 "$PY" -m pip install -e ".[gui,build]"
 
 APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
+"$PY" build/build_identity.py --platform linux-aarch64
 
 "$PY" -m PyInstaller \
   --noconfirm \
@@ -28,6 +29,8 @@ APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
   --collect-all customtkinter \
   --collect-all tkinterdnd2 \
   --collect-data megcfbt \
+  --add-data "build/_build_info.json:megcfbt" \
+  --add-data "build/_build_info.json:sts2-tools" \
   --collect-data gamemakerframe \
   --collect-data rpgmframe \
   --collect-data monoframe \

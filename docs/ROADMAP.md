@@ -223,11 +223,11 @@ Version milestones are **scope targets**, not release dates. Features can move i
 
 ### Fine-grained versioning and traceable ZIP output
 
-After the v0.1.0 candidate's existing-game regression retest, establish a single authoritative application version and **four-component** release identifiers for subsequent revisions: `MAJOR.MINOR.PATCH.REVISION`. Keep `0.1.0` as the initial baseline; use `0.1.0.1`, `0.1.0.2`, etc. for tightly scoped follow-up releases. Larger planned releases can use identifiers such as `0.1.1.0` and `0.2.0.0`. Increment versions deliberately for published changes, not on every developer build; record the Git commit separately for exact traceability.
+Use one authoritative application release number and **four-component** public versions: `MAJOR.MINOR.PATCH.REVISION`. Existing `0.1.0` and `0.1.0.1` releases stay unchanged. The next v0.1.1 milestone uses `0.1.1.0`; ordinary commits produce development identities automatically. See [versioning and provenance](versioning.md) and [release process](release-process.md).
 
-- Name packaged Windows releases `multi-engine-game-conversion-framework-by-tovakai-v<version>-windows-x64.zip` (and version any future application release archives).
+- Application archives retain `multi-engine-game-conversion-framework-by-tovakai-<version>-<platform>` names, with ZIP for Windows x64 and tar.gz for Linux ARM64.
 - Name **all** converted-game ZIPs `<game>-frame-conv-v<version>-linux-aarch64.zip` or an equivalent sanitized, clearly labeled convention; the embedded version means **converter version**, not source-game version. Preserve the `-linux-aarch64.zip` suffix for existing distribution/install consumers.
 - Include converter version and source Git commit in portable game metadata/manifests and application build metadata. Preserve source-game version as an independent field.
 - Use the same version source in GUI About/status, CLI `--version`, package metadata and build scripts. Do not hardcode conflicting versions across backends.
 - Handle old unversioned ZIPs gracefully and never silently overwrite a different release's package. Update packaging, repackage/artwork commands, Frame installation/manifests, and automated tests together.
-- **Do not change the converter code or release version during the immediate working-main regression retest.** Implement this versioning policy after recording those results, then test clean builds and all backend ZIP names before release.
+- Verify full provenance in clean frozen builds and backend packages before publishing; version identity alone does not establish hardware compatibility.

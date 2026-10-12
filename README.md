@@ -203,7 +203,11 @@ one long command was not enough.
 
 ## Steam Frame install flow
 
-The default build also creates a portable `*-linux-aarch64.zip` package. For
+See [versioning and provenance](docs/versioning.md) for development identities,
+CLI `--build-info`, the GUI's **COPY BUILD INFO**, and identifying old conversions.
+
+The default build also creates a portable `<game>-frame-conv-v<converter-version>-linux-aarch64.zip` package
+(UnityFrame keeps the `-windows-arm64-proton.zip` suffix). Existing unversioned ZIPs remain installable. For
 now, treat it as a normal file transfer rather than a magic sideload bundle:
 
 1. copy the ZIP to the Steam Frame using Frame Control, SCP, a USB drive, or any

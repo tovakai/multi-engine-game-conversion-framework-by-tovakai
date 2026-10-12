@@ -82,6 +82,9 @@ echo "Install native EasyRPG Player first: flatpak install --user --arch=aarch64
 exit 127
 ''', encoding='utf-8', newline='\n')
         launcher.chmod(0o755)
+        from megcfbt.frame_package import write_frame_metadata
+        write_frame_metadata(staging, name=inspection.game_name or output_path.name,
+                             launcher_path=launcher, engine='rpg2k')
         _install_staging(staging, output_path, force=force)
     finally:
         if staging.exists():

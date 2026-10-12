@@ -416,6 +416,10 @@ def build_mkxp_game(
         executable = staging / "mkxp-z.aarch64"
         executable.chmod(executable.stat().st_mode | 0o755)
         launcher = _write_launcher(staging)
+        from megcfbt.frame_package import write_frame_metadata
+        write_frame_metadata(staging, name=inspection.game_name or output_path.name,
+                             launcher_path=launcher, engine=inspection.engine.value,
+                             engine_version=inspection.engine_version)
         _install_staging(staging, output_path, force=force)
     except MkxpBuildError:
         if staging.exists():
