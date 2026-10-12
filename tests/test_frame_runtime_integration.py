@@ -30,7 +30,7 @@ def test_frame_zip_contains_single_launcher_and_payload(tmp_path):
         build, name="Brotato", launcher_path=launcher, engine="godot"
     )
     archive = create_frame_zip(build)
-    assert archive.name == "Brotato-linux-aarch64.zip"
+    assert archive.name.startswith('Brotato-frame-conv-v') and archive.name.endswith('-linux-aarch64.zip')
     with zipfile.ZipFile(archive) as zf:
         names = set(zf.namelist())
         assert "Brotato-frame/launch.sh" in names

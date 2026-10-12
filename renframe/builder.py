@@ -876,6 +876,11 @@ def build_game(
             )
         if live2d_core is not None:
             live2d.install(live2d_core, staging)
+        from megcfbt.frame_package import write_frame_metadata
+        write_frame_metadata(staging, name=display_name or fs_name,
+                             launcher_path=built_launcher, engine='renpy',
+                             engine_version=result.source_version,
+                             runtime_engine_version=runtime_version)
         _replace_output(staging, output_path, force=force)
         result.launcher_path = output_path / built_launcher.name
     except BuildError:

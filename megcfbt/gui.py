@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import queue
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from megcfbt import APP_NAME, sts2
+from megcfbt.version import display_version, get_build_info
 from megcfbt.frame_control_patch import (
     PATCHED_LIMIT_GIB,
     STOCK_LIMIT_GIB,
@@ -132,6 +134,7 @@ class ConverterApp:
         self.renpy_runtime: Path | None = None
         self.backend_runtime: Path | None = None
         self.sts2_sdk: Path | None = None
+        self.celeste_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
@@ -451,12 +454,22 @@ class ConverterApp:
             font=ctk.CTkFont(family="Courier", size=11, weight="bold"),
         )
         self.status.pack(side="left")
-        ctk.CTkLabel(
+        self.version_label = ctk.CTkLabel(
             status_row,
-            text="tovakai // ARM64 conversion deck",
+            text=display_version(),
             text_color=C_DIM,
             font=ctk.CTkFont(family="Courier", size=10),
-        ).pack(side="right")
+        )
+        self.version_label.pack(side="right")
+        ctk.CTkButton(status_row, text="COPY BUILD INFO", width=110, height=22,
+                      fg_color=C_PANEL, hover_color=C_PANEL_2, text_color=C_MUTED,
+                      font=ctk.CTkFont(family="Courier", size=10),
+                      command=self._copy_build_info).pack(side="right", padx=10)
+
+    def _copy_build_info(self) -> None:
+        self.root.clipboard_clear()
+        self.root.clipboard_append(json.dumps(get_build_info(), indent=2))
+        self.status.configure(text="BUILD INFO COPIED")
 
     def _dispatch(self, callback) -> None:
         if threading.current_thread() is threading.main_thread():
@@ -643,6 +656,14 @@ class ConverterApp:
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
         elif result.backend == 'unityframe':
             self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
+        elif result.backend == 'celesteframe':
+            from celesteframe.runtime import find_fmod_sdk
+            try:
+                self.celeste_sdk = find_fmod_sdk()
+            except (OSError, ValueError, RuntimeError):
+                self.celeste_sdk = None
+            self.runtime_button.configure(state='normal',
+                text='FMOD SDK SELECTED' if self.celeste_sdk else 'GET FMOD SDK • CELESTE')
         elif result.engine == "renpy":
             if self.renpy_runtime:
                 runtime_text = f"REN'PY OVERRIDE // {self.renpy_runtime.name}"
@@ -661,7 +682,7 @@ class ConverterApp:
             else:
                 runtime_text = "RUNTIME // CHOOSE REN'PY ARM64…"
             self.runtime_button.configure(state="normal", text=runtime_text)
-        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        elif result.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe", "celesteframe"} or result.engine=='rpg2k' or (result.engine == "godot" and result.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             if self.backend_runtime:
                 runtime_text = f"CUSTOM RUNTIME // {self.backend_runtime.name}"
             elif auto_custom_runtime:
@@ -770,14 +791,14 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
-        if self.inspection and self.inspection.backend == "sts2":
-            from megcfbt.sts2_sdk_setup import Sts2SdkDialog
-            self.sts2_sdk_dialog = Sts2SdkDialog(self)
+        if self.inspection and self.inspection.backend in {'sts2', 'celesteframe'}:
+            from megcfbt.fmod_sdk_setup import FmodSdkDialog
+            self.fmod_sdk_dialog = FmodSdkDialog(self, self.inspection.backend)
             return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
             return
-        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
+        if self.inspection.backend in {"gamemakerframe", "loveframe", "agsframe", "monoframe", "celesteframe"} or self.inspection.engine=='rpg2k' or (self.inspection.engine == "godot" and self.inspection.runtime_kind in {"godot-custom", "godot-encrypted", "godot-native-extensions"}):
             self._pick_backend_runtime()
 
     def _pick_renpy_runtime(self) -> None:
@@ -797,7 +818,7 @@ class ConverterApp:
         if not folder:
             return
         runtime = Path(folder)
-        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
+        executable = {"gamemakerframe": "butterscotch", "loveframe": "love", "agsframe": "ags", "monoframe":"dotnet/dotnet", "celesteframe":"dotnet/dotnet"}.get(self.inspection.backend, "godot.arm64")
         if not (runtime / executable).is_file():
             messagebox.showerror(
                 APP_NAME,
@@ -933,6 +954,22 @@ class ConverterApp:
             if self.backend_runtime is None:
                 return
 
+        if self.inspection.backend == 'celesteframe':
+            from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
+            if self.backend_runtime is None and not automatic_native_runtime_available(self.inspection):
+                self._pick_backend_runtime()
+                if self.backend_runtime is None:
+                    return
+            try:
+                self.celeste_sdk = validate_fmod_sdk(self.celeste_sdk) if self.celeste_sdk else find_fmod_sdk()
+                if self.celeste_sdk is None:
+                    self._pick_runtime()
+                    return
+            except (OSError, RuntimeError, ValueError):
+                self.celeste_sdk = None
+                self._pick_runtime()
+                return
+
         source = self.source
         output = output_path_for_source(source, self.output_dir, self.inspection.game_name)
         force = bool(self.force_var.get())
@@ -956,6 +993,7 @@ class ConverterApp:
                     renpy_ddlc_753_migration=ddlc_753_approved,
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
+                    **({'celeste_sdk': self.celeste_sdk} if self.inspection.backend == 'celesteframe' else {}),
                     **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
                        if self.inspection.backend == "sts2" else {}),
                     force=force,

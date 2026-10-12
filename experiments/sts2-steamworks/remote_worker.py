@@ -220,7 +220,9 @@ def build(root, sdk, archive):
         emit('progress',value=.90,message='Packaging verified output')
         create_tar(output,archive_path)
     command='"'+str(output/'play-steam.sh')+'" %command%'
-    receipt={'output':str(output),'launch_command':command,'validation':report,'archive':str(archive_path) if archive else None}
+    provenance = json.loads((output/'conversion-manifest.json').read_bytes()).get('conversion')
+    receipt={'output':str(output),'launch_command':command,'validation':report,'archive':str(archive_path) if archive else None,
+             'conversion': provenance}
     (root/'result.json').write_text(json.dumps(receipt,indent=2)+'\n')
     emit('result',**receipt)
 

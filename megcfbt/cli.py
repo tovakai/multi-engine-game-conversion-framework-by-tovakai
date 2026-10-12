@@ -7,12 +7,23 @@ import json
 from pathlib import Path
 
 from megcfbt import APP_NAME, __version__
+from megcfbt.version import get_build_info
 from megcfbt.router import ConversionError, build_source, inspect_source
+
+
+class _BuildInfoAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        # argparse's version formatter wraps text to the terminal width, which
+        # can insert control characters inside JSON strings in release builds.
+        print(json.dumps(get_build_info(), sort_keys=True))
+        parser.exit()
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="multi-engine-game-conversion-framework-by-tovakai")
     parser.add_argument('--version', action='version', version=f'{APP_NAME} {__version__}')
+    parser.add_argument('--build-info', action=_BuildInfoAction, nargs=0,
+                        help='print detailed build provenance as JSON')
     sub = parser.add_subparsers(dest="command", required=True)
 
     inspect_cmd = sub.add_parser("inspect", help="detect engine and compatibility")
@@ -43,7 +54,7 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="optional ARM64 runtime override; Unity accepts a folder containing the two pinned runtime archives",
     )
-    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2")
+    build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2 or Celeste")
     build_cmd.add_argument("--runtime-version", default=None)
     build_cmd.add_argument("--force", action="store_true")
     build_cmd.add_argument(
@@ -240,6 +251,7 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             backend_runtime=args.runtime,
             sts2_sdk=args.fmod_sdk,
+            celeste_sdk=args.fmod_sdk,
             force=args.force,
             archive=not args.no_archive,
             steam_cover=args.steam_cover,

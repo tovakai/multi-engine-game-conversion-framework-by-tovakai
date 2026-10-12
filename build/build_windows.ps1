@@ -14,6 +14,8 @@ if (-not (Test-Path $py)) {
 if ($LASTEXITCODE -ne 0) { throw "Build dependency installation failed ($LASTEXITCODE)" }
 
 $appName = "Multi-Engine Game Conversion Framework by tovakai"
+& $py build/build_identity.py --platform windows-x64
+if ($LASTEXITCODE -ne 0) { throw "Build identity validation failed ($LASTEXITCODE)" }
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
 $buildWorkspace = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\') + '\'
 function Assert-BuildTarget([string]$target) {
@@ -47,10 +49,13 @@ foreach ($path in @(
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
   --collect-data megcfbt `
+  --add-data "build/_build_info.json;megcfbt" `
+  --add-data "build/_build_info.json;sts2-tools" `
   --collect-data gamemakerframe `
   --collect-data rpgmframe `
   --collect-data monoframe `
   --collect-all unityframe `
+  --collect-all celesteframe `
   --add-data "experiments/sts2-steamworks;sts2-tools" `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }

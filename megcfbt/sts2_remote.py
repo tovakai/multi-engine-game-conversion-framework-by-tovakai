@@ -157,6 +157,10 @@ def backend_bundle(destination):
         license=directory/'LICENSE'
         if not license.exists(): license=directory.parents[1]/'LICENSE'
         archive.add(license,arcname='LICENSE',recursive=False)
+        import io
+        raw = module('provenance').bundled_identity_bytes()
+        item = tarfile.TarInfo('_build_info.json'); item.size = len(raw)
+        archive.addfile(item, io.BytesIO(raw))
 
 
 def digest_file(path,limit=None):
@@ -302,7 +306,13 @@ class RemoteBuild:
         archive_path=None
         if result.get('archive'):
             self.stage(.94,'Downloading verified transfer archive')
-            archive_path=local_output/('STS2-'+Path(job).name+'.tar')
+            identity = (result.get('conversion') or {}).get('converter') or {}
+            version = identity.get('version') or 'unknown'
+            if any(c not in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.+-' for c in version):
+                raise RemoteError('Unsafe converter version in remote result')
+            archive_path=local_output/('STS2-'+Path(job).name+'-conv-v'+version+'-linux-aarch64.tar')
+            if archive_path.exists():
+                raise RemoteError('Downloaded archive already exists; choose a new local output')
             partial=archive_path.with_suffix('.tar.part')
             remote_path=result['archive']
             expected=json.loads(self.transport.run(shlex.join(['python3','-c',"import hashlib,json,sys;from pathlib import Path;p=Path(sys.argv[1]);print(json.dumps({'sha256':hashlib.file_digest(p.open('rb'),'sha256').hexdigest(),'size':p.stat().st_size}))",remote_path])))
@@ -311,7 +321,9 @@ class RemoteBuild:
                 _,error=process.communicate()
                 if process.returncode: raise RemoteError('Archive download interrupted: '+error.decode(errors='replace'))
             if partial.stat().st_size!=expected['size'] or digest_file(partial)!=expected['sha256']: raise RemoteError('Downloaded archive checksum mismatch')
-            os.rename(partial,archive_path)
+            with archive_path.open('xb') as destination, partial.open('rb') as source_stream:
+                shutil.copyfileobj(source_stream, destination, 1024 * 1024)
+            partial.unlink()
         result.update(local_archive=str(archive_path) if archive_path else None,job=job,status='complete',source_profile_sha256=identity,host=s.host)
         receipt_path.write_text(json.dumps(result,indent=2)+'\n')
         self.stage(1.,'Verified native game deployed on Frame')

@@ -21,19 +21,27 @@ Check each archive's `BUILD.json`, `BUILD.txt`, `LICENSE`,
 `tracked_changes` must be false for a published release. CI/startup success is
 not a substitute for the representative game conversion/install acceptance matrix.
 
-The current version is defined in `megcfbt.__version__`; bundled RenFrame and
-RPGMFrame share it. `pyproject.toml` must agree, and archive generation rejects
-a mismatch. The CLI reports it with `--version`.
+The sole maintained release number is `RELEASE_VERSION` in `megcfbt/version.py`.
+Setuptools, bundled backends, GUI, CLI and archive names derive their build version
+from it. See [versioning](versioning.md) for development identities and game provenance.
+The builders resolve `build/_build_info.json` **before** freezing. Archive generation
+rejects source changes since that snapshot; CI checks the actual frozen GUI/CLI
+receipt against archive metadata, names and checksums. Full history is fetched.
 
 ## Promote and publish deliberately
 
 1. Review the candidate scope, known limits, hardware evidence and passing checks.
 2. Reconcile `main` history through the working-main promotion PR; do not replace
    main with a force push or merge obsolete feature implementations individually.
-3. Merge the reviewed PR. Build and verify both archives from the resulting exact
-   main commit. Keep the full source commit in each artifact's provenance.
-4. After acceptance, create `v<version>` on that commit (for example `v0.1.0.1`). The tag triggers both build
-   workflows; inspect their results before uploading application release assets.
+3. In a reviewed release-preparation PR, set only `RELEASE_VERSION` to the intended
+   public number (for example `0.1.1.0`) and add `docs/releases/<version>.md` notes.
+   Merge after acceptance and verify development candidate builds from the exact
+   main commit. No version bump is needed for ordinary commits.
+4. After approval, create `v<version>` on that accepted commit. Rebuild both official
+   archives from the tagged checkout. Tag-triggered workflows reject invalid or
+   mismatched versions, shallow history and tracked source changes before freezing.
+   A local official build must also use the exact matching tag and clean tree.
+   Inspect both workflows before uploading assets. Do not move or recreate old tags.
 5. Publish the application release with reviewed notes, the Windows ZIP, native
    Linux ARM64 tarball, and checksums. Use a notes file with `gh release create`;
    verify release asset names and hashes after upload.

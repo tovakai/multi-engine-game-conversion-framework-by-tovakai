@@ -62,6 +62,9 @@ def test_zip_transfer_extracts_and_finishes_without_ssh(conversion, tmp_path):
         package.extractall(extracted)
     root = extracted / output.name
     assert installer.verify_package(root)['kind'] == installer.KIND
+    preparation = installer.verify_package(root)['preparation']
+    assert preparation['converter']['commit']
+    assert (root/'backend/_build_info.json').is_file()
     assert (root/'backend/frame_install.py').is_file()
     cli = subprocess.run([sys.executable, '-S', str(root/'backend/frame_install.py'), '--help'],
                          capture_output=True, text=True, timeout=20)
@@ -95,6 +98,12 @@ def test_zip_transfer_extracts_and_finishes_without_ssh(conversion, tmp_path):
          mock.patch.object(installer, 'validate_native_bindings', return_value=[]):
         result = installer.install(root, progress=lambda message:None)
         assert result['validation']['errors'] == []
+        manifest = json.loads((root/'game'/module('verify_output').MANIFEST).read_bytes())
+        assert manifest['conversion']['converter']['commit'] == preparation['converter']['commit']
+        assert manifest['finalization']['converter']['commit'] == preparation['converter']['commit']
+        assert manifest['finalization']['execution_architecture'] == 'aarch64'
+        assert result['preparation'] == preparation
+        assert result['finalization'] == manifest['finalization']
         assert shlex.split(result['launch_command']) == [str(root/'game/play-steam.sh'), '%command%']
         assert module('verify_output').verify(root/'game', check_modes=True)['errors'] == []
         diagnostics = root/'prepared/diagnostics'

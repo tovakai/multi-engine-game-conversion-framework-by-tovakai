@@ -31,10 +31,14 @@ def validate_sdk(path: Path) -> Path:
 
 
 def find_sdk() -> Path | None:
+    from megcfbt.fmod_sdk import remembered_sdk
     candidates = []
     configured = os.environ.get('MEGCFBT_STS2_FMOD_SDK')
     if configured:
         candidates.append(Path(configured))
+    shared = remembered_sdk()
+    if shared is not None:
+        candidates.append(shared)
     try:
         record = json.loads((sdk_directory().parent / 'sdk.json').read_bytes())
         candidates.append(Path(record['sdk_file']))

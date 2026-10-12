@@ -1,0 +1,26 @@
+{
+  "profile": "celeste-steam-xna-1.4.0.0",
+  "source_edition": "Vanilla Steam Windows XNA Celeste 1.4.0.0",
+  "target": "Steam Frame / native Linux ARM64",
+  "runtime": ".NET 8.0.31 / FNA 23.10 / FMOD Studio API 2.03.15",
+  "graphics": "FNA3D Vulkan / Turnip Adreno 750",
+  "observed": [
+    "GAME DISPLAYED and DONE LOADING",
+    "Real SteamAPI_InitSafe succeeded",
+    "Native ARM64 .NET, FNA3D, FMOD and Valve Steam API in process mappings",
+    "Windows preparation and unified CLI conversion succeeded",
+    "Normal converter ZIP Steam installation applied four artwork slots"
+  ],
+  "owner_confirmed_prototype": [
+    "Menu and music work",
+    "Gameplay, controller and sound work with an external 8BitDo gamepad",
+    "Frame controllers work after relaunching with them as primary",
+    "Save loads and Frame-controller gameplay/audio work"
+  ],
+  "controller_note": "Select the desired primary controller through Steam when multiple controllers are connected.",
+  "integrated_package_gameplay": "Owner confirmed menu, Frame controllers, music, gameplay and save/reload through the normal installed Celeste entry",
+  "frozen_windows_gui": "Real drop handler and Convert button completed conversion and ZIP packaging with the selected runtime and owner FMOD SDK",
+  "automated_tests": {"passed": 447, "skipped": 3},
+  "automatic_runtime": "Published archive downloaded, SHA-256 and ARM64/file checks passed; cache reuse passed; CI-built frozen Windows GUI completed conversion with runtime_override=false",
+  "unverified": ["Full-game completion", "Achievements", "Steam Cloud", "Mods and Everest"]
+}

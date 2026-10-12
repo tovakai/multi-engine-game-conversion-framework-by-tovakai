@@ -244,7 +244,7 @@ def test_artwork_cli_refreshes_existing_build_without_reconversion(tmp_path, mon
     output = capsys.readouterr().out
     assert "Updated Frame package" in output
     assert (root / ".megcfbt/artwork/grid.png").is_file()
-    assert root.parent.joinpath("MyPigPrincess-linux-aarch64.zip").is_file()
+    assert list(root.parent.glob("MyPigPrincess-frame-conv-v*-linux-aarch64.zip"))
 
 
 def test_invalid_explicit_id_does_not_crash_conversion(tmp_path, monkeypatch):
