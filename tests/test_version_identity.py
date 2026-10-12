@@ -89,6 +89,7 @@ def test_release_tag_validation(repository):
 
 
 def test_shallow_identity(repository, tmp_path):
+    git(repository, 'tag', 'v' + version.RELEASE_VERSION)
     shallow = tmp_path / 'shallow'
     git(tmp_path, 'clone', '--depth', '1', repository.as_uri(), str(shallow))
     info = version.resolve_source(shallow)

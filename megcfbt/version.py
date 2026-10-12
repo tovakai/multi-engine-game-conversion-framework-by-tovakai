@@ -60,7 +60,7 @@ def resolve_source(root: Path = ROOT) -> dict:
             diff_digest = hashlib.sha256(diff).hexdigest()
         tags = _git(root, "tag", "--points-at", "HEAD").splitlines()
         count = None if shallow else int(_git(root, "rev-list", "--count", "HEAD"))
-        released = f"v{RELEASE_VERSION}" in tags and not dirty
+        released = f"v{RELEASE_VERSION}" in tags and not dirty and not shallow
         local = f"g{commit[:12]}" + (".shallow" if shallow else "")
         if dirty:
             local += f".dirty.d{diff_digest[:12]}"
