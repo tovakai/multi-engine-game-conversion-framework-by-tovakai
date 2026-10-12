@@ -46,7 +46,7 @@ def package(application: Path, platform: str) -> Path:
     (application / 'BUILD.txt').write_text(f'version={__version__}\ncommit={commit}\nplatform={platform}\ntracked_changes={dirty}\n', encoding='utf-8')
     for source in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
         shutil.copy2(ROOT / source, application / source)
-    notes = (ROOT / 'docs/releases/0.1.0.md').read_text(encoding='utf-8')
+    notes = (ROOT / f'docs/releases/{__version__}.md').read_text(encoding='utf-8')
     documentation = f'https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/blob/{commit}/docs/'
     (application / 'RELEASE-NOTES.md').write_text(notes.replace('](../', '](' + documentation), encoding='utf-8')
     (application / 'README.txt').write_text(

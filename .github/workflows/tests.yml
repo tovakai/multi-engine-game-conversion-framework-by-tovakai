@@ -22,5 +22,5 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: '"C:\Program Files\Git\bin" >> $env:GITHUB_PATH'
-      - run: python -m compileall -q megcfbt renframe rpgmframe gamemakerframe loveframe constructframe agsframe monoframe
+      - run: python -m compileall -q megcfbt renframe rpgmframe gamemakerframe loveframe constructframe agsframe monoframe unityframe
       - run: pytest -q

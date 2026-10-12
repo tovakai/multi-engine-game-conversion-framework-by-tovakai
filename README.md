@@ -1,19 +1,21 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
-**Convert supported PC games you already own into native Linux ARM64 packages.**
+**Convert supported PC games you already own into ARM64 packages for Linux.**
 Initially built for the **Steam Frame**, with portable AArch64 Linux output as the broader goal.
+Most backends use native Linux runtimes; experimental UnityFrame runs a matching
+Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-## Download v0.1.0: Foundation
+## Download v0.1.0.1: Hollow Knight support
 
-**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0)**
+**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.1)**
 
 | Converter application | Download |
 | --- | --- |
-| Windows x64 | [v0.1.0 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.0-windows-x64.zip) |
-| Linux ARM64 / AArch64 | [v0.1.0 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.0-linux-aarch64.tar.gz) |
-| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0/SHA256SUMS.txt) |
+| Windows x64 | [v0.1.0.1 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.0.1 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/multi-engine-game-conversion-framework-by-tovakai-0.1.0.1-linux-aarch64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.1/SHA256SUMS.txt) |
 
 These downloads contain **the converter, not games**. The project does not distribute retail game files, proprietary SDKs or Steam client libraries. You supply your own game installation and any separately licensed dependencies a particular engine needs.
 
@@ -21,16 +23,16 @@ These downloads contain **the converter, not games**. The project does not distr
 
 1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux ARM64.
 2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
-3. Convert the game to a separate **Linux AArch64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
-4. For **Steam Frame**, transfer the generated `*-linux-aarch64.zip`, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut.
+3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
+4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
 
-**Native does not mean universal.** Matching a supported engine is not a guarantee that every game built with it will work. Read the [0.1.0 scope and limitations](docs/releases/0.1.0.md), the [23-package Steam Frame test report](docs/hardware-feedback-2026-10-11.md), and [known issues](#known-issues-and-testing-limits).
+**Native does not mean universal.** Matching a supported engine is not a guarantee that every game built with it will work. Read the [0.1.0.1 scope and limitations](docs/releases/0.1.0.1.md), the [23-package Steam Frame test report](docs/hardware-feedback-2026-10-11.md), and [known issues](#known-issues-and-testing-limits).
 
 The existing [Slay the Spire 2 experimental workflow](docs/sts2-integrated-workflow.md) is different: Windows prepares a transfer package using a user-supplied FMOD Linux SDK, and the Frame finishes native components on-device. It is **not** the same one-step conversion path as the simpler engines.
 
 ## Contents
 
-- [Download v0.1.0](#download-v010-foundation)
+- [Download v0.1.0.1](#download-v0101-hollow-knight-support)
 - [Quick start](#quick-start)
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
@@ -58,8 +60,8 @@ itself is already portable: it is the **bundled engine runtime** that was
 built for x86-64.
 
 This project takes a different route. When an engine is supported, it keeps
-your existing game files and substitutes a compatible **native Linux ARM64
-runtime**, rather than translating the original x86-64 runtime while playing.
+your existing game files and substitutes a compatible **ARM64 runtime**.
+UnityFrame preserves Windows assets and runs its Windows ARM64 player under ARM64 Proton.
 
 Why bother?
 
@@ -94,6 +96,7 @@ it pretend it has one?**
 | Adventure Game Studio | AGSFrame | automatically download native AGS; retain CLIB data and supporting assets | Experimental; The Cat Lady startup tested; unknown plugins require native implementations |
 | MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
+| Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame; GUI-generated package installed and launched through Steam |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
@@ -112,7 +115,10 @@ including pinned HD source and UI fixes. Identified Ren'Py 8.5 nightlies offer a
 experimental complete 8.5.3 engine/runtime migration in the GUI or with
 `--experimental-renpy-prerelease-migration`; this requires gameplay/save testing.
 Encrypted Godot packs/scripts require an ARM64 runtime built with the game's key.
-Unity native exports and WOLF RPG Editor games are diagnosed as unsupported.
+The exact tested Hollow Knight Steam edition on Unity 6000.0.61f1 now uses the
+regular CLI/GUI conversion flow with automatic verified downloads and Windows
+ARM64 Proton packaging. See [UnityFrame setup and limits](docs/backends/unityframe.md).
+Other Unity exports and WOLF RPG Editor games remain gated as unsupported.
 
 New EasyRPG packages include a portable player and supporting libraries
 automatically. Older packages can still use the system player or

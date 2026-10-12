@@ -19,7 +19,7 @@ def _parser() -> argparse.ArgumentParser:
     inspect_cmd.add_argument("source", type=Path)
     inspect_cmd.add_argument("--json", action="store_true")
 
-    build_cmd = sub.add_parser("build", help="convert a supported game to Linux ARM64")
+    build_cmd = sub.add_parser("build", help="convert a supported game for ARM64 Linux/Frame")
     build_cmd.add_argument("source", type=Path)
     build_cmd.add_argument("--experimental-legacy-arm64-fallback", action="store_true",
                            help="opt in: authoritative 7.3.5 or 7.4.x Python 2; matched full 7.5.0 ARM64 engine; experimental")
@@ -41,7 +41,7 @@ def _parser() -> argparse.ArgumentParser:
     build_cmd.add_argument(
         "--runtime",
         type=Path,
-        help="optional manually supplied ARM64 runtime for RPG Maker/Godot",
+        help="optional ARM64 runtime override; Unity accepts a folder containing the two pinned runtime archives",
     )
     build_cmd.add_argument("--fmod-sdk", type=Path, help="FMOD Studio API 2.03.15 Linux SDK archive for STS2")
     build_cmd.add_argument("--runtime-version", default=None)
@@ -249,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
             **kwargs,
         )
         print(f"{'Planned' if args.dry_run else 'Built'}:   {result.output_path}")
+        print(f'Target:  {result.target_platform}')
         if result.archive_path:
             print(f"Package: {result.archive_path}")
         for warning in result.warnings:

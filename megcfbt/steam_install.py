@@ -125,7 +125,7 @@ def _write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def _install_tree(source: Path, gameid: str, launcher: str) -> Path:
+def _install_tree(source: Path, gameid: str, launcher: str, *, compat_tool: str = 'SteamLinuxRuntime_4-arm64') -> Path:
     _DEVKIT_ROOT.mkdir(parents=True, exist_ok=True)
     destination = _DEVKIT_ROOT / gameid
     staging = _DEVKIT_ROOT / f".{gameid}.megcfbt-upload"
@@ -172,7 +172,7 @@ def _install_tree(source: Path, gameid: str, launcher: str) -> Path:
         _DEVKIT_ROOT / f"{gameid}-settings.json",
         {
             "steam_play": "0",
-            "compat_tool": "SteamLinuxRuntime_4-arm64",
+            "compat_tool": compat_tool,
         },
     )
     return destination
@@ -404,7 +404,10 @@ def install_build(
     step = progress or (lambda _message: None)
 
     step("Preparing Steam Devkit Game")
-    destination = _install_tree(source, gameid, launcher)
+    proton_package = metadata.get('target_platform') == 'windows-arm64-proton'
+    runtime = metadata.get('runtime', 'SteamLinuxRuntime_4-arm64')
+    destination = (_install_tree(source, gameid, launcher, compat_tool='') if proton_package
+                   else _install_tree(source, gameid, launcher))
     step("Registering with Steam")
     registration = _register_devkit_game(gameid)
 
@@ -432,7 +435,7 @@ def install_build(
         "name": name,
         "directory": str(destination),
         "launcher": launcher,
-        "runtime": "SteamLinuxRuntime_4-arm64",
+        "runtime": runtime,
         "registration": registration,
         "appid": appid,
         "warnings": warnings,
