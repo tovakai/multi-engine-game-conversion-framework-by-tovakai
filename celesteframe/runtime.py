@@ -103,11 +103,15 @@ def automatic_runtime_available():
     return recipe_entry() is not None
 
 def find_fmod_sdk():
+    from megcfbt.fmod_sdk import remembered_sdk
     selected = os.environ.get('MEGCFBT_CELESTE_FMOD_SDK')
     if selected:
         return validate_fmod_sdk(Path(selected))
     candidates = [Path.home()/'Downloads'/FMOD_FILENAME,
         Path(os.environ.get('APPDATA', Path.home()/'.config'))/'megcfbt/sts2/dependencies'/FMOD_FILENAME]
+    shared = remembered_sdk()
+    if shared is not None:
+        candidates.insert(0, shared)
     for path in candidates:
         if path.is_file():
             try:
