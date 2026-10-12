@@ -20,7 +20,7 @@
   "controller_note": "Select the desired primary controller through Steam when multiple controllers are connected.",
   "integrated_package_gameplay": "Owner confirmed menu, Frame controllers, music, gameplay and save/reload through the normal installed Celeste entry",
   "frozen_windows_gui": "Real drop handler and Convert button completed conversion and ZIP packaging with the selected runtime and owner FMOD SDK",
-  "automated_tests": {"passed": 444, "skipped": 3},
+  "automated_tests": {"passed": 447, "skipped": 3},
   "automatic_runtime": "Published archive downloaded, SHA-256 and ARM64/file checks passed; cache reuse passed; CI-built frozen Windows GUI completed conversion with runtime_override=false",
   "unverified": ["Full-game completion", "Achievements", "Steam Cloud", "Mods and Everest"]
 }
