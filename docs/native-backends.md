@@ -129,6 +129,13 @@ Physical keyboard/controller interaction through Steam still needs device testin
 Online/co-op/workshop, save round trips and complete gameplay remain unverified.
 Intro/menu screenshots are not full-game compatibility certification.
 
+On 2026-10-12, Cassette Beasts 1.8.3 passed user-confirmed five-minute graphical
+gameplay on physical Frame using a narrow Zink/depth compatibility profile,
+including movement, transition, battle and save/load. The fresh frozen Windows
+GUI's ZIP passed the same acceptance with its original native runtime and game
+resources unchanged. Controller and extended/online coverage remain separate.
+See [the rendering investigation](cassette-beasts-rendering.md).
+
 Final local verification: 264 tests passed on Windows, with two link tests
 skipped for missing symlink privileges. Escaped links and recursive links were
 also rejected in direct Linux checks on Frame. All three canonical native SDK

@@ -1,0 +1,15 @@
+{
+  "file_count": 40,
+  "all_file_bytes_and_permissions_identical": false,
+  "different_files": [
+    "CassetteBeasts-frame/.megcfbt/package.json",
+    "CassetteBeasts-frame/payload/.megcfbt/package.json"
+  ],
+  "semantically_equivalent_package_metadata": [
+    "CassetteBeasts-frame/.megcfbt/package.json",
+    "CassetteBeasts-frame/payload/.megcfbt/package.json"
+  ],
+  "gameplay_files_bytes_and_permissions_identical": true,
+  "functional_differences": [],
+  "scope": "ZIP timestamps are excluded; package metadata JSON ordering is compared semantically; all other file bytes and permissions are compared exactly"
+}

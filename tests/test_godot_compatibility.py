@@ -52,6 +52,23 @@ def test_quoted_depth_keys_are_replaced_and_duplicate_keys_rejected():
         merge_depth_override('[rendering]\n"quality/depth_prepass/enable"=false\nquality/depth_prepass/enable=true\n')
 
 
+def test_multiline_variants_cannot_be_mistaken_for_sections_or_depth_keys():
+    value = '[other]\ntext="first line\n[rendering]\nquality/depth_prepass/enable=false\nlast line"\ndictionary={\n"array": [Vector2(1,2), Vector2(3,4)]\n}\n'
+    merged = merge_depth_override(value)
+    assert merged.startswith(value)
+    assert merged.endswith('[rendering]\nquality/depth_prepass/disable_for_vendors=""\nquality/depth_prepass/enable=true\n')
+
+
+@pytest.mark.parametrize("text", [
+    '[other]\nvalue="unterminated\n',
+    '[other]\nvalue={"a": [1,2}\n',
+    '[rendering]\nquality/depth_prepass/disable_for_vendors="Adreno,\nApple"\n',
+])
+def test_unsafe_or_multiline_depth_values_are_not_silently_rewritten(text):
+    with pytest.raises(ValueError, match="review before conversion"):
+        merge_depth_override(text)
+
+
 def test_launcher_applies_norp_only_for_selected_profile():
     selected = godot_launcher_body("game/CassetteBeasts.pck", disable_zink_render_pass_optimizations=True, force_gles3=True)
     assert 'export ZINK_DEBUG="${ZINK_DEBUG:+${ZINK_DEBUG},}norp"' in selected

@@ -31,8 +31,34 @@ def cassette_rendering_profile(pack: GodotPack, app_id: str | None, runtime: dic
 def merge_depth_override(text: str) -> str:
     """Preserve Godot Variant values and comments outside the two depth keys."""
     lines = text.splitlines(keepends=True)
+    top_level = []
+    quote = False
+    escaped = False
+    nesting = []
+    for line in lines:
+        top_level.append(not quote and not nesting)
+        for character in line:
+            if quote:
+                if escaped:
+                    escaped = False
+                elif character == "\\":
+                    escaped = True
+                elif character == '"':
+                    quote = False
+            elif character in ";#":
+                break
+            elif character == '"':
+                quote = True
+            elif character in "([{":
+                nesting.append(character)
+            elif character in ")]}":
+                if not nesting or nesting.pop() != {")": "(", "]": "[", "}": "{"}[character]:
+                    raise ValueError("Unbalanced Variant value in override.cfg; review before conversion")
+    if quote or nesting:
+        raise ValueError("Unbalanced Variant value in override.cfg; review before conversion")
     section_pattern = r"^\s*\[([^]]+)\]\s*(?:;.*)?$"
-    sections = [(i, re.match(section_pattern, line.strip())) for i, line in enumerate(lines)]
+    sections = [(i, re.match(section_pattern, line.strip()) if top_level[i] else None)
+                for i, line in enumerate(lines)]
     rendering = [i for i, match in sections if match and match.group(1) == "rendering"]
     if len(rendering) > 1:
         raise ValueError("Duplicate rendering sections in override.cfg; review before conversion")
@@ -47,9 +73,11 @@ def merge_depth_override(text: str) -> str:
     end = next((i for i, match in sections if i > start and match), len(lines))
     seen = set()
     for i in range(start + 1, end):
-        match = re.match(r'^\s*(?:"([^"\n]+)"|([A-Za-z0-9_./]+))\s*=', lines[i])
+        match = re.match(r'^\s*(?:"([^"\n]+)"|([A-Za-z0-9_./]+))\s*=', lines[i]) if top_level[i] else None
         key = (match.group(1) or match.group(2)) if match else None
         if key in values:
+            if i + 1 < len(lines) and not top_level[i + 1]:
+                raise ValueError("Multiline depth setting in override.cfg; review before conversion")
             if key in seen:
                 raise ValueError("Duplicate depth setting in override.cfg; review before conversion")
             lines[i] = f"{key}={values[key]}\n"

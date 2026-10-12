@@ -3,7 +3,7 @@
 Status: the combined Zink `norp` + forced depth pre-pass configuration passed
 user-confirmed five-minute gameplay, transitions, tutorial battle and save/load
 on physical Steam Frame. A narrowly matched experimental conversion profile is
-implemented; fresh frozen-GUI ZIP hardware acceptance is pending. Runtime releases
+implemented; the fresh frozen-GUI ZIP also passed hardware acceptance. Runtime releases
 and the existing control conversion remain unchanged.
 
 ## Reproduce privately
@@ -195,6 +195,34 @@ whereas the tested host uses Mesa 26.3.0-devel. No software game trial was run;
 a container comparison would need a matched container GPU control to avoid
 confounding driver/session changes.
 
-Validation: 37 experiment/Godot runtime/provisioning tests passed. First test run
-failed at pytest temporary-directory setup due to filesystem permissions; rerun
+### Fresh converter-produced acceptance
+
+The isolated frozen Windows GUI used the real drop handler and enabled Convert
+button, a new cache and no runtime override. Its private ZIP hash is
+`7aeda7ea1f6458e92acd9fb80ffbd3b3115c9ab93ed386ea80a5c705c23b8929`; the same
+hash was verified after transfer. The original source hashes and mtimes stayed
+unchanged, ZIP CRC/required contents passed, and the extracted package was not
+edited. A diagnostic wrapper outside it only isolates saves and logs FPS.
+The fresh PCK hash matches the control's `f086cdf5...`; the engine remains the
+same AArch64 binary. The fresh probe confirms GLES3, enabled/unexcluded pre-pass,
+1920×1080, and its actual process environment contains `ZINK_DEBUG=norp`.
+
+The user confirmed the fresh output works, then confirmed again after extra
+gameplay to clear the five-minute threshold. The measured process duration was
+at least 6:47, and actual battle commands and saves appear in the private logs.
+Movement, transition, battle and save/load were confirmed. Fresh scene FPS samples
+were about 42–45 and a battle logged 60; scene differences preclude controlled
+speedup claims. `acceptance-frame-20261012.json` records the bounded acceptance.
+Controller compatibility remains a separate issue; this is not full-game certification.
+
+The final override-preservation hardening was followed by another successful
+clean-cache frozen-GUI conversion (42.1 seconds). All game/runtime/configuration
+bytes and permissions match the accepted ZIP; only equivalent artwork-slot JSON
+key ordering differs. See `final-gui-package-equivalence-20261012.json` and
+[the concise rendering report](../../docs/cassette-beasts-rendering.md).
+
+Validation: 88 Godot/profile/launcher/Frame-packaging tests passed with one Windows
+symlink-creation skip; the equivalent symlink guard check passed on Frame.
+The first test run failed at pytest temporary-directory setup due to filesystem
+permissions; rerun
 with an explicit dedicated worktree test directory passed (one cache-write warning).

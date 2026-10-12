@@ -450,7 +450,7 @@ game files or proprietary SDK binaries.**
 
 | Game / area | Known limitation |
 | --- | --- |
-| Cassette Beasts | Reaches startup, but sprites/tiles flicker or disappear; controller not recognized. Not counted as playable. |
+| Cassette Beasts | Graphical corruption resolved in a user-confirmed five-minute native Frame test of fresh Windows-GUI output, including transitions, battle and save/load, using a narrow Zink/depth profile. Controller remains a separate issue; not full-game certification. [Rendering evidence](docs/cassette-beasts-rendering.md). |
 | Cook, Serve, Delicious! 3 | Launches, but performance and controller behavior remain problematic. |
 | Desert Child | Runs with graphical glitches; not a clean compatibility pass. |
 | Katawa Shoujo (non-HD) | A compatibility profile was added after a failed conversion report; do not count it as hardware-verified gameplay without a new test. |
