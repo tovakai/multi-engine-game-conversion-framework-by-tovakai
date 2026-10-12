@@ -19,6 +19,6 @@ Exact game/engine version and gameplay depth not recorded. This is a catalog sna
 
 ## Sources
 
-[Prior README hardware record](../../README.md#tested-game-compatibility)
+[Historical v0.1.0.3-tag README evidence](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/blob/v0.1.0.3/README.md#tested-game-compatibility)
 
 [← Full compatibility index](../README.md)
