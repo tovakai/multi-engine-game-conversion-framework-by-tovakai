@@ -50,8 +50,9 @@ engine and Frame's installed Steam library. The old Steam initialization failure
 is resolved. A nonfatal Godot 3.5 X11 keyboard-layout warning uses its QWERTY
 fallback. A subsequent test of the frozen Windows GUI's ZIP accepted an injected
 E key in Frame's desktop session and advanced to the update notices. Physical
-controller input, extended gameplay, save/load and online features remain
-unverified; automatic provisioning does not certify full game compatibility.
+controller input, extended gameplay, save/load and online features were not
+verified by those startup tests; automatic provisioning does not certify full
+game compatibility.
 
 On 2026-10-10, frozen-GUI verification passed clean-cache conversions for Cassette
 Beasts, Brotato, Silly Linguine and Unnamed Space Idle. Each used the real shipped
@@ -61,6 +62,14 @@ download. ZIP CRC/required contents and original source hashes/mtimes passed.
 The final Windows regression run passed 290 tests with two symlink-privilege
 skips. Hardware verification used the ZIP produced by the frozen Windows GUI,
 not a separately prepared SDK or manually edited game package.
+
+The 2026-10-12 graphical investigation subsequently verified Cassette Beasts
+1.8.3 on physical Frame with Zink render-pass optimizations disabled and depth
+pre-pass forced. A narrow converter profile packages both settings using this
+same published runtime. Fresh frozen-GUI output passed user-confirmed five-minute
+movement, transition, battle and save/load checks. Controller handling remains
+separate. See the [rendering evidence](cassette-beasts-rendering.md) and experiment
+journal; the runtime archive itself was not rebuilt or reclassified.
 
 ## Godot 4.6.0 and 4.7.2
 

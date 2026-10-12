@@ -1,0 +1,24 @@
+{
+  "pack_format": 1,
+  "engine_version": "3.5.1",
+  "entries": 27628,
+  "text_shader_resources": 53,
+  "shader_feature_counts": {
+    "TIME": 31,
+    "render_mode:depth_draw_alpha_prepass": 15,
+    "textureSize": 7,
+    "uint": 18,
+    "render_mode:unshaded": 16,
+    "SCREEN_TEXTURE": 8,
+    "render_mode:depth_draw_never": 6,
+    "render_mode:depth_test_disable": 3,
+    "ALPHA_SCISSOR": 5,
+    "render_mode:cull_disabled": 10,
+    "DEPTH_TEXTURE": 13,
+    "sampler2DArray": 2,
+    "discard": 4,
+    "INSTANCE_CUSTOM": 4
+  },
+  "gridmap_named_resources": 4,
+  "scope": "Lexical inventory; comments may match; no shader source or resources exported"
+}

@@ -1,0 +1,80 @@
+{
+  "control": "/run/media/steamos/SD512/games/Dont work/CassetteBeasts-frame/payload",
+  "control_sha256": {
+    "SOURCE-BUILD.txt": "95b39c956a545dfd8e737cb99fc54f50a56f3c9b98cea65075cecb489c798007",
+    "libframe_steam_env.so": "938f22d19e5aaa72975d4f3507767afcc003496ae243529b54eea0caaa30eaff",
+    "AUTHORS-Godot.md": "d84d45c69d048d0ef4dd48eab1e1f8251aeb32e7f34042be405b1301ec2f0484",
+    "godot.arm64": "dff499fb712d0d8b0777d4171d0fcf89164dbf8bc6a841cc9ce9239d74bb9884",
+    "LICENSE-Converter.txt": "6f1e622c82a380075843bb084a7ec3b1f1d12a4a02526d75e78b0924a860aa75",
+    "THIRD_PARTY_NOTICES.md": "02d5c4d7305d0081d892e5dec9569c2818c84dee5b93519142c8f5b04594e2dd",
+    "LICENSE-GodotSteam.txt": "e1400a974f3466f4f49c05e8b7153996938049feb6f6b86ce6518f7e57b05860",
+    "variant-release-guard.patch": "b7a846429079e2c05c442cdb5798973ed4f1c6457bb9a122d73229dcc117e855",
+    "NOTICE.txt": "913a318dab582861a4e09c034a11660532530a4a53e86c678bcf20423398297f",
+    "COPYRIGHT-Godot.txt": "8c4a27b643101fa2b4fb50dc2da78deef2e8fa43ed188e6f8f619a08c0ecbbe3",
+    "runtime-source-build.sh": "4bd28f3821806218225e7f69387f2c47907444d76bda238f675658ea66733713",
+    "frame_steam_env.json": "408c367b64f3a3eb7c86f8e0a95cf1570a121002a9412484260af16b8e76d209",
+    "godotsteam-legacy-cpp.patch": "ced67ec0cc678d731633ef328d9becb0c9ba0d45668fd5efd33243d7b146d941",
+    "LICENSE-Godot.txt": "966313e8129db5d0b3b081d1a50ae107da9a3da2d8faa05899e3042a33192525",
+    "frame_steam_env.c": "666033ca73915197bab62a4b57f41e557000c7345509fbe01d8e4528c7b5e8c5",
+    "godotsteam-legacy-header.patch": "519a630de984247f989a7784cc667949ec5e20d4c597f1846829632fee335771",
+    "launch.sh": "fb2254318cb6850a62754435c7726809fc3798ada16c48927d5c75733a5b088e",
+    "steam_appid.txt": "970c1e1101580901abfd0ef21917072683666a3dff93cce9fef5ec256830c0a1",
+    "runtime.json": "021487cf94ac1ed34fa68968fc42d44a93d5a5c0b5608b4d40da0d7efcdea016",
+    ".megcfbt/package.json": "270ab2f9b28fec6c3b1640b19f0b74ecc1f5aada58759663cca60946655f6c26",
+    "game/WorkshopUtility.pck": "a5c4e6ce1ab31defe8ea875664ccb98174221a09003259ccf04bc7d58123523f",
+    "game/readme.txt": "ba2139b7c2a60e359b256956aae523210fba566ac25c90e52a82919af01cbf91",
+    "game/steam_api64.dll": "1add7f151fa644870a735ae86e68d1f019f296130d8e7c0a7ed3ecc7482dccbc",
+    "game/steam_appid.txt": "970c1e1101580901abfd0ef21917072683666a3dff93cce9fef5ec256830c0a1",
+    "game/CassetteBeasts.pck": "f086cdf559c3b0507c194d6cfac1b85453eb437911c4f225c720f346e382525e",
+    ".megcfbt/artwork/wide.jpg": "af6e6230885c184e9345023c191521f6ebc99a126889a2bb4539e29dcf5fa9c0",
+    ".megcfbt/artwork/logo.png": "f456e0d307ab398e4ab5a1b95ed63b42d4039898a8de48e3f54bc539c2ce9ae6",
+    ".megcfbt/artwork/hero.jpg": "4ac2a39a4a04e94fe94b1d0ec92a30270a5b87ed79c880176dc97c7727a59677",
+    ".megcfbt/artwork/grid.jpg": "351b0f78317717037f9ae6d02d5da0925d635d9c445fe1175f6c79a8bbf2b6e4"
+  },
+  "runtime": {
+    "kind": "godot-custom",
+    "recipe_id": "godot-3.5.1-godotsteam-3.30-steamworks-1.62-frame-arm64-v1",
+    "architecture": "aarch64",
+    "engine_version": "3.5.1",
+    "godot_ref": "6fed1ffa313c6760fa88b368ae580378daaef0f0",
+    "godot_version_output": "3.5.1.stable.custom_build.6fed1ffa3",
+    "godotsteam_ref": "f73d138b56fe971a940dd0498e8b9d0fc8fdcffd",
+    "godotsteam_compatibility_version": "3.30",
+    "proton_ref": "5b89db940e0ebe3a137a6009a3589232fe084c09",
+    "patches": [
+      "legacy-steam-init-dictionary-v1",
+      "release-safe-variant-missing-method",
+      "native-networking-helpers"
+    ],
+    "capabilities": {
+      "legacy_steam_init_dictionary": true
+    },
+    "pack_loading": "main-pack",
+    "steam_api_dependency": {
+      "provider": "steam-frame-installed",
+      "directory": "/opt/steamvr/bin/linuxarm64",
+      "filename": "libsteam_api.so",
+      "tested_sha256": "9d354c631f01f7318bc00e8fa29842b83678f4293b52d0d5c11806edd76a7f4b"
+    },
+    "validation": "Steam Frame native 3D title screen; gameplay/input/save round trips unverified",
+    "unstripped_binary_sha256": "c84e0f6f082807074810d8f3c47ccd144c3d9295dc54a3b0bbee7a3b63880203",
+    "files": {
+      "AUTHORS-Godot.md": "d84d45c69d048d0ef4dd48eab1e1f8251aeb32e7f34042be405b1301ec2f0484",
+      "COPYRIGHT-Godot.txt": "8c4a27b643101fa2b4fb50dc2da78deef2e8fa43ed188e6f8f619a08c0ecbbe3",
+      "LICENSE-Converter.txt": "6f1e622c82a380075843bb084a7ec3b1f1d12a4a02526d75e78b0924a860aa75",
+      "LICENSE-Godot.txt": "966313e8129db5d0b3b081d1a50ae107da9a3da2d8faa05899e3042a33192525",
+      "LICENSE-GodotSteam.txt": "e1400a974f3466f4f49c05e8b7153996938049feb6f6b86ce6518f7e57b05860",
+      "NOTICE.txt": "913a318dab582861a4e09c034a11660532530a4a53e86c678bcf20423398297f",
+      "THIRD_PARTY_NOTICES.md": "02d5c4d7305d0081d892e5dec9569c2818c84dee5b93519142c8f5b04594e2dd",
+      "godot.arm64": "dff499fb712d0d8b0777d4171d0fcf89164dbf8bc6a841cc9ce9239d74bb9884",
+      "godotsteam-legacy-cpp.patch": "ced67ec0cc678d731633ef328d9becb0c9ba0d45668fd5efd33243d7b146d941",
+      "godotsteam-legacy-header.patch": "519a630de984247f989a7784cc667949ec5e20d4c597f1846829632fee335771",
+      "runtime-source-build.sh": "4bd28f3821806218225e7f69387f2c47907444d76bda238f675658ea66733713",
+      "variant-release-guard.patch": "b7a846429079e2c05c442cdb5798973ed4f1c6457bb9a122d73229dcc117e855",
+      "SOURCE-BUILD.txt": "95b39c956a545dfd8e737cb99fc54f50a56f3c9b98cea65075cecb489c798007"
+    }
+  },
+  "control_unchanged": true,
+  "gameplay_verified": false,
+  "save_load_verified": false
+}

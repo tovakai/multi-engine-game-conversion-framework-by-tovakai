@@ -1,7 +1,8 @@
 # Versions and conversion provenance
 
 `megcfbt/version.py:RELEASE_VERSION` is the only maintained application version.
-It currently targets **0.1.1.0**, the planned v0.1.1 milestone, without publishing it.
+It currently targets **0.1.0.3**. The planned v0.1.1 milestone remains a separate
+future release.
 Public versions use `MAJOR.MINOR.PATCH.REVISION`; existing `0.1.0` and `0.1.0.1`
 remain valid and unchanged. Python packaging uses PEP 440, including four-part
 release segments, development releases and local build labels.

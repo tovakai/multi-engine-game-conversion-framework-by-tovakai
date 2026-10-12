@@ -172,3 +172,6 @@ def test_conversion_packages_published_engine_notices_and_guard(tmp_path,monkeyp
     assert '/opt/steamvr/bin/linuxarm64' in result.launcher_path.read_text()
     assert (result.output_path/'game/game.pck').read_bytes()==before['game.pck']
     assert {p.name:p.read_bytes() for p in source.iterdir()}==before
+    assert 'ZINK_DEBUG' not in result.launcher_path.read_text()
+    assert not (result.output_path/'godot-compatibility.json').exists()
+    assert not (result.output_path/'game/override.cfg').exists()

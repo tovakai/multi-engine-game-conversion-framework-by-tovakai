@@ -100,6 +100,8 @@ def godot_launcher_body(
     *,
     force_zink: bool = False,
     adjacent_pack: bool = False,
+    disable_zink_render_pass_optimizations: bool = False,
+    force_gles3: bool = False,
 ) -> str:
     pack = shlex.quote(pack_relative)
     zink = (
@@ -113,6 +115,12 @@ export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
         else ""
     )
     pack_argument = '' if adjacent_pack else f' --main-pack "$ROOT"/{pack}'
+    video_argument = ' --video-driver GLES3' if force_gles3 else ''
+    zink_compatibility = (
+        '# Cassette Beasts: retain user debug flags and disable Zink render-pass optimizations.\n'
+        'export ZINK_DEBUG="${ZINK_DEBUG:+${ZINK_DEBUG},}norp"\n\n'
+        if disable_zink_render_pass_optimizations else ''
+    )
     return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
 # may ship shared libraries beside the engine runtime.
 steam_arm64_dir="/opt/steamvr/bin/linuxarm64"
@@ -122,6 +130,6 @@ else
     export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 fi
 
-{zink}cd "$ROOT/game"
-exec "$ROOT/godot.arm64"{pack_argument} "$@"
+{zink}{zink_compatibility}cd "$ROOT/game"
+exec "$ROOT/godot.arm64"{pack_argument}{video_argument} "$@"
 '''

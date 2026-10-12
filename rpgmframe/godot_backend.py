@@ -20,6 +20,7 @@ from rpgmframe.godot import (
 )
 from rpgmframe.godot_runtime import GodotRuntimeError, GodotRuntimeManager
 from rpgmframe.launchers import godot_launcher_body
+from rpgmframe.godot_compatibility import cassette_rendering_profile, install_cassette_rendering_profile
 from rpgmframe.models import BuildResult, EngineVariant, GameInspection
 from megcfbt.steam_context import steam_app_id_for_source
 from megcfbt.frame_runtime import install_steam_graphics_guard
@@ -266,6 +267,7 @@ def build_godot_game(
         stage(0.45, "Preparing build staging area")
         staging.mkdir()
         runtime_files = _copy_runtime_bundle(runtime_path, staging)
+        app_id = None
         if fingerprint is not None and fingerprint.godotsteam:
             install_steam_graphics_guard(staging)
         if progress:
@@ -321,6 +323,7 @@ def build_godot_game(
             shutil.copy2(pack.path, pck_target)
 
         adjacent_pack = False
+        runtime_metadata = {}
         runtime_manifest = runtime_path/'runtime.json'
         if runtime_manifest.is_file():
             try:
@@ -332,6 +335,14 @@ def build_godot_game(
             # Hardened export templates reject --main-pack. Use Godot's
             # executable-basename lookup while retaining the game working dir.
             pck_target.rename(staging/'godot.pck')
+
+        compatibility_profile = cassette_rendering_profile(
+            pack, app_id or steam_app_id_for_source(inspection.game_root), runtime_metadata,
+        )
+        if compatibility_profile:
+            install_cassette_rendering_profile(staging, pck_target)
+            if progress:
+                progress("Applied Cassette Beasts rendering compatibility")
 
         stage(0.78, "Checking native Windows dependencies")
         dlls = list(inspection.game_root.rglob("*.dll"))
@@ -352,6 +363,7 @@ def build_godot_game(
             godot_launcher_body(
                 f"game/{pck_name}",
                 force_zink=bool(fingerprint is not None and fingerprint.custom_build),
+                **({'disable_zink_render_pass_optimizations': True, 'force_gles3': True} if compatibility_profile else {}),
                 **({'adjacent_pack': True} if adjacent_pack else {}),
             ),
             encoding="utf-8",

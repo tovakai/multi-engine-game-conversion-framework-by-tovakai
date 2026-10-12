@@ -1,0 +1,17 @@
+{
+  "left_entries": 27628,
+  "right_entries": 27628,
+  "common": 27628,
+  "different_digest": 131,
+  "left_only": 0,
+  "right_only": 0,
+  "different_by_extension": {
+    ".translation": 99,
+    ".gdc": 23,
+    ".res": 9
+  },
+  "shared_shader_resources": 53,
+  "different_shader_digests": 0,
+  "project_binary_digest_equal": true,
+  "scope": "Pack-directory MD5 comparison; no resources extracted or distributed"
+}
