@@ -1,0 +1,12 @@
+{
+  "filename": "CassetteBeasts.exe",
+  "architecture": "x86_64",
+  "sha256": "1c995bd2b6c524db0353ed3be8827405f84adc6ecbc4ca73384144ded52458bb",
+  "size": 35536384,
+  "version_strings": [
+    "3.5.1.stable",
+    "3.5.1.stable.custom_build"
+  ],
+  "diagnostic_source_paths": [],
+  "scope": "Static strings do not establish which engine patches are present"
+}

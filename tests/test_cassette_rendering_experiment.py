@@ -61,3 +61,22 @@ def test_packages_keep_control_bytes_and_isolate_settings_and_saves(tmp_path):
     assert (target / "baseline/profile/data/CassetteBeasts/save").read_bytes() == b"synthetic save"
     with pytest.raises(ValueError, match="new destination"):
         experiment.prepare(source, target, saves)
+
+
+def test_driver_variants_change_one_flag_and_keep_override(tmp_path):
+    source = tmp_path / "control"
+    (source / "game").mkdir(parents=True)
+    (source / "game/CassetteBeasts.pck").write_bytes(b"synthetic pack")
+    original = '[rendering]\nquality/depth_prepass/enable=false\n'
+    (source / "game/override.cfg").write_text(original)
+    (source / "runtime.json").write_text(json.dumps({"engine_version": "3.5.1", "pack_loading": "main-pack"}))
+    target = tmp_path / "drivers"
+    experiment.prepare(source, target, tmp_path / "absent-saves",
+                       ("turnip-sysmem", "zink-sync", "zink-norp"))
+    for name, flag in (("turnip-sysmem", "export TU_DEBUG=sysmem"),
+                       ("zink-sync", "export ZINK_DEBUG=sync"),
+                       ("zink-norp", "export ZINK_DEBUG=norp")):
+        launcher = (target / f"launch-{name}.sh").read_text()
+        assert flag + "\nmkdir" in launcher
+        assert "--video-driver GLES3" in launcher
+        assert (target / name / "payload/game/override.cfg").read_text() == original

@@ -1,0 +1,102 @@
+{
+  "sessions": {
+    "baseline-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:20:23+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 43,
+      "fps_min": 1,
+      "fps_median": 53,
+      "fps_max": 61,
+      "diagnostics": [
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    },
+    "depth-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:22:19+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 36,
+      "fps_min": 1,
+      "fps_median": 15.0,
+      "fps_max": 58,
+      "diagnostics": [
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    },
+    "gles2-session.txt": {
+      "utc_launch": [
+        "2026-10-12T21:24:32+00:00"
+      ],
+      "fps_scope": "Entire launch session including loading/menu; not a controlled benchmark",
+      "fps_samples": 74,
+      "fps_min": 6,
+      "fps_median": 23.0,
+      "fps_max": 60,
+      "diagnostics": [
+        "ERROR: 3D textures and Texture Arrays are not supported in GLES2. Please switch to the GLES3 backend.",
+        "ERROR: GL ERROR: Source: OpenGL\tType: Error\tID: 73\tSeverity: High\tMessage: GL_INVALID_ENUM in glBindTexture(target = GL_NONE)",
+        "ERROR: GL ERROR: Source: OpenGL\tType: Error\tID: 73\tSeverity: High\tMessage: GL_INVALID_ENUM in glTexParameterf(target)",
+        "ERROR: GL ERROR: Source: OpenGL\tType: Error\tID: 73\tSeverity: High\tMessage: GL_INVALID_ENUM in glTexParameteri(target)",
+        "ERROR: Index 1 = 1 is out of bounds (info.size() = 1).",
+        "SHADER ERROR: \"sampler2DArray\" type is only supported on the GLES3 backend, but your project is using GLES2.",
+        "SHADER ERROR: \"uint\" type is only supported on the GLES3 backend, but your project is using GLES2.",
+        "SHADER ERROR: Built-in function \"textureSize(sampler2D, int)\" is only supported on the GLES3 backend, but your project is using GLES2.",
+        "WARNING: The HingeJoint parameter 0 is deprecated."
+      ]
+    }
+  },
+  "probes": [
+    {
+      "variant": "baseline",
+      "settings": {
+        "vendor": "Mesa",
+        "renderer": "zink Vulkan 1.4(Turnip Adreno (TM) 750 (MESA_TURNIP))",
+        "driver": "GLES3",
+        "prepass_setting": true,
+        "excluded_renderers": "PowerVR,Mali,Adreno,Apple",
+        "matched_exclusions": [
+          "Adreno"
+        ],
+        "prepass_expected_from_source": false,
+        "override_path": "user://custom_settings.cfg",
+        "window_size": "(1920, 1080)"
+      }
+    },
+    {
+      "variant": "depth-prepass",
+      "settings": {
+        "vendor": "Mesa",
+        "renderer": "zink Vulkan 1.4(Turnip Adreno (TM) 750 (MESA_TURNIP))",
+        "driver": "GLES3",
+        "prepass_setting": true,
+        "excluded_renderers": "",
+        "matched_exclusions": [],
+        "prepass_expected_from_source": true,
+        "override_path": "user://custom_settings.cfg",
+        "window_size": "(1920, 1080)"
+      }
+    },
+    {
+      "variant": "gles2",
+      "settings": {
+        "vendor": "Mesa",
+        "renderer": "zink Vulkan 1.4(Turnip Adreno (TM) 750 (MESA_TURNIP))",
+        "driver": "GLES2",
+        "prepass_setting": true,
+        "excluded_renderers": "PowerVR,Mali,Adreno,Apple",
+        "matched_exclusions": [
+          "Adreno"
+        ],
+        "prepass_expected_from_source": false,
+        "override_path": "user://custom_settings.cfg",
+        "window_size": "(1920, 1080)"
+      }
+    }
+  ],
+  "graphical_correctness_requires_human_testing": true
+}

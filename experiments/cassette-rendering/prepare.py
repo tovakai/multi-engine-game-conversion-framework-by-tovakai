@@ -3,9 +3,28 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import re
 import shlex
 import shutil
+import sys
+
+repo_root = Path(__file__).resolve().parents[2]
+if (repo_root / "rpgmframe/godot_compatibility.py").is_file():
+    sys.path.insert(0, str(repo_root))
+try:
+    from rpgmframe.godot_compatibility import merge_depth_override
+except ModuleNotFoundError:
+    # Standalone copies on Frame include this stdlib-only helper beside prepare.py.
+    from godot_compatibility import merge_depth_override
+
+VARIANTS = {
+    "baseline": "",
+    "depth-prepass": "",
+    "gles2": "",
+    "turnip-sysmem": "export TU_DEBUG=sysmem\n",
+    "zink-sync": "export ZINK_DEBUG=sync\n",
+    "zink-norp": "export ZINK_DEBUG=norp\n",
+    "zink-norp-depth": "export ZINK_DEBUG=norp\n",
+}
 
 
 def digest(path):
@@ -16,45 +35,7 @@ def digest(path):
     return h.hexdigest()
 
 
-def merge_depth_override(text):
-    """Keep Godot Variant syntax/comments; change only two rendering keys."""
-    lines = text.splitlines(keepends=True)
-    if sum(bool(re.match(r"^\s*\[rendering\]\s*(?:;.*)?$", line.strip())) for line in lines) > 1:
-        raise ValueError("Duplicate rendering sections; manual review required")
-    section = None
-    start = None
-    end = len(lines)
-    for i, line in enumerate(lines):
-        match = re.match(r"^\s*\[([^]]+)\]\s*(?:;.*)?$", line.strip())
-        if match:
-            if section == "rendering":
-                end = i
-                break
-            section = match.group(1)
-            if section == "rendering":
-                start = i
-    values = {
-        "quality/depth_prepass/disable_for_vendors": '""',
-        "quality/depth_prepass/enable": "true",
-    }
-    if start is None:
-        return text.rstrip("\r\n") + '\n\n[rendering]\n' + "".join(
-            f"{key}={value}\n" for key, value in values.items())
-    seen = set()
-    for i in range(start + 1, end):
-        key = lines[i].split("=", 1)[0].strip()
-        if key in values:
-            if key in seen:
-                raise ValueError("Duplicate depth setting; manual review required")
-            lines[i] = f"{key}={values[key]}\n"
-            seen.add(key)
-    if end and not lines[end - 1].endswith("\n"):
-        lines[end - 1] += "\n"
-    lines[end:end] = [f"{key}={value}\n" for key, value in values.items() if key not in seen]
-    return "".join(lines)
-
-
-def prepare(source, destination, saves):
+def prepare(source, destination, saves, variants=("baseline", "depth-prepass", "gles2")):
     source = source.resolve()
     destination = destination.resolve()
     if destination.exists() or destination == source or source in destination.parents:
@@ -70,11 +51,13 @@ def prepare(source, destination, saves):
         raise ValueError("Control contains symlinks; review before copying")
     before = {str(p.relative_to(source)): digest(p) for p in source.rglob("*") if p.is_file()}
     destination.mkdir(parents=True)
-    for variant in ("baseline", "depth-prepass", "gles2"):
+    if not variants or any(variant not in VARIANTS for variant in variants):
+        raise ValueError("Unknown or empty experiment selection")
+    for variant in variants:
         target = destination / variant / "payload"
         shutil.copytree(source, target)
         override = target / "game/override.cfg"
-        if variant == "depth-prepass":
+        if variant in {"depth-prepass", "zink-norp-depth"}:
             original = override.read_text(encoding="utf-8-sig") if override.exists() else ""
             override.write_text(merge_depth_override(original), encoding="utf-8", newline="\n")
         data = destination / variant / "profile/data/CassetteBeasts"
@@ -93,10 +76,11 @@ ROOT={root}
 export XDG_DATA_HOME="$ROOT/profile/data"
 export XDG_CONFIG_HOME="$ROOT/profile/config"
 export XDG_CACHE_HOME="$ROOT/profile/cache"
+{VARIANTS[variant]}\
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
 LOG="$ROOT/logs/$(date -u +%Y%m%dT%H%M%S)-$$.log"
 printf 'Variant: {variant}\\nUTC: %s\\n' "$(date -u --iso-8601=seconds)" | tee "$LOG"
-env | sort | grep -E '^(DISPLAY|XAUTHORITY|XDG_|MESA_|GALLIUM_|VK_|TU_|LD_)' >> "$LOG" || true
+env | sort | grep -E '^(DISPLAY|XAUTHORITY|XDG_|MESA_|GALLIUM_|ZINK_|VK_|TU_|LD_)' >> "$LOG" || true
 "$ROOT/payload/launch.sh"{args} --verbose "$@" 2>&1 | tee -a "$LOG"
 '''
         launcher = destination / f"launch-{variant}.sh"
@@ -118,5 +102,7 @@ if __name__ == "__main__":
     parser.add_argument("source", type=Path, help="Control payload folder")
     parser.add_argument("destination", type=Path, help="New experiment folder")
     parser.add_argument("--saves", type=Path, default=Path.home() / ".local/share/CassetteBeasts")
+    parser.add_argument("--variants", nargs="+", choices=VARIANTS,
+                        default=["baseline", "depth-prepass", "gles2"])
     args = parser.parse_args()
-    prepare(args.source, args.destination, args.saves)
+    prepare(args.source, args.destination, args.saves, args.variants)

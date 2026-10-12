@@ -1,0 +1,25 @@
+{
+  "filename": "godot.arm64",
+  "architecture": "aarch64",
+  "sha256": "dff499fb712d0d8b0777d4171d0fcf89164dbf8bc6a841cc9ce9239d74bb9884",
+  "size": 53521128,
+  "version_strings": [
+    "3.5.1.stable",
+    "3.5.1.stable.custom_build"
+  ],
+  "diagnostic_source_paths": [
+    "drivers/gles3/rasterizer_canvas_base_gles3.cpp",
+    "drivers/gles3/rasterizer_canvas_gles3.cpp",
+    "drivers/gles3/rasterizer_gles3.cpp",
+    "drivers/gles3/rasterizer_scene_gles3.cpp",
+    "drivers/gles3/rasterizer_storage_gles3.cpp",
+    "drivers/gles3/rasterizer_storage_gles3.h",
+    "drivers/gles3/shader_cache_gles3.cpp",
+    "drivers/gles3/shader_compiler_gles3.cpp",
+    "drivers/gles3/shader_gles3.cpp",
+    "drivers/gles3/shader_gles3.h",
+    "modules/godotsteam/godotsteam.cpp",
+    "modules/gridmap/grid_map.cpp"
+  ],
+  "scope": "Static strings do not establish which engine patches are present"
+}
