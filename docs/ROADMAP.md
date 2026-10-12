@@ -80,12 +80,25 @@ The following are **workstreams**, not a fixed 0.3.0–0.9.0 calendar. Choose am
 | Workstream | Why it matters |
 | --- | --- |
 | **Compatibility recipes and diagnostics** | Improve the existing engine/version detection and pinned recipes; add safe, version-scoped repairs, portable diagnostic bundles, and regression tracking rather than repeating investigative work title by title. |
+| **Older Ren'Py games** | Expand RenFrame's coverage of legacy Ren'Py releases (especially 6.x and early 7.x, with older generations assessed separately). Prioritize safe detection, compatible Python 2 ARM64 runtime/migration paths, script/bytecode compatibility, media and saves; reuse existing narrow migration profiles instead of silently upgrading incompatible projects. |
 | **Steam Frame and device integration** | Improve transfer, install, repair, uninstall, artwork, and controller guidance. Aim for a non-terminal path where feasible without making SSH, Steam settings changes, or online access mandatory. |
 | **Device-side finalization** | Generalize the experimental STS2-style two-stage contract for engines requiring native components, vendor SDKs, or final ARM64 builds; keep licensing and ownership boundaries intact. |
 | **Mods, saves, and libraries** | Revisit the existing Ren'Py mod-library prototype; offer reversible profiles, save-location discovery/migration, and clear handling of native x86-only mod dependencies. |
 | **Broader ARM64 Linux hardware** | Move beyond a single Steam Frame baseline to handhelds, laptops, and low-power boards where games are viable; measure performance and memory honestly rather than assuming native automatically means faster. |
 | **New engine research** | Investigate XNA/FNA/MonoGame generalization, Unity/VR, WOLF RPG Editor, and other candidates only behind explicit experimental scopes. MonoFrame already exists for one pinned Stardew Valley version; that does **not** imply general managed-game compatibility. |
 | **Community verification** | Build a useful compatibility catalogue, reproducible issue templates, opt-in diagnostics, contributor docs, and clear distinctions between reported working, reproducibly converted, and fully played. |
+
+## Older Ren'Py compatibility: dedicated research and implementation track
+
+**Goal:** Bring more games built with pre-ARM64 Ren'Py releases to native Linux AArch64 without treating a single successful migration as proof of universal legacy support.
+
+- **Inventory legacy generations:** Map relevant Ren'Py 6.x and pre-7.5 7.x releases, then investigate even older releases (including 5.x) separately where practical. Record each game's exact engine version, Python generation, archives, bytecode-only scripts, extensions, and external binaries.
+- **Build on existing evidence:** Preserve the narrowly scoped experimental paths for original **DDLC 6.99.12 → 7.5.3** and **Ren'Py 7.3.5 / 7.4.x → 7.5.0**, plus existing title-specific Katawa Shoujo compatibility research. These are starting points, **not generic support for all 6.x or early 7.x games**.
+- **Choose safe strategies per generation:** Evaluate full-engine migration, source/script transformation, or independently maintained compatible ARM64 runtimes as appropriate. Respect Python 2 vs Python 3, engine APIs, compiled bytecode formats, Python/native extensions, codecs, shaders, and other dependencies. Avoid mixing incompatible engine code with native runtime libraries.
+- **Keep migration explicit and reversible:** Detect unsupported combinations clearly; require opt-in for cross-version migrations; always preserve the source game. Do not guess a nearby engine release or distribute retail assets or proprietary binaries.
+- **Verify more than startup:** Test dialogue, choices, image/audio/video, rollback, save/load, exit/relaunch, and where relevant script/character-file behavior on actual ARM64 hardware. Add version-scoped automated fixtures and record regressions separately from game-specific failures.
+
+**Success criterion:** More independently tested legacy Ren'Py versions can be **reproducibly converted through the public application** using documented, narrowly scoped compatibility paths. This work is prioritized after the immediate v0.1.1 stability pass unless a contained regression fix belongs in that patch; no new blanket legacy-support promise is implied.
 
 ## What v1.0 would actually mean
 
