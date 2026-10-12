@@ -3,7 +3,7 @@
 | Field | v0.1.0.3 compatibility record |
 | --- | --- |
 | Game edition | Not recorded |
-| Backend | RPGMFrame; older ConstructFrame menu evidence appears in repository |
+| Backend | Not identified for the working package; an earlier ConstructFrame menu-only test is documented |
 | Target | Native Linux ARM64 (as reported) |
 | Tested device | Steam Frame |
 | Hardware status | **Reported working** |
