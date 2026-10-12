@@ -10,6 +10,8 @@ from megcfbt.native_backend import NativeBuildError, validate_runtime
 from monoframe.runtime import windows_x64_executable
 from renframe.elf import read_elf_architecture
 from renframe.source_safety import validate_copy_tree
+from megcfbt.native_runtime import _cache_parent
+from megcfbt.runtime_download import ensure_bundle, RuntimeDownloadError
 
 REQUIRED = {'dotnet/dotnet', 'managed/FNA.dll', 'managed/Steamworks.NET.dll',
             'prepare/windows-x64/CelestePrepare.exe', 'prepare/managed/CelestePrepare.dll',
@@ -18,6 +20,26 @@ REQUIRED = {'dotnet/dotnet', 'managed/FNA.dll', 'managed/Steamworks.NET.dll',
             'native/libceleste_fmod_compat.so'}
 FMOD_HASH = '48241c836b45116e1b25f9f2cb121e45c64140c5af205706b48c8b1c3712f963'
 FMOD_FILENAME = 'fmodstudioapi20315linux.tar.gz'
+INDEX_PATH = Path(__file__).with_name('runtime_index.json')
+
+def recipe_entry():
+    try:
+        entry = json.loads(INDEX_PATH.read_text())['recipes'][PROFILE]
+        names = entry['archive_files']
+        if (entry.get('executable') != 'dotnet/dotnet'
+            or not re.fullmatch(r'[a-z0-9-]+', str(entry.get('recipe_id', '')))
+            or not re.fullmatch(r'[0-9a-f]{64}', str(entry.get('sha256', '')))
+            or not str(entry.get('url', '')).startswith('https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/')
+            or not isinstance(names, list) or not names or len(names) != len(set(names))
+            or not REQUIRED.union({'engine-capabilities.json'}).issubset(names)):
+            return None
+        for name in names:
+            if not isinstance(name, str) or any(not re.fullmatch(r'[A-Za-z0-9_+.-]+', part)
+                or part in {'.', '..'} or part.endswith('.') for part in name.split('/')):
+                return None
+        return entry
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 def validate_fmod_sdk(path: Path) -> Path:
     path = Path(path).expanduser().resolve()
@@ -55,16 +77,30 @@ def validate_sdk(root: Path) -> dict:
     except (OSError, ValueError, KeyError, TypeError) as error:
         raise NativeBuildError(f'Celeste runtime SDK validation failed: {error}') from error
 
-def resolve_runtime(runtime=None, **kwargs):
+def resolve_runtime(runtime=None, *, progress=None, download_progress=None):
     selected = runtime or os.environ.get('CELESTEFRAME_RUNTIME')
-    if not selected:
-        raise NativeBuildError('Celeste requires its matching Linux ARM64 SDK; select it with --backend-runtime.')
-    root = Path(selected).expanduser().resolve()
-    validate_sdk(root)
-    return root
+    if selected:
+        root = Path(selected).expanduser().resolve()
+        validate_sdk(root)
+        return root
+    entry = recipe_entry()
+    if entry is None:
+        raise NativeBuildError('No published Celeste runtime SDK; select the matching directory with --backend-runtime.')
+    def valid(root):
+        try:
+            manifest = validate_sdk(root)
+            return (manifest.get('recipe_id') == entry['recipe_id']
+                    and set(manifest['files']) == set(entry['archive_files'])-{'engine-capabilities.json'})
+        except NativeBuildError:
+            return False
+    try:
+        return ensure_bundle(entry, _cache_parent()/'celesteframe'/entry['recipe_id'],
+            validate=valid, progress=progress, download_progress=download_progress)
+    except RuntimeDownloadError as error:
+        raise NativeBuildError(str(error)) from error
 
 def automatic_runtime_available():
-    return False
+    return recipe_entry() is not None
 
 def find_fmod_sdk():
     selected = os.environ.get('MEGCFBT_CELESTE_FMOD_SDK')

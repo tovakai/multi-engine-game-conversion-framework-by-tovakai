@@ -14,7 +14,7 @@ ARM64 runtime and Windows preparation tool. See [MonoFrame support and validatio
 | LÖVEFrame | `.love`, fused EXE ZIP, or Lua project | Automatically downloaded LÖVE 11.5 and supported ARM64 modules | Balatro main menu; Gravity Circuit language screen with Steam initialized |
 | ConstructFrame | Construct 2/3 packaged web exports | Shared ARM64 NW.js backend | The Witch's House main menu from the earlier native conversion test |
 | AGSFrame | CLIB game library or appended executable data | Automatically downloaded AGS 3.6.2.21 with plugin capabilities | The Cat Lady opening sequence through the generated launcher |
-| CelesteFrame | Pinned vanilla Steam Windows XNA Celeste 1.4.0.0 | Matching FNA 23.10 / .NET 8.0.31 ARM64 SDK plus owner-supplied FMOD Studio API 2.03.15 Linux SDK | Menu, music, gameplay and save/load with Frame controllers; primary-controller selection matters. See [setup](backends/celesteframe.md) |
+| CelesteFrame | Pinned vanilla Steam Windows XNA Celeste 1.4.0.0 | Automatically downloaded FNA 23.10 / .NET 8.0.31 ARM64 SDK plus owner-supplied FMOD Studio API 2.03.15 Linux SDK | Menu, music, gameplay and save/load with Frame controllers; primary-controller selection matters. See [setup](backends/celesteframe.md) |
 
 GameMaker YYC/GMRT native exports cannot use a VM runner. Newer WAD 17 features,
 native extensions and unimplemented runner functions can still prevent gameplay.

@@ -5,20 +5,21 @@ installation into a native Linux ARM64 FNA package for Steam Frame. It preserves
 the owned game content and prepares a separate managed executable. It uses real
 Steam initialization and stats interfaces through the Frame's installed client.
 
-Supply the matching Celeste runtime SDK and the separately obtained
-**FMOD Studio API 2.03.15 Linux SDK** archive. The open runtime SDK includes
+The converter automatically downloads and verifies the matching Celeste runtime
+SDK. Supply the separately obtained **FMOD Studio API 2.03.15 Linux SDK** archive.
+The open runtime SDK includes
 FNA 23.10, FNA3D, FAudio, Theorafile, SDL2, .NET 8.0.31 and preparation tools;
 it excludes game data, FMOD libraries and Steam client libraries.
 
 ```powershell
 python -m megcfbt build "C:\Program Files (x86)\Steam\steamapps\common\Celeste" `
-  --runtime "C:\path\to\celeste-runtime-sdk" `
   --fmod-sdk "C:\path\to\fmodstudioapi20315linux.tar.gz" `
   --output "C:\Conversions\Celeste-frame"
 ```
 
-The GUI detects Celeste, requests the matching runtime directory, and finds the
-FMOD archive in Downloads or lets you select it. `MEGCFBT_CELESTE_FMOD_SDK` can
+The GUI detects Celeste, selects the runtime automatically, and finds the FMOD
+archive in Downloads or lets you select it. `--runtime` can select an optional
+matching runtime directory override. `MEGCFBT_CELESTE_FMOD_SDK` can
 also select the archive. FMOD SDK archives with an unexpected checksum are
 rejected. The original installation and its saves remain untouched; an existing
 source `Saves/` directory is copied into the new package.

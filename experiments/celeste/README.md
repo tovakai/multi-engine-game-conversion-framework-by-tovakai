@@ -47,8 +47,10 @@ Celeste's existing controller selection behavior.
 
 Windows CLI inspection and conversion passed with the officially built Linux
 Steamworks.NET wrapper. The ordinary Frame ZIP installer registered `Celeste`
-and applied all four artwork slots. Integrated package gameplay and public
-runtime distribution checks are still pending.
+and applied all four artwork slots. The owner confirmed gameplay and save/reload
+through that installed copy. The frozen Windows GUI also completed real
+inspection, conversion and ZIP packaging. Public runtime distribution checks
+remain pending.
 
 ## Build the open runtime SDK
 

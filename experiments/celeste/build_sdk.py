@@ -126,6 +126,7 @@ def main():
         (tools/'licenses/FMODStudioFix-MIT.txt', 'FMODStudioFix-MIT.txt'), (framework/'LICENSE', 'Framework-LICENSE')]:
         shutil.copy2(path, licenses/name)
     shutil.copytree(tools/'native', target/'source/native')
+    shutil.copy2(framework/'megcfbt/runtime_support/frame_steam_env.c', target/'source/native/frame_steam_env.c')
     shutil.copytree(tools/'prepare', target/'source/prepare', ignore=shutil.ignore_patterns('bin', 'obj'))
     shutil.copy2(Path(__file__), target/'source/build_sdk.py')
     provenance = {'FNA': FNA_COMMIT, 'Steamworks.NET': STEAM_COMMIT,

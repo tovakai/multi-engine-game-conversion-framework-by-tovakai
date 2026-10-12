@@ -44,7 +44,7 @@ def sdk(tmp_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         files[name] = hashlib.sha256(data).hexdigest()
-    manifest = {'profile': profiles.PROFILE, 'architecture': 'aarch64',
+    manifest = {'profile': profiles.PROFILE, 'architecture': 'aarch64', 'recipe_id': 'celeste-test',
         'dotnet_version': '8.0.31', 'files': files,
         'runtime_files': [name for name in files if not name.startswith('prepare/')]}
     (root/'engine-capabilities.json').write_text(json.dumps(manifest))
@@ -122,3 +122,38 @@ def test_managed_config_loads_real_fna_and_steam_assemblies(tmp_path):
     target = deps['targets'][deps['runtimeTarget']['name']]
     assert target['Celeste/1.0.0']['dependencies'] == {'FNA': '23.10.0', 'Steamworks.NET': '20.0.0'}
     assert 'Steamworks.NET.dll' in target['Steamworks.NET/20.0.0']['runtime']
+
+def test_pinned_runtime_download_cache_and_repair(tmp_path, monkeypatch):
+    root = sdk(tmp_path)
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode='w:gz') as archive:
+        for path in root.rglob('*'):
+            if path.is_file(): archive.add(path, arcname=path.relative_to(root).as_posix())
+    data = buffer.getvalue()
+    entry = {'recipe_id': 'celeste-test', 'executable': 'dotnet/dotnet',
+        'sha256': hashlib.sha256(data).hexdigest(),
+        'archive_files': [path.relative_to(root).as_posix() for path in root.rglob('*') if path.is_file()],
+        'url': 'https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/test/celeste.tar.gz'}
+    monkeypatch.setattr(runtime, 'recipe_entry', lambda: entry)
+    monkeypatch.setattr(runtime, '_cache_parent', lambda: tmp_path/'cache')
+    from megcfbt import runtime_download
+    downloads = []
+    class Response(io.BytesIO):
+        headers = {'Content-Length': str(len(data))}
+    def open_url(*args, **kwargs):
+        downloads.append(args[0])
+        return Response(data)
+    monkeypatch.setattr(runtime_download.urllib.request, 'urlopen', open_url)
+    cache = runtime.resolve_runtime()
+    assert runtime.resolve_runtime() == cache
+    assert len(downloads) == 1
+    (cache/'managed/FNA.dll').write_bytes(b'corrupt')
+    assert runtime.resolve_runtime() == cache
+    assert len(downloads) == 2
+    assert runtime.validate_sdk(cache)['profile'] == profiles.PROFILE
+
+def test_real_recipe_enables_normal_gui_provisioning(tmp_path, monkeypatch):
+    root = source(tmp_path, monkeypatch)
+    from megcfbt.router import automatic_native_runtime_available
+    assert runtime.recipe_entry()['recipe_id'] == 'celeste-steam-xna-1-4-0-0-net8-fna2310'
+    assert automatic_native_runtime_available(inspect_source(root))

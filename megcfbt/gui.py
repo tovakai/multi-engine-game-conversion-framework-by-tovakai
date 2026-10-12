@@ -948,7 +948,7 @@ class ConverterApp:
 
         if self.inspection.backend == 'celesteframe':
             from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
-            if self.backend_runtime is None:
+            if self.backend_runtime is None and not automatic_native_runtime_available(self.inspection):
                 self._pick_backend_runtime()
                 if self.backend_runtime is None:
                     return

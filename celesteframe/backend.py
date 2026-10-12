@@ -41,14 +41,14 @@ def build_game(source: Path, *, output: Path, runtime=None, runtime_version=None
         raise NativeBuildError('Expected the verified vanilla Steam Windows XNA Celeste 1.4.0.0 installation; mods, Everest and other editions need a separate profile.')
     if runtime_version not in (None, '1.4.0.0'):
         raise NativeBuildError('Celeste requires the pinned 1.4.0.0 source profile.')
-    sdk = resolve_runtime(runtime)
-    manifest = validate_sdk(sdk)
     try:
         fmod = validate_fmod_sdk(Path(fmod_sdk)) if fmod_sdk else find_fmod_sdk()
     except RuntimeError as error:
         raise NativeBuildError(str(error)) from error
     if fmod is None:
         raise NativeBuildError('Celeste needs the separately obtained FMOD Studio API 2.03.15 Linux SDK. Place fmodstudioapi20315linux.tar.gz in Downloads or set MEGCFBT_CELESTE_FMOD_SDK.')
+    sdk = resolve_runtime(runtime, progress=progress, download_progress=download_progress)
+    manifest = validate_sdk(sdk)
     if force and Path(output).exists() and any((Path(output)/name).exists() for name in ('game/Saves', 'userdata', 'userconfig')):
         raise NativeBuildError('This Celeste output contains user data; select a new output directory to preserve it.')
     def prepare(target):

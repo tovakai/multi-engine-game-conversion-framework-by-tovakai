@@ -42,6 +42,9 @@ from megcfbt.native_runtime import automatic_runtime_available
 
 
 def automatic_native_runtime_available(inspection: UnifiedInspection) -> bool:
+    if inspection.backend == 'celesteframe':
+        from celesteframe.runtime import automatic_runtime_available as celeste_available
+        return inspection.buildable and celeste_available()
     if inspection.backend == 'unityframe':
         return inspection.buildable
     if inspection.backend=='monoframe':
