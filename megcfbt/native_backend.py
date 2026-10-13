@@ -126,7 +126,7 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             encoding='utf-8', newline='\n')
         launcher.chmod(0o755)
         from megcfbt.frame_package import write_frame_metadata
-        write_frame_metadata(stage, name=game_name, launcher_path=launcher,
+        metadata_path = write_frame_metadata(stage, name=game_name, launcher_path=launcher,
                              engine=engine, engine_version=engine_version,
                              backend={'CelesteFrame': 'celesteframe', 'MonoFrame': 'monoframe',
                                       'GameMaker': 'gamemakerframe', 'LÖVE': 'loveframe',
@@ -135,6 +135,10 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
                              compatibility_profile=compatibility_profile,
                              steam_identity=steam_identity,
                              steam_runtime_appid=app_id)
+        from megcfbt.asset_dedup import record_origins
+        if progress and compatibility_profile:
+            progress('Recording final asset provenance for optional Steam deduplication')
+        record_origins(stage, source, json.loads(metadata_path.read_text(encoding='utf-8')))
         (stage / 'native-runtime.json').write_text(json.dumps({
             'engine': engine, 'source_engine_version': engine_version,
             'architecture': 'aarch64', 'executable': executable,

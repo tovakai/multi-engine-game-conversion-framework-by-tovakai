@@ -47,7 +47,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.setuptools.package-data]
-megcfbt = ["steam_library.py", "asset_dedup.py", "_build_info.json", "native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
+megcfbt = ["steam_library.py", "steam_client.py", "asset_dedup.py", "_build_info.json", "native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
 gamemakerframe = ["patches/*.patch"]
 rpgmframe = ["godot_runtime_index.json"]
 monoframe = ["runtime_index.json", "runtime_support/*.c", "patches/*.patch"]

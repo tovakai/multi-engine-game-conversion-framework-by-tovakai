@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import uuid
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
@@ -23,6 +24,87 @@ SCHEMA = 'megcfbt.asset-links/v1'
 DENIED = {'saves', 'save', 'mods', 'config', 'userdata', 'userconfig', 'runtime', 'patches'}
 PROFILES = {('celesteframe', 'celeste-steam-xna-1.4.0.0'),
             ('monoframe', 'stardew-steam-1.6.15-net6')}
+ORIGINS_SCHEMA = 'megcfbt.asset-origins/v1'
+LEGACY_GRAPHICS_PREAMBLE_SHA = 'deee20d22b3867be8149d81fee063bf37d6ec050b4dd2ca4cc5ded72a969f768'
+
+
+class Progress:
+    def __init__(self, callback, phase, total):
+        self.callback, self.phase, self.total = callback, phase, total
+        self.last = 0
+        self.update(0, force=True)
+
+    def update(self, completed, *, force=False):
+        now = time.monotonic()
+        if self.callback and (force or completed == self.total or now - self.last >= 1):
+            self.callback(self.phase, completed, self.total)
+            self.last = now
+
+
+def eligible_asset(relative):
+    return (relative.startswith('Content/') and relative.endswith('.xnb')
+            and not any(part.lower() in DENIED for part in relative.split('/')))
+
+
+def record_origins(root, source, meta):
+    """Record actual final conversion results, never authorize a depot match.
+
+    This runs after backend preparation, so patched resources cannot be classified
+    merely from copy intentions. Only existing experimental static allowlists apply.
+    """
+    if (library().backend(meta), meta.get('compatibility_profile')) not in PROFILES:
+        return None
+    game = root / 'game'
+    entries = []
+    for target in sorted((game / 'Content').rglob('*.xnb')):
+        relative = target.relative_to(game).as_posix()
+        if not eligible_asset(relative):
+            continue
+        target = path_inside(game, relative)
+        if not target.is_file() or target.stat().st_nlink != 1:
+            continue
+        converted_sha = digest(target)
+        original = path_inside(source, relative)
+        original_sha = digest(original, source=True) if original.is_file() else None
+        entries.append({'path': relative, 'sha256': converted_sha,
+                        'source_sha256': original_sha, 'size': target.stat().st_size,
+                        'status': 'unchanged' if converted_sha == original_sha else
+                        'modified' if original_sha else 'generated'})
+    destination = root / '.megcfbt/asset-origins.json'
+    library().atomic_json(destination, {'schema': ORIGINS_SCHEMA,
+        'backend': library().backend(meta), 'profile': meta.get('compatibility_profile'),
+        'package_identity': meta.get('conversion'), 'entries': entries})
+    return destination
+
+
+def origins(base, meta):
+    path = path_inside(base, '.megcfbt/asset-origins.json')
+    if not path.exists():
+        return None  # Legacy packages still compare the complete safe allowlist.
+    if path.stat().st_size > 64 * 1024 * 1024:
+        raise ValueError('Conversion asset inventory is too large')
+    data = json.loads(path.read_text(encoding='utf-8'))
+    if (not isinstance(data, dict) or data.get('schema') != ORIGINS_SCHEMA
+            or data.get('backend') != library().backend(meta)
+            or data.get('profile') != meta.get('compatibility_profile')
+            or data.get('package_identity') != meta.get('conversion')
+            or not isinstance(data.get('entries'), list)):
+        raise ValueError('Conversion asset inventory does not match this package')
+    result = {}
+    for entry in data['entries']:
+        if (not isinstance(entry, dict) or not isinstance(entry.get('path'), str)
+                or not eligible_asset(entry['path']) or entry['path'] in result
+                or entry.get('status') not in {'unchanged', 'modified', 'generated'}
+                or not re.fullmatch('[0-9a-f]{64}', str(entry.get('sha256', '')))
+                or type(entry.get('size')) is not int or entry['size'] < 0):
+            raise ValueError('Invalid conversion asset inventory entry')
+        path_inside(base / 'game', entry['path'])
+        source_sha = entry.get('source_sha256')
+        if ((entry['status'] == 'unchanged' and source_sha != entry['sha256'])
+                or (source_sha is not None and not re.fullmatch('[0-9a-f]{64}', str(source_sha)))):
+            raise ValueError('Conflicting conversion asset provenance')
+        result[entry['path']] = entry
+    return result
 
 
 def library():
@@ -119,7 +201,7 @@ def link_matches(target, source):
     return value == str(source)
 
 
-def candidates(root, meta, detected):
+def candidates(root, meta, detected, *, progress=None):
     if detected.get('state') != 'installed':
         raise ValueError('Original Steam game must be installed locally before deduplication')
     if (library().backend(meta), meta.get('compatibility_profile')) not in PROFILES:
@@ -134,19 +216,27 @@ def candidates(root, meta, detected):
     if not content.is_dir():
         return [], 'Converted Content directory missing; no storage savings possible.'
     result = []
+    inventory = origins(base, meta)
+    targets = sorted(content.rglob('*.xnb'))
+    reporter = Progress(progress, 'Comparing assets', len(targets))
     # Compiled static XNA/MonoGame content only. Scripts, executables, packs,
     # patched resources, configs, saves and even other Content extensions stay.
-    for target in sorted(content.rglob('*.xnb')):
+    for index, target in enumerate(targets):
+        reporter.update(index)
         relative = target.relative_to(root).as_posix()
         path_inside(root, relative)
         asset = target.relative_to(game).as_posix()
-        if any(part.lower() in DENIED for part in Path(asset).parts):
+        if not eligible_asset(asset):
+            continue
+        recorded = inventory.get(asset) if inventory is not None else None
+        if inventory is not None and (not recorded or recorded['status'] != 'unchanged'):
             continue
         if not target.is_file() or target.stat().st_nlink != 1:
             continue
         with target.open('rb') as stream:
             if stream.read(3) != b'XNB':
                 continue
+        target_sha = None
         for installation in detected.get('installations', []):
             original = Path(installation['game'])
             if root.is_relative_to(original) or original.is_relative_to(root):
@@ -154,8 +244,13 @@ def candidates(root, meta, detected):
             source = path_inside(original, asset)
             if not source.is_file() or source.stat().st_size != target.stat().st_size:
                 continue
+            if recorded and target.stat().st_size != recorded['size']:
+                continue
+            target_sha = target_sha or digest(target)
+            if recorded and target_sha != recorded['sha256']:
+                continue  # Post-conversion edits are never treated as unchanged.
             sha = digest(source, source=True)
-            if sha != digest(target):
+            if sha != target_sha:
                 continue
             result.append({'path': relative, 'source_root': str(original),
                            'source_path': asset, 'source': str(source), 'sha256': sha,
@@ -163,10 +258,11 @@ def candidates(root, meta, detected):
                            'mode': stat.S_IMODE(target.stat().st_mode), 'status': 'planned',
                            'backup': relative + '.megcfbt-backup-' + uuid.uuid4().hex})
             break
+    reporter.update(len(targets), force=True)
     return result, 'Experimental Content/*.xnb candidates; backend gameplay/write-safety acceptance is pending.'
 
 
-def isolated_command(root, source_roots, command, executable=None):
+def isolated_command(root, source_roots, command, executable=None, *, profile=None):
     executable = executable or shutil.which('bwrap')
     if sys.platform != 'linux' or not executable:
         raise ValueError('Read-only bubblewrap isolation unavailable; keep full converted assets')
@@ -177,6 +273,23 @@ def isolated_command(root, source_roots, command, executable=None):
     session = os.environ.get('XDG_RUNTIME_DIR')
     if session and Path(session).is_absolute() and Path(session).is_dir():
         args += ['--bind', session, session]
+    if profile == 'stardew-steam-1.6.15-net6':
+        config = Path(os.environ.get('XDG_CONFIG_HOME') or (Path.home() / '.config'))
+        if not config.is_absolute():
+            raise ValueError('Unsafe Stardew configuration path; restore assets for standalone use')
+        save_directory = config / 'StardewValley'
+        for parent in [save_directory, *save_directory.parents]:
+            if parent.is_symlink():
+                raise ValueError('Unsafe save-directory symlink; full converted assets must be retained')
+        for original in source_roots:
+            original = Path(original).resolve()
+            if save_directory.is_relative_to(original) or original.is_relative_to(save_directory):
+                raise ValueError('Writable save path overlaps original Steam installation')
+        save_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        for item in save_directory.rglob('*'):
+            if item.is_symlink() or (item.is_file() and item.stat().st_nlink != 1):
+                raise ValueError('Unsafe linked save/config content; restore assets for standalone use')
+        args += ['--bind', str(save_directory), str(save_directory)]
     for source in sorted(set(source_roots)):
         args += ['--ro-bind', source, source]
     return args + ['--', *command]
@@ -210,6 +323,7 @@ def load(root):
     library().appid(data.get('appid'))
     if data.get('status') not in {'preparing', 'active', 'restoring', 'restored'}:
         raise ValueError('Invalid asset transaction status; recover from the original ZIP')
+    replay(root, data)
     for entry in data['entries']:
         if not isinstance(entry, dict):
             raise ValueError('Invalid asset entry')
@@ -230,7 +344,64 @@ def load(root):
 
 
 def save(root, data):
+    # Full checkpoints are constant in number. Small durable per-file events
+    # avoid rewriting a multi-megabyte manifest thousands of times on SD cards.
+    data['journal_id'] = uuid.uuid4().hex
     library().atomic_json(manifest_path(root), data)
+    replace_bytes(path_inside(root, '.megcfbt/asset-progress.jsonl'), b'', 0o600)
+
+
+def save_entry(root, data, index):
+    entry = data['entries'][index]
+    changes = {key: entry[key] for key in ('status', 'released_allocation',
+        'observed_free_increase', 'reclaimed') if key in entry}
+    event = {'journal_id': data['journal_id'], 'index': index, 'changes': changes}
+    payload = (json.dumps(event, separators=(',', ':')) + '\n').encode('utf-8')
+    path = path_inside(root, '.megcfbt/asset-progress.jsonl')
+    descriptor = os.open(path, os.O_WRONLY | os.O_APPEND | getattr(os, 'O_NOFOLLOW', 0))
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError('Unsafe asset progress journal')
+        with os.fdopen(descriptor, 'ab', closefd=False) as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+    finally:
+        os.close(descriptor)
+
+
+def replay(root, data):
+    path = path_inside(root, '.megcfbt/asset-progress.jsonl')
+    if not path.exists():
+        return  # Backward-compatible legacy manifests.
+    if path.stat().st_size > 128 * 1024 * 1024 or path.stat().st_nlink != 1:
+        raise ValueError('Unsafe or oversized asset progress journal')
+    if data['status'] in {'active', 'restored'}:
+        return  # Complete checkpoint supersedes even a stale/truncated old log.
+    with path.open('rb') as stream:
+        for line in stream:
+            # An interrupted last append has no durable completion marker. The
+            # checkpoint still has every hash/backup path needed for recovery.
+            if not line.endswith(b'\n'):
+                break
+            try:
+                event = json.loads(line)
+                if not isinstance(event, dict):
+                    raise ValueError('Invalid asset progress event')
+                if event.get('journal_id') != data.get('journal_id'):
+                    continue  # Crash between new checkpoint and journal reset.
+                index, changes = event['index'], event['changes']
+                if (data['status'] not in {'preparing', 'restoring'} or type(index) is not int
+                        or not 0 <= index < len(data['entries']) or not isinstance(changes, dict)
+                        or changes.get('status') not in {'replacing', 'linked', 'restored'}
+                        or set(changes) - {'status', 'released_allocation', 'observed_free_increase', 'reclaimed'}
+                        or any(value is not None and (type(value) is not int or value < 0)
+                               for key, value in changes.items() if key != 'status')):
+                    raise ValueError('Invalid asset progress event')
+                data['entries'][index].update(changes)
+            except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                raise ValueError('Invalid asset progress journal; retain the conversion ZIP for recovery') from exc
 
 
 def source_for(entry, detected):
@@ -270,6 +441,8 @@ def summary(data):
 
 
 def replace_bytes(path, content, mode):
+    if path.exists() and (not path.is_file() or path.stat().st_nlink != 1):
+        raise ValueError('Unsafe multiply-linked converted replacement file')
     fd, temporary = tempfile.mkstemp(prefix='.asset-write-', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:
@@ -304,32 +477,35 @@ def install_guard(root, meta, data):
     replace_bytes(launcher, script, 0o755)
 
 
-def enable(root, meta, detected, *, experimental=False):
+def enable(root, meta, detected, *, experimental=False, progress=None):
     root = root.resolve()
     with transaction(root):
-        return _enable(root, meta, detected, experimental=experimental)
+        return _enable(root, meta, detected, experimental=experimental, progress=progress)
 
 
-def _enable(root, meta, detected, *, experimental=False):
+def _enable(root, meta, detected, *, experimental=False, progress=None):
     root = root.resolve()
     data = load(root)
     if data and data['status'] != 'restored':
         validate(root, data, detected)
+        repair_graphics_bootstrap(root, meta, detected)
         return summary(data)
     if not experimental:
         return {'linked': 0, 'reclaimed_bytes': 0, 'allocation_measured': True,
                 'reason': 'No backend is advertised as safely deduplicated before Steam Frame gameplay acceptance. Full package retained.'}
-    entries, reason = candidates(root, meta, detected)
+    entries, reason = candidates(root, meta, detected, progress=progress)
     if not entries:
         return {'linked': 0, 'reclaimed_bytes': 0, 'allocation_measured': True, 'reason': reason + ' No byte-identical eligible assets; no storage savings.'}
     executable = probe_isolation(root)
+    repair_graphics_bootstrap(root, meta, detected)
     data = {'schema': SCHEMA, 'appid': library().identity(meta), 'package': str(root),
             'package_identity': meta.get('conversion'), 'profile': meta.get('compatibility_profile'),
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'status': 'preparing', 'isolation': executable, 'entries': entries}
     save(root, data)
     install_guard(root, meta, data)  # Guard refuses partial state before any links exist.
-    for entry in entries:
+    reporter = Progress(progress, 'Linking assets', len(entries))
+    for index, entry in enumerate(entries):
         target = path_inside(root, entry['path'])
         source = source_for(entry, detected)
         if target.stat().st_nlink != 1 or target.stat().st_size != entry['size'] or digest(target) != entry['sha256']:
@@ -338,7 +514,7 @@ def _enable(root, meta, detected, *, experimental=False):
         if backup.exists():
             raise ValueError('Unexpected asset backup; recover before retrying')
         entry['status'] = 'replacing'
-        save(root, data)
+        save_entry(root, data, index)
         os.replace(target, backup)
         sync_directory(target.parent)
         # Keep the complete converted copy until the replacement is verified.
@@ -350,7 +526,7 @@ def _enable(root, meta, detected, *, experimental=False):
             if not link_matches(target, source) or digest(source, source=True) != entry['sha256']:
                 raise ValueError('Replacement source changed; converted backup retained')
             entry['status'] = 'linked'
-            save(root, data)
+            save_entry(root, data, index)
             blocks = allocated(target)
             free_before = shutil.disk_usage(root).free
             backup.unlink()  # Exclusively converted package, after verified link + journal.
@@ -360,10 +536,11 @@ def _enable(root, meta, detected, *, experimental=False):
             entry['released_allocation'] = released
             entry['observed_free_increase'] = max(0, free_after - free_before)
             entry['reclaimed'] = min(released, entry['observed_free_increase']) if released is not None else None
-            save(root, data)
+            save_entry(root, data, index)
         finally:
             if temporary.is_symlink():
                 temporary.unlink()
+        reporter.update(index + 1)
     data['status'] = 'active'
     save(root, data)
     validate(root, data, detected)
@@ -386,7 +563,7 @@ def _restore_assets(root, detected=None):
     data['status'] = 'restoring'
     save(root, data)
     count = 0
-    for entry in data['entries']:
+    for index, entry in enumerate(data['entries']):
         target = path_inside(root, entry['path'], linked=True)
         backup = path_inside(root, entry['backup'])
         if target.exists() and not target.is_symlink():
@@ -423,7 +600,7 @@ def _restore_assets(root, detected=None):
             backup.unlink()
             sync_directory(backup.parent)
         entry['status'] = 'restored'
-        save(root, data)
+        save_entry(root, data, index)
     if data.get('launcher_backup'):
         launcher = path_inside(root, data['launcher'])
         backup = path_inside(root, data['launcher_backup'])
@@ -449,8 +626,96 @@ def launch(root, args):
     original = path_inside(root, data['launcher_backup'])
     if digest(original) != data['launcher_sha256']:
         raise ValueError('Converted launcher changed; repair before launching')
-    command = isolated_command(root, roots, [str(original), *args], data['isolation'])
+    import_graphics_environment()
+    command = isolated_command(root, roots, [str(original), *args], data['isolation'], profile=data.get('profile'))
     os.execv(command[0], command)
+
+
+def import_graphics_environment(*, pid=None, proc_root=None):
+    """Import only existing desktop graphics fields BEFORE entering bubblewrap.
+
+    Mount/user isolation can deny /proc/<desktop>/environ despite readable mode
+    bits. Steam identity and session authorization are never fabricated here.
+    """
+    if os.environ.get('MEGCFBT_ORIGINAL_STEAM_ENTRY') == '1':
+        os.environ['MEGCFBT_FRAME_ENV_IMPORTED'] = '1'
+        return  # The real Steam harness selected SteamVR graphics/input context.
+    if pid is None:
+        try:
+            result = subprocess.run(['pgrep', '-n', '-u', str(os.getuid()), 'plasmashell'],
+                capture_output=True, text=True, timeout=2)
+            pid = int(result.stdout.strip()) if result.returncode == 0 else None
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            pid = None
+    if pid is not None:
+        path = (proc_root or Path('/proc')) / str(pid) / 'environ'
+        try:
+            with path.open('rb') as stream:
+                contents = stream.read(1024 * 1024)
+            environment = dict(item.split(b'=', 1) for item in contents.split(b'\0') if b'=' in item)
+            graphics = {key.decode(): environment[key].decode() for key in
+                (b'DISPLAY', b'WAYLAND_DISPLAY', b'XDG_RUNTIME_DIR', b'XAUTHORITY') if key in environment}
+            frame = (graphics.get('XDG_RUNTIME_DIR', '').endswith('/frametop')
+                     or '/frametop/' in graphics.get('XAUTHORITY', ''))
+            if frame or not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY')):
+                os.environ.update(graphics)
+        except (OSError, ValueError):
+            pass  # Keep the inherited graphics context; never fail a native launch.
+    os.environ['MEGCFBT_FRAME_ENV_IMPORTED'] = '1'
+
+
+def repair_graphics_bootstrap(root, meta, detected):
+    """Migrate only the exact earlier shared preamble, exclusively in conversion.
+
+    A backup and repair receipt precede replacement. Other launcher bytes and
+    user edits are never guessed or rewritten. New conversions need no migration.
+    """
+    if (library().backend(meta), meta.get('compatibility_profile')) not in PROFILES:
+        return False
+    if detected.get('state') != 'installed':
+        raise ValueError('Original Steam installation required for isolation repair')
+    for item in detected.get('installations', []):
+        original = Path(item['game']).resolve()
+        if root.is_relative_to(original) or original.is_relative_to(root):
+            raise ValueError('Converted package must be separate from original Steam files')
+    base = path_inside(root, meta['payload']) if meta.get('payload') else root
+    launcher = path_inside(base, 'launch.sh')
+    if not launcher.is_file() or launcher.stat().st_nlink != 1:
+        return False
+    body = launcher.read_bytes()
+    record_path = path_inside(root, '.megcfbt/native-launcher-repair.json')
+    backup = path_inside(root, '.megcfbt/native-launcher-before-isolation.sh')
+    if record_path.exists():
+        recorded = json.loads(record_path.read_text())
+        if recorded.get('path') != launcher.relative_to(root).as_posix():
+            raise ValueError('Native launcher repair path changed; preserve the existing backup')
+        current = hashlib.sha256(body).hexdigest()
+        if current == recorded.get('after'):
+            return False
+        if current != recorded.get('before'):
+            raise ValueError('User changed the native launcher; automatic isolation repair refused')
+    prefix, marker, remainder = body.partition(b'cd "$ROOT/game"\n')
+    if not marker or hashlib.sha256(prefix).hexdigest() != LEGACY_GRAPHICS_PREAMBLE_SHA:
+        return False
+    repaired = prefix.replace(b'if command -v pgrep >/dev/null 2>&1; then',
+        b'if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]] && command -v pgrep >/dev/null 2>&1; then')
+    repaired = repaired.replace(b'''tr '\\0' '\\n' < "/proc/$pid/environ"''',
+        b'''tr '\\0' '\\n' 2>/dev/null < "/proc/$pid/environ" || true''')
+    repaired = repaired.replace(b'''tr '\\0' '\\n' < "/proc/$plasma_pid/environ" |''',
+        b'''{ tr '\\0' '\\n' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |''')
+    repaired += marker + remainder
+    record = {'path': launcher.relative_to(root).as_posix(),
+              'before': hashlib.sha256(body).hexdigest(), 'after': hashlib.sha256(repaired).hexdigest(),
+              'backup': backup.relative_to(root).as_posix(), 'reason': 'graphics-environment-before-isolation'}
+    library().atomic_json(record_path, record)
+    mode = stat.S_IMODE(launcher.stat().st_mode)
+    if backup.exists():
+        if digest(backup) != record['before']:
+            raise ValueError('Native launcher backup changed; isolation repair refused')
+    else:
+        replace_bytes(backup, body, mode)
+    replace_bytes(launcher, repaired, mode)
+    return True
 
 
 if __name__ == '__main__':

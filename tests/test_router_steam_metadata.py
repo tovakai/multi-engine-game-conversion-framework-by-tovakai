@@ -35,6 +35,7 @@ def fixture_game(tmp_path, monkeypatch, backend, trusted=True):
         def prepare(command, **kwargs):
             target = Path(command[command.index('--game-dir') + 1])
             (target / 'Stardew Valley.dll').write_bytes(b'prepared synthetic managed assembly')
+            (target / 'Content/Maps/patched.xnb').write_bytes(b'XNBprepared resource')
             return subprocess.CompletedProcess(command, 0, 'Prepared')
         host_preparer(monkeypatch, mono_fixtures.backend, prepare)
         return source, runtime, {}
@@ -53,6 +54,7 @@ def fixture_game(tmp_path, monkeypatch, backend, trusted=True):
         monkeypatch.setattr(celeste_fixtures.runtime, 'validate_fmod_sdk', lambda p: p)
         def prepare(command, **kwargs):
             Path(command[-1]).write_bytes(b'prepared synthetic Celeste assembly')
+            (Path(command[-1]).parent / 'Content/Maps/patched.xnb').write_bytes(b'XNBprepared resource')
             return subprocess.CompletedProcess(command, 0, 'Prepared')
         host_preparer(monkeypatch, celeste_fixtures.backend, prepare)
         return source, runtime, {'celeste_sdk': fmod}
@@ -86,6 +88,11 @@ def fixture_game(tmp_path, monkeypatch, backend, trusted=True):
 
 def convert(tmp_path, monkeypatch, backend, trusted=True):
     source, runtime, options = fixture_game(tmp_path, monkeypatch, backend, trusted)
+    if backend in {'monoframe', 'celesteframe'}:
+        content = source / 'Content/Maps'
+        content.mkdir(parents=True, exist_ok=True)
+        (content / 'unchanged.xnb').write_bytes(b'XNBunchanged source asset')
+        (content / 'patched.xnb').write_bytes(b'XNBsource resource')
     before = {p.relative_to(source): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in source.rglob('*') if p.is_file()}
     inspection = router.inspect_source(source)
@@ -148,6 +155,9 @@ def test_full_pipeline_keeps_installer_identity(tmp_path, monkeypatch, backend, 
         assert installer.capability(meta)[0]
         if backend in {'celesteframe', 'monoframe'}:
             assert meta.get('steam_identity') is None  # Audited hash profile alone suffices.
+            inventory = installer.assets().origins(root / 'payload', meta)
+            assert inventory['Content/Maps/unchanged.xnb']['status'] == 'unchanged'
+            assert inventory['Content/Maps/patched.xnb']['status'] == 'modified'
         else:
             assert meta['steam_identity']['source'] == 'installed-source-manifest'
             assert int(meta['steam_identity']['appid']) == number

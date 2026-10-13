@@ -31,7 +31,8 @@ def prepare():
                 out.write(path, path.relative_to(root).as_posix())
         for name in ['test_asset_dedup.py', 'test_steam_library.py', 'test_frame_package.py',
                      'test_router_steam_metadata.py', 'test_native_backends.py', 'test_monoframe.py',
-                     'test_celesteframe.py', 'test_easyrpg_backend.py']:
+                     'test_celesteframe.py', 'test_easyrpg_backend.py',
+                     'test_steam_client.py', 'test_steam_live_link.py', 'test_steam_native_chain.py']:
             out.write(root / 'tests' / name, 'tests/' + name)
     print(archive)
 
@@ -47,7 +48,9 @@ def run(archive):
         result = subprocess.run([sys.executable, '-m', 'pytest', '-q', '--tb=short', '-p', 'no:cacheprovider',
                                  '--basetemp', str(root / 'fixtures'),
                                  'tests/test_asset_dedup.py', 'tests/test_steam_library.py',
-                                 'tests/test_frame_package.py', 'tests/test_router_steam_metadata.py'], cwd=root, env=env)
+                                 'tests/test_frame_package.py', 'tests/test_router_steam_metadata.py',
+                                 'tests/test_steam_client.py', 'tests/test_steam_live_link.py',
+                                 'tests/test_steam_native_chain.py'], cwd=root, env=env)
         raise SystemExit(result.returncode)
 
 

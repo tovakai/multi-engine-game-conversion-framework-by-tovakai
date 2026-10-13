@@ -139,16 +139,19 @@ def test_prepare_idempotent_restore_and_original_preservation(tmp_path, package,
     assert wrapper.parent == record_path.parent
     body = wrapper.read_text()
     assert '%command%' in record['generated']
-    assert 'exec ' in body and '"$@"' not in body
+    assert 'exec ' in body and '--launch-link' in body and '"$@"' in body
     assert 'export SteamAppId' not in body
     assert 'Proton' not in body
     repeated = lib.prepare(root, meta, launcher, 504230, 'incorrect new backup', record_path, detected)
     assert repeated['previous'] == 'old user options'
     assert wrapper.read_text() == body
+    from test_steam_live_link import Client
+    client = Client('user edited options')
     with pytest.raises(ValueError, match='changed'):
-        lib.restore(record_path, 'user edited options', True)
+        lib.restore_live(record_path, client)
     assert json.loads(record_path.read_text())['status'] == 'pending'
-    assert lib.restore(record_path, record['generated'], True) == 'old user options'
+    client.options = record['generated']
+    assert lib.restore_live(record_path, client) == 'old user options'
     assert json.loads(record_path.read_text())['status'] == 'restored'
     assert original.read_bytes() == before
 

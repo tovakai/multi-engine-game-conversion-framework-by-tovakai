@@ -16,42 +16,49 @@ link**. This opens `steam://install/<validated-AppID>` in Steam. Complete Steam'
 installation, then rescan or rerun this same extracted installer. No regeneration
 or transfer is needed. The converter never downloads the original game itself.
 
-## Guided linking
+## Automatic linking
 
-Choose the recommended original-entry option. First copy your current launch
-options from the original game in **Properties → General → Launch Options** into
-the installer. Empty means you confirm there were none. The installer cannot
-reliably read live launch options; its backup is explicitly user-provided.
+Choose the recommended original-entry option. The installer reads the exact
+custom launch options through Steam's live `RegisterForAppDetails` callback
+(`strLaunchOptions`), saves them in its recovery record, and calls
+`SteamClient.Apps.SetAppLaunchOptions` with the validated AppID and wrapper command.
+It reads the options back and reports configuration success only on an exact
+match. There is no copying, pasting or editing Steam Properties.
 
-Copy the generated command (clipboard tools are used when available) and paste
-it into that field. Disable forced compatibility overrides for the native Linux
-launcher; do not select x86 Proton. Start the original game through Steam.
+The bridge uses an **already existing** loopback CEF debugging endpoint, probing
+ports 8080, 1337 and 9222 and the Steam SharedJSContext. It does not enable debugging,
+open a listener, install plugins, change Steam binaries/wrappers or restart Steam.
+If no safe live interface works, linking is unavailable and the installer offers
+non-Steam installation. It never edits `localconfig.vdf` or falls back to manual
+launch-option entry. Enabling CEF on a client that lacks it is separate setup
+research; no restart or patch is introduced as a hidden prerequisite.
 
-The wrapper consumes `%command%`, checks the matching inherited `SteamAppId`, and
+The wrapper consumes `%command%`, checks actual inherited Steam identity, and
 executes the converted launcher without passing Steam's original executable as
-game arguments. It preserves inherited Steam context and does not fabricate
+game arguments. It accepts matching Steam-provided identity fields or the actual
+ancestor SteamLaunch AppID when `SteamAppId` is absent. It preserves inherited Steam context and does not fabricate
 ownership or successful Steamworks calls. Steam Input and original-entry playtime
 may work, but require device verification. Steam initialization is not proof of
 achievement support. Offline Steam stubs remain offline stubs.
 
-Setup remains **pending** until the wrapper observes a matching Steam launch
-context and rechecks the local installation. **launch-observed** means the
+**configured** means live launch-option readback succeeded. **launch-observed** means the
 wrapper was reached, not that the game successfully initialized or gameplay was
 verified. Run the installer again and choose **Verify existing link** to inspect
-the receipt, package availability and current local installation. Compare the
-printed command with the live Launch Options field; cached configuration is not
-treated as authoritative. Steam does not get killed, restarted, or edited through
+the receipt, package availability, live options and current local installation.
+While the game is running, verification checks the actual `/proc/<pid>/exe`,
+matching Steam context and the converted Linux AArch64 ELF. Wrapper execution
+alone never establishes game-runtime success. Steam does not get killed, restarted, or edited through
 configuration files.
 
 ## Backend capability matrix
 
 | Backend | Shared linking | Identity and limitations |
 | --- | --- | --- |
-| CelesteFrame | Guided native, device acceptance pending | Hash-gated vanilla Steam XNA 1.4.0.0 profile, AppID 504230; existing user FMOD and controller launcher retained |
-| MonoFrame / Stardew Valley | Guided native, device acceptance pending | Hash-gated Steam 1.6.15 .NET 6 profile, AppID 413150; Steam online features remain unverified |
-| GameMakerFrame | Guided native, device acceptance pending | Exact source Steam manifest required; offline runtime stubs gain no achievements |
-| LÖVEFrame | Guided native, device acceptance pending | Exact source Steam manifest required; no general Steamworks guarantee |
-| AGSFrame | Guided native, device acceptance pending | Exact source Steam manifest required; no general Steamworks guarantee |
+| CelesteFrame | Automatic native, device acceptance pending | Hash-gated vanilla Steam XNA 1.4.0.0 profile, AppID 504230; existing user FMOD and controller launcher retained |
+| MonoFrame / Stardew Valley | Automatic native, device acceptance pending | Hash-gated Steam 1.6.15 .NET 6 profile, AppID 413150; Steam online features remain unverified |
+| GameMakerFrame | Automatic native, device acceptance pending | Exact source Steam manifest required; offline runtime stubs gain no achievements |
+| LÖVEFrame | Automatic native, device acceptance pending | Exact source Steam manifest required; no general Steamworks guarantee |
+| AGSFrame | Automatic native, device acceptance pending | Exact source Steam manifest required; no general Steamworks guarantee |
 | RenFrame | Deferred | Non-Steam supported; Ren'Py/runtime variants need dedicated context acceptance |
 | RPGMFrame | Deferred | Non-Steam supported; NW.js, mkxp-z and EasyRPG contracts need separate acceptance |
 | Godot / GodotSteam | Deferred | Non-Steam supported; genuine APIs, limited legacy bridges and offline stubs must remain distinct |
@@ -83,52 +90,70 @@ Records live at `~/.local/share/megcfbt/steam-links/<AppID>.json`, outside the
 original game directory. The stable `launch-<AppID>.sh` wrapper lives there too,
 so a moved/deleted conversion can still produce repair guidance. Records contain
 package and launcher paths, AppID,
-converter identity, profile, mode, generated options, user-preserved previous
+converter identity, profile, mode, generated options, exact live previous
 options, installation paths, status and timestamps. Records are atomically
 written before wrapper activation. A failed operation retains recovery data.
 
 Rerunning the installer offers verification, repair, restoration, a separate
 non-Steam shortcut, or cancellation. One record per original AppID prevents
 duplicate integration records. Repairs and package moves retain the first
-preserved original options. Preserve any later user edits before agreeing to
-repair. Existing non-Steam duplicate detection and artwork refresh still apply.
+preserved original options. Repair and restoration refuse unrelated later user
+changes. Existing non-Steam duplicate detection and artwork refresh still apply.
 
-Choose **Restore original Steam launch configuration** and paste the CURRENT
-live Launch Options to compare with the generated command. If they changed,
-the installer refuses restoration and asks you to preserve and reconcile your
-settings manually. Otherwise it prints the preserved original options to paste
-back into Steam, and marks the record restored only after explicit confirmation.
+Choose **Restore original Steam launch configuration**. The installer reads live
+options, compares them with its generated command, restores the exact saved
+string through Steam and verifies readback. If the user changed the options,
+restoration refuses to overwrite them. Interrupted restoration is retryable.
 An unavailable backup is never invented. Restoration never deletes original
 games, saves, mods or unrelated settings. Recovery records and the inactive
 wrapper are retained.
 
 If the conversion was moved or deleted, run the installer at its new location
-and select repair, or restore the original options in Steam using the record.
+and select repair or automatic restoration using the existing record.
 The stable wrapper reports missing launchers even if the entire conversion
-folder was deleted. Open the original game's Properties and use the preserved
-record to restore its options, or repair from a newly extracted ZIP.
+folder was deleted. Use a newly extracted package's installer to restore the
+original options or repair the link; no command entry is needed.
 
 ## Required Steam Frame acceptance
 
-No hardware acceptance is claimed for this release candidate. Record converter
+Full hardware acceptance remains pending for this release candidate. Record converter
 commit, game/runtime versions, library paths and evidence for each check:
 
 SSH access to a Frame was available. Synthetic fixtures passed there, including
-actual bubblewrap write denial and source metadata preservation. Real-game
-interactive acceptance below remains pending. The
-[asset deduplication checklist](steam-asset-deduplication.md) is also mandatory.
+actual bubblewrap write denial and source metadata preservation. On the actual
+Frame, the existing loopback endpoint exposed both required SteamClient methods.
+Stardew's live empty options were backed up, replaced, read back, restored,
+verified and configured again, with SteamVR running and original files (including
+hashes and metadata) unchanged during configuration. Subsequent real-game testing
+confirmed `payload/runtime/dotnet/dotnet` as an AArch64 Linux ELF with genuine
+AppID 413150. The user confirmed SteamVR view, controller input, gameplay,
+saving and relaunch. Steam and SteamVR remained running throughout.
+
+The shared launch contract retains Valve's native ARM64 launch wrapper and
+`reaper SteamLaunch AppId=...` prefix from `%command%`, then uses the installed
+native Valve pressure-vessel host launcher to execute the conversion. The original
+x86/FEX/Proton game suffix is replaced. Preserving this harness and its graphics
+context was necessary for SteamVR and controller input on the tested Frame.
+A wrapper receipt alone is never counted as proof of an ARM64 game process.
+
+Ordinary Steam restart persistence and original-runtime gameplay after restoration
+remain unverified, as do playtime and achievements. Other backends still require
+real-game acceptance. The [asset deduplication checklist](steam-asset-deduplication.md)
+is also mandatory; this test does not approve every candidate backend.
 
 - [ ] Installed original on internal storage: recommended link offered.
 - [ ] Owned but not installed locally: clear requirement; official Steam install
       flow; cancel and later rescan without transferring again.
 - [ ] Original installed on mounted SD/secondary library: detected without reinstall.
 - [ ] No valid identity / other store: existing non-Steam path and artwork work.
-- [ ] Guided link from original entry: actual gameplay, Steam Input/controller,
+- [ ] Automatic link from original entry: actual AArch64 game executable, gameplay, Steam Input/controller,
       save, exit and relaunch; original files unchanged.
 - [ ] Playtime attribution verified separately, or explicitly unverified.
 - [ ] Achievements verified using a genuinely supported backend and an actual
       unlock, or explicitly unverified; initialization alone is insufficient.
 - [ ] Restore previous options; original runtime launches normally.
+- [ ] Live options persist across an ordinary user-initiated Steam restart;
+      installer does not restart Steam or SteamVR.
 - [ ] Duplicate installer runs, conversion updates, moved/deleted packages and
       interrupted setup recover without duplicate modifications.
 - [ ] User edits after linking remain preserved; restoration refuses conflicts.
@@ -147,3 +172,10 @@ and a Linux [%command% wrapper example](https://help.steampowered.com/en/faqs/vi
 The [Steam browser protocol](https://developer.valvesoftware.com/wiki/Steam_browser_protocol)
 provides the official client installation flow. STS2's local debug setter is an
 architectural reference, not a stable public API assumed available across clients.
+
+The [steam-engine API example](https://github.com/6E6B/steam-engine) demonstrates
+`SetAppLaunchOptions` over CDP, but its wrapper-patching/debugger-enabling setup is
+not adopted. [Decky frontend support](https://github.com/SteamDeckHomebrew/decky-frontend-lib)
+and [steam-debug](https://github.com/kmturley/steam-debug) provide additional live
+client context. `GetLaunchOptionsForApp` returns game-defined choices and is not
+used to back up custom launch options.

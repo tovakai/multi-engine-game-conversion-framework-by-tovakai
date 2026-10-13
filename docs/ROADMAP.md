@@ -50,7 +50,9 @@ v0.1.0.3 is published and immutable. This release improves the shared extracted
 ZIP installer: detect original games installed through Steam on this Frame,
 including secondary libraries; guide supported native packages toward original
 entries; retain non-Steam registration and artwork. Preserve original files and
-Steam context, record reversible setup, and keep Steam running.
+Steam context, configure/read back launch options through an existing live client
+interface, record exact backups and reversible setup, and keep Steam running.
+No manual launch-command copying or running-client configuration-file edits.
 Add guarded post-extraction asset deduplication for byte-identical, explicitly
 selected read-only assets, with recovery and restoration. Deduplication remains
 experimental until backend-specific Frame gameplay/write-safety gates pass.

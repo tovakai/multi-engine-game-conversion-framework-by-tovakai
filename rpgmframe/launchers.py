@@ -25,19 +25,19 @@ import_graphics_env() {
                 export "$key=$value"
                 ;;
         esac
-    done < <(tr '\0' '\n' < "/proc/$pid/environ")
+    done < <(tr '\0' '\n' 2>/dev/null < "/proc/$pid/environ" || true)
 }
 
-if command -v pgrep >/dev/null 2>&1; then
+if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]] && command -v pgrep >/dev/null 2>&1; then
     plasma_pid="$(pgrep -n plasmashell || true)"
     if [[ -n "$plasma_pid" && -r "/proc/$plasma_pid/environ" ]]; then
         plasma_runtime="$(
-            tr '\0' '\n' < "/proc/$plasma_pid/environ" |
+            { tr '\0' '\n' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |
                 sed -n 's/^XDG_RUNTIME_DIR=//p' |
                 tail -n 1
         )"
         plasma_xauth="$(
-            tr '\0' '\n' < "/proc/$plasma_pid/environ" |
+            { tr '\0' '\n' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |
                 sed -n 's/^XAUTHORITY=//p' |
                 tail -n 1
         )"

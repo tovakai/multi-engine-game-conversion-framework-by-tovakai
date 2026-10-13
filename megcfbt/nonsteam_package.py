@@ -401,10 +401,13 @@ a trustworthy AppID. The original game must be installed through Steam on this
 Steam Frame before linking is available. Ownership or installation on another
 computer is not sufficient. Additional mounted Steam libraries are discovered.
 Missing games can be installed through Steam, then rescanned without retransferring.
-Guided linking generates Launch Options to paste into the original game's
-Properties > General. Preserve existing options first. No original game files
-or live Steam configuration files are changed. Rerun the installer to verify,
-repair, or restore. A launch receipt does not verify achievements or playtime.
+Automatic linking reads and backs up custom Launch Options, configures the
+original entry through an existing local SteamClient interface, and verifies
+readback. No copying or editing Steam Properties is needed. If the live interface
+is unavailable, use non-Steam installation. Steam is never restarted and no
+original game files or live Steam configuration files are edited by the installer.
+Rerun to verify, repair or restore automatically. A wrapper receipt does not prove
+that the ARM64 game runtime is running, or verify achievements or playtime.
 Optional experimental asset deduplication compares static Content XNB files by
 size/SHA-256 for audited Celeste/Stardew profiles. It only changes the converted
 package, requires read-only bubblewrap launches and records recovery state.
@@ -438,6 +441,7 @@ def installer_files(*, target_platform: str = 'linux-aarch64') -> dict[str, tupl
         "install-to-steam.sh": (INSTALLER_SHELL.encode("utf-8"), 0o755),
         ".megcfbt/install-to-steam.py": (INSTALLER_PYTHON.encode("utf-8"), 0o755),
         ".megcfbt/steam_library.py": (Path(__file__).with_name('steam_library.py').read_bytes(), 0o644),
+        ".megcfbt/steam_client.py": (Path(__file__).with_name('steam_client.py').read_bytes(), 0o644),
         ".megcfbt/asset_dedup.py": (Path(__file__).with_name('asset_dedup.py').read_bytes(), 0o644),
         "INSTALL-ON-FRAME.txt": (guide.encode("utf-8"), 0o644),
     }

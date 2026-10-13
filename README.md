@@ -1,12 +1,15 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
 The **v0.1.1.0 development candidate** adds shared Steam library integration.
-After ZIP transfer and extraction, run `./install-to-steam.sh` to choose guided
+After ZIP transfer and extraction, run `./install-to-steam.sh` to choose automatic
 original-entry linking for an approved backend or the existing non-Steam entry
 with artwork. **The original game must be installed through Steam on this Steam
 Frame before linking is available.** Secondary libraries are detected; missing
 games can be installed through Steam and rescanned without another transfer.
-Original files are preserved and Steam stays running. See the
+Original files are preserved and Steam stays running. Linking backs up and
+verifies launch options through an existing local Steam client interface; when
+that interface is unavailable, use the non-Steam option. No launch-command
+copying or Properties editing is required. See the
 [integration guide, backend limits and device checklist](docs/steam-library-integration.md).
 Hardware acceptance remains pending; v0.1.0.3 remains the current public release.
 Optional [post-extraction asset deduplication](docs/steam-asset-deduplication.md)
