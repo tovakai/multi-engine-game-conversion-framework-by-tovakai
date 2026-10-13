@@ -237,6 +237,8 @@ def test_receipt_requires_real_context(tmp_path, package, installed, monkeypatch
     path = tmp_path / 'records/504230.json'
     detected = lib.installation(504230, [installed])
     record = lib.prepare(root, meta, launcher, 504230, '', path, detected)
+    with pytest.raises(ValueError, match='Package changed'):
+        lib.receipt(path, record['generated'], root.with_name('obsolete package'))
     monkeypatch.delenv('SteamAppId', raising=False)
     with pytest.raises(ValueError, match='context'):
         lib.receipt(path, record['generated'])
@@ -268,3 +270,12 @@ def test_missing_game_opens_only_official_steam_flow(package, monkeypatch, capsy
     assert calls == [['xdg-open', 'steam://install/504230']]
     assert 'original Steam game must be installed through Steam on this Steam Frame' in capsys.readouterr().out
     assert not (tmp_path / 'records').exists()
+
+
+def test_conflicting_identity_still_offers_nonsteam(package, monkeypatch, capsys):
+    root, launcher, meta = package
+    meta['steam_identity'] = {'appid': 123, 'source': 'installed-source-manifest'}
+    (root / '.megcfbt/package.json').write_text(json.dumps(meta))
+    monkeypatch.setattr('builtins.input', lambda prompt: '1')
+    assert lib.menu(root, 'Celeste', launcher) is True
+    assert 'No trustworthy Steam AppID' in capsys.readouterr().out

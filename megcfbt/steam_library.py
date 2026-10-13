@@ -254,10 +254,12 @@ def prepare(root, meta, launcher, number, previous, record_path, detected):
     return record
 
 
-def receipt(path, generated):
+def receipt(path, generated, expected_package=None):
     record = json.loads(path.read_text())
     if record.get('generated') != generated or record.get('status') == 'restored':
         raise ValueError('Link changed; rerun installer to repair')
+    if expected_package is not None and record.get('package') != str(expected_package):
+        raise ValueError('Package changed during link repair. Rerun install-to-steam.sh before launching.')
     if os.environ.get('SteamAppId') != str(record['appid']):
         raise ValueError('Genuine matching Steam launch context required')
     if installation(record['appid'])['state'] != 'installed':
@@ -367,7 +369,11 @@ def menu(root, name, launcher):
     if not isinstance(meta.get('conversion', {}), dict):
         raise ValueError('Invalid conversion metadata')
     safe_file(root, meta.get('launcher'))
-    number = identity(meta)
+    try:
+        number = identity(meta)
+    except ValueError as exc:
+        print(f'{name} detected\nAutomatic linking unavailable: {exc}. No trustworthy Steam AppID.')
+        return choose('1. Add as non-Steam game\n2. Cancel\nChoice: ') == '1' and standalone(root)
     allowed, reason = capability(meta)
     print(f'{name} detected\nSteam AppID: {number or "unavailable"}')
     if number is None or not allowed:
@@ -454,7 +460,10 @@ def menu(root, name, launcher):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) == 4 and sys.argv[1] == '--receipt':
-        receipt(Path(sys.argv[2]), sys.argv[3])
+        try:
+            receipt(Path(sys.argv[2]), sys.argv[3], Path(__file__).resolve().parent.parent)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise SystemExit(f'Steam link repair required: {exc}')
     elif len(sys.argv) == 3 and sys.argv[1] == '--inspect':
         print(json.dumps(installation(appid(sys.argv[2])), indent=2))
     else:
