@@ -294,6 +294,32 @@ def apply_artwork(found: dict[Path, int]) -> int:
     return copied
 
 
+def refresh_artwork_live(found: dict[Path, int]) -> bool:
+    # Files remain the reliable fallback; the live setter invalidates UI caches.
+    client = None
+    try:
+        import steam_client
+        client = steam_client.connect()
+        refreshed = 0
+        for appid in sorted(set(found.values())):
+            for slot in ARTWORK:
+                source = artwork_source(slot)
+                if source is None:
+                    continue
+                image_type = 'jpg' if source.suffix.lower() in {'.jpg', '.jpeg'} else 'png'
+                client.artwork(appid, source.read_bytes(), image_type, slot)
+                refreshed += 1
+        if refreshed:
+            print(f'Artwork applied through the running Steam client: {refreshed}.')
+        return bool(refreshed)
+    except (ImportError, OSError, ValueError, RuntimeError) as exc:
+        print(f'Artwork files are installed; live artwork refresh unavailable: {exc}')
+        return False
+    finally:
+        if client is not None:
+            client.close()
+
+
 def main() -> int:
     if '--help' in sys.argv:
         print('Run install-to-steam.sh on Frame with Steam running. Choose original-entry linking or the existing non-Steam artwork installer. The original game must be installed through Steam on this Frame before linking. Rerun to rescan, verify, repair or restore. No Steam configuration files are written.')
@@ -329,7 +355,7 @@ def main() -> int:
         print("Non-Steam AppID: " + ", ".join(str(value) for value in appids))
         print(f"Artwork files refreshed: {copied}.")
         if copied:
-            print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
+            refresh_artwork_live(found)
         return 0
 
     if not steam_running():
@@ -378,7 +404,7 @@ def main() -> int:
         )
     print(f"Artwork files applied: {copied}.")
     if copied:
-        print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
+        refresh_artwork_live(found)
     print("The game should now be available in the Steam library.")
     return 0
 

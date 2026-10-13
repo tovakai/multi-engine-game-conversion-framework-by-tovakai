@@ -179,3 +179,14 @@ not adopted. [Decky frontend support](https://github.com/SteamDeckHomebrew/decky
 and [steam-debug](https://github.com/kmturley/steam-debug) provide additional live
 client context. `GetLaunchOptionsForApp` returns game-defined choices and is not
 used to back up custom launch options.
+
+## Non-Steam artwork refresh
+
+The installer continues to copy bundled artwork under the actual registered
+shortcut ID. When an existing loopback live interface is available, it also calls
+`SteamClient.Apps.SetCustomArtworkForApp` to refresh the running client's artwork
+without restarting Steam or SteamVR. This applies to all non-Steam backends,
+including Hollow Knight; it does not enable original-entry linking for them.
+If the interface is unavailable, installed image files remain intact and the
+installer reports the refresh limitation. Steam API acknowledgement is distinct
+from user confirmation that artwork is visible.

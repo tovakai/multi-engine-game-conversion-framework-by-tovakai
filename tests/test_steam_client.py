@@ -114,3 +114,65 @@ def test_no_endpoint_no_restart_or_configuration_edits(monkeypatch):
     monkeypatch.setattr(bridge.http.client, 'HTTPConnection', Missing)
     with pytest.raises(bridge.Unavailable, match='Automatic linking is unavailable'):
         bridge.connect()
+
+
+def test_live_shortcut_artwork_uses_unsigned_id_and_correct_slot():
+    client = bridge.Client(None, 'synthetic')
+    expressions = []
+    client.evaluate = lambda expression: expressions.append(expression) or True
+    client.artwork(3353729607, b'\xff\xd8\xfffixture', 'jpg', 'grid')
+    assert 'SetCustomArtworkForApp(3353729607,' in expressions[0]
+    assert ', "jpg", 0)' in expressions[0]
+    client.artwork(3353729607, b'\x89PNG\r\n\x1a\nfixture', 'png', 'logo')
+    assert ', "png", 2)' in expressions[1]
+
+
+@pytest.mark.parametrize('number,data,kind,slot', [
+    (True, b'\xff\xd8\xff', 'jpg', 'grid'),
+    (2**32, b'\xff\xd8\xff', 'jpg', 'grid'),
+    (123, b'not an image', 'jpg', 'grid'),
+    (123, b'\xff\xd8\xff', 'jpg', 'arbitrary'),
+])
+def test_live_artwork_rejects_invalid_inputs(number, data, kind, slot):
+    client = bridge.Client(None, 'synthetic')
+    client.evaluate = lambda expression: pytest.fail('Invalid data reached Steam')
+    with pytest.raises(ValueError):
+        client.artwork(number, data, kind, slot)
+
+
+def test_nonsteam_live_artwork_unavailable_preserves_files(tmp_path, monkeypatch):
+    import sys
+    import types
+    from megcfbt.nonsteam_package import INSTALLER_PYTHON
+    installer = types.ModuleType('synthetic_installer')
+    installer.__file__ = str(tmp_path / '.megcfbt/install-to-steam.py')
+    exec(compile(INSTALLER_PYTHON, installer.__file__, 'exec'), installer.__dict__)
+    artwork = tmp_path / '.megcfbt/artwork'
+    artwork.mkdir(parents=True)
+    image = artwork / 'grid.jpg'
+    image.write_bytes(b'\xff\xd8\xfffixture')
+    def unavailable():
+        raise bridge.Unavailable('synthetic unavailable client')
+    monkeypatch.setitem(sys.modules, 'steam_client', types.SimpleNamespace(connect=unavailable))
+    assert installer.refresh_artwork_live({tmp_path / 'fake-user': 3353729607}) is False
+    assert image.read_bytes() == b'\xff\xd8\xfffixture'
+
+
+def test_nonsteam_live_artwork_refreshes_actual_shortcut_once(tmp_path, monkeypatch):
+    import sys
+    import types
+    from megcfbt.nonsteam_package import INSTALLER_PYTHON
+    installer = types.ModuleType('synthetic_installer')
+    installer.__file__ = str(tmp_path / '.megcfbt/install-to-steam.py')
+    exec(compile(INSTALLER_PYTHON, installer.__file__, 'exec'), installer.__dict__)
+    artwork = tmp_path / '.megcfbt/artwork'
+    artwork.mkdir(parents=True)
+    image = artwork / 'hero.jpg'
+    image.write_bytes(b'\xff\xd8\xfffixture')
+    calls = []
+    client = types.SimpleNamespace(artwork=lambda *args: calls.append(args),
+        close=lambda: calls.append('closed'))
+    monkeypatch.setitem(sys.modules, 'steam_client', types.SimpleNamespace(connect=lambda: client))
+    assert installer.refresh_artwork_live({tmp_path / 'user1': 3353729607,
+        tmp_path / 'user2': 3353729607})
+    assert calls == [(3353729607, image.read_bytes(), 'jpg', 'hero'), 'closed']

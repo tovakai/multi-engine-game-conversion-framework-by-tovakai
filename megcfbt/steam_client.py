@@ -180,6 +180,23 @@ class Client:
                 raise Unavailable('Steam live API failed; no verified launch-option result')
             return value.get('result', {}).get('value')
 
+    def artwork(self, number, data, image_type, slot):
+        # Shortcut IDs are unsigned 32-bit values, unlike original Steam AppIDs.
+        if type(number) is not int or not 0 < number < 2**32:
+            raise ValueError('Invalid shortcut artwork ID')
+        kinds = {'grid': 0, 'hero': 1, 'logo': 2, 'wide': 3, 'icon': 4}
+        if slot not in kinds or image_type not in {'jpg', 'png'}:
+            raise ValueError('Invalid artwork slot or type')
+        magic = b'\x89PNG\r\n\x1a\n' if image_type == 'png' else b'\xff\xd8\xff'
+        if not isinstance(data, bytes) or not data.startswith(magic) or len(data) > 8 * 1024 * 1024:
+            raise ValueError('Invalid or oversized artwork image')
+        arguments = json.dumps([number, base64.b64encode(data).decode('ascii'), image_type, kinds[slot]])[1:-1]
+        value = self.evaluate('(async()=>{if(typeof SteamClient.Apps.SetCustomArtworkForApp!=="function")'
+            '{throw new Error("Live artwork API unavailable");}'
+            'await SteamClient.Apps.SetCustomArtworkForApp(' + arguments + ');return true;})()')
+        if value is not True:
+            raise Unavailable('Steam did not acknowledge custom artwork')
+
     def read(self, number):
         value = self.evaluate(OPTIONS_JS + '(' + json.dumps([valid_appid(number), 'read', None, None])[1:-1] + ')')
         if not isinstance(value, dict) or not isinstance(value.get('options'), str) or len(value['options']) > 65536:
