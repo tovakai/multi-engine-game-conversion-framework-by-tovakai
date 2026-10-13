@@ -67,6 +67,8 @@ _HAS_DND = False
 
 def _load_gui_dependencies() -> None:
     global ctk, tk, filedialog, messagebox, DND_FILES, TkinterDnD, _HAS_DND
+    from megcfbt.gui_stdio import ensure_gui_streams
+    ensure_gui_streams()
     if ctk is not None:
         return
     try:
