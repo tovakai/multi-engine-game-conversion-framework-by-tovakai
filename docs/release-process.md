@@ -5,6 +5,13 @@ artifacts. Runtime-only tags must not imply that a converter release was tested.
 
 ## Build and review a candidate
 
+For v0.1.1.0 Steam Library Integration, use the
+[mandatory Frame acceptance checklist](steam-library-integration.md#required-steam-frame-acceptance).
+Candidate CI archives remain development builds until those checks are reviewed.
+Keep v0.1.0.3 immutable; do not create the public v0.1.1.0 tag or publish final
+artifacts while required installation, launch, restoration or hardware checks
+remain unverified. Playtime and achievements require separate evidence.
+
 Use Python 3.12 to build. On Windows run `powershell -ExecutionPolicy Bypass -File
 build/build_windows.ps1`; on native Linux ARM64 run
 `bash build/build_linux_aarch64.sh`. The builders install the declared GUI/build

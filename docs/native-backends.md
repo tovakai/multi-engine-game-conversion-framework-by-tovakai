@@ -149,3 +149,10 @@ Upstream sources: [Butterscotch](https://github.com/ButterscotchRunner/Buttersco
 [AGS](https://github.com/adventuregamestudio/ags),
 [GodotSteam](https://codeberg.org/godotsteam/godotsteam), and
 [Valve networking headers](https://github.com/ValveSoftware/GameNetworkingSockets).
+# v0.1.1.0 installer integration
+
+The shared ZIP installer now offers guided original-entry linking for approved
+native contracts with trustworthy identity, alongside non-Steam registration.
+The original game must be installed through Steam on this Frame first. See the
+[backend matrix and device acceptance checklist](steam-library-integration.md).
+GameMaker offline stubs do not gain Steamworks features from library linking.

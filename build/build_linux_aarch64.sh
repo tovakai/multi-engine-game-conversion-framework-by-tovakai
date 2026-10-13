@@ -29,6 +29,8 @@ APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
   --collect-all customtkinter \
   --collect-all tkinterdnd2 \
   --collect-data megcfbt \
+  --add-data "megcfbt/steam_library.py:megcfbt" \
+  --add-data "megcfbt/asset_dedup.py:megcfbt" \
   --add-data "build/_build_info.json:megcfbt" \
   --add-data "build/_build_info.json:sts2-tools" \
   --collect-data gamemakerframe \

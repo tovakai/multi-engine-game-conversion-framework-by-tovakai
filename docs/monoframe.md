@@ -53,3 +53,9 @@ forced Steam application environment IDs and is not a controller acceptance test
 
 The software SDK includes third-party license notices and source provenance. Game
 assets, saves and Steam libraries must stay out of public runtime artifacts.
+# Steam library linking candidate
+
+The audited vanilla Stardew Steam profile can use the v0.1.1.0 shared guided
+installer. The original must be installed through Steam on Frame. Original files,
+saves and mods are never changed by linking. Steam online features remain
+unverified. See [setup and restoration](steam-library-integration.md).

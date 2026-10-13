@@ -45,3 +45,10 @@ Everest, mods, the FNA/openGL beta branch and other Celeste releases need their
 own profiles. Full-game completion, achievements and Steam Cloud are unverified.
 See [the hardware record](../../celesteframe/validation-2026-10-12.json) and
 [the SDK source recipe](../../experiments/celeste/README.md).
+# Steam library linking candidate
+
+The hash-gated vanilla Celeste Steam XNA profile can use the shared v0.1.1.0
+guided installer when the original is installed through Steam on Frame. The
+user-supplied FMOD dependency, controller setup and converted launcher remain
+required. Achievements and playtime remain separately unverified. See
+[setup, restoration and device acceptance](../steam-library-integration.md).

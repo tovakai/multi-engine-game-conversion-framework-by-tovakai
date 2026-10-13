@@ -77,6 +77,7 @@ def build_game(source: Path, *, output: Path, runtime=None, runtime_version=None
     return build_native(source, output=output, runtime=sdk, executable='dotnet/dotnet',
         engine='CelesteFrame', game_name='Celeste', engine_version='1.4.0.0', prepare_game=prepare,
         arguments=['Celeste.exe'], force=force, progress=progress, steam_app_id='504230',
+        compatibility_profile=PROFILE,
         prepare_runtime=lambda root, target: copy_runtime(root, target, fmod),
         launcher_environment='export DOTNET_ROOT="$ROOT/runtime/dotnet"\n'
             'export LD_LIBRARY_PATH="$ROOT/runtime/native:/opt/steamvr/bin/linuxarm64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n'

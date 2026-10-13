@@ -124,10 +124,13 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             encoding='utf-8', newline='\n')
         launcher.chmod(0o755)
         from megcfbt.frame_package import write_frame_metadata
+        from megcfbt.steam_context import verified_source_identity
         write_frame_metadata(stage, name=game_name, launcher_path=launcher,
                              engine=engine, engine_version=engine_version,
                              runtime_engine_version=runtime_version, game_version=game_version,
-                             compatibility_profile=compatibility_profile)
+                             compatibility_profile=compatibility_profile,
+                             steam_identity=verified_source_identity(source, app_id),
+                             steam_runtime_appid=app_id)
         (stage / 'native-runtime.json').write_text(json.dumps({
             'engine': engine, 'source_engine_version': engine_version,
             'architecture': 'aarch64', 'executable': executable,

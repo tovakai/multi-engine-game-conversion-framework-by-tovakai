@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 INSTALLER_SHELL = r'''#!/usr/bin/env bash
 set -euo pipefail
 
@@ -17,7 +19,7 @@ if [[ ! -f "$PY" ]]; then
     exit 1
 fi
 
-exec python3 "$PY"
+exec python3 "$PY" "$@"
 '''
 
 INSTALLER_PYTHON = r'''#!/usr/bin/env python3
@@ -73,6 +75,8 @@ def load_metadata() -> tuple[str, Path]:
         data = json.loads(META.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise RuntimeError(f"could not read {META}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise RuntimeError("package metadata must be an object")
     name = str(data.get("name") or ROOT.name).replace("\n", " ").replace("\r", " ").strip()
     launcher_raw = str(data.get("launcher") or "launch.sh").replace("\\", "/")
     launcher = (ROOT / launcher_raw).resolve()
@@ -291,12 +295,22 @@ def apply_artwork(found: dict[Path, int]) -> int:
 
 
 def main() -> int:
+    if '--help' in sys.argv:
+        print('Run install-to-steam.sh on Frame with Steam running. Choose original-entry linking or the existing non-Steam artwork installer. The original game must be installed through Steam on this Frame before linking. Rerun to rescan, verify, repair or restore. No Steam configuration files are written.')
+        return 0
     if sys.platform != "linux":
         return fail("this installer is intended for the Steam Frame / Linux")
 
     try:
         name, launcher = load_metadata()
     except RuntimeError as exc:
+        return fail(str(exc))
+
+    try:
+        from steam_library import menu
+        if not menu(ROOT, name, launcher):
+            return 0
+    except (OSError, ValueError, RuntimeError, EOFError, KeyError, TypeError, subprocess.SubprocessError) as exc:
         return fail(str(exc))
 
     try:
@@ -382,7 +396,24 @@ INSTALL_GUIDE = """Steam Frame package
 
    ./install-to-steam.sh
 
-The installer asks the running Steam client to import launch.sh as a normal
+The installer prefers original Steam library linking for approved backends with
+a trustworthy AppID. The original game must be installed through Steam on this
+Steam Frame before linking is available. Ownership or installation on another
+computer is not sufficient. Additional mounted Steam libraries are discovered.
+Missing games can be installed through Steam, then rescanned without retransferring.
+Guided linking generates Launch Options to paste into the original game's
+Properties > General. Preserve existing options first. No original game files
+or live Steam configuration files are changed. Rerun the installer to verify,
+repair, or restore. A launch receipt does not verify achievements or playtime.
+Optional experimental asset deduplication compares static Content XNB files by
+size/SHA-256 for audited Celeste/Stardew profiles. It only changes the converted
+package, requires read-only bubblewrap launches and records recovery state.
+No backend is advertised as safely deduplicated before gameplay acceptance.
+Steam updates/broken links require repair or re-extraction of the retained ZIP.
+Non-Steam installation needs no deduplication; existing asset links must first
+be restored to ordinary converted copies.
+
+Alternatively, the installer asks the running Steam client to import launch.sh as a normal
 non-Steam game. It then reads back the shortcut Steam created and installs any
 bundled portrait, banner, hero, logo, and icon artwork using that shortcut's
 non-Steam AppID. Steam may require a Steam / SteamVR environment restart before
@@ -406,5 +437,7 @@ def installer_files(*, target_platform: str = 'linux-aarch64') -> dict[str, tupl
     return {
         "install-to-steam.sh": (INSTALLER_SHELL.encode("utf-8"), 0o755),
         ".megcfbt/install-to-steam.py": (INSTALLER_PYTHON.encode("utf-8"), 0o755),
+        ".megcfbt/steam_library.py": (Path(__file__).with_name('steam_library.py').read_bytes(), 0o644),
+        ".megcfbt/asset_dedup.py": (Path(__file__).with_name('asset_dedup.py').read_bytes(), 0o644),
         "INSTALL-ON-FRAME.txt": (guide.encode("utf-8"), 0o644),
     }

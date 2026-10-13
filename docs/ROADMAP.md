@@ -15,7 +15,8 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 | Version | Theme | Primary outcome |
 | --- | --- | --- |
 | **0.1.0** | Foundation | Reliable existing backends and consistent GUI-to-device workflow |
-| **0.1.1** | Local installation + maintenance | One-operation installation on Frame, direct Steam patching/restoration, release-feedback fixes and diagnostics |
+| **0.1.1.0** | Steam Library Integration | Guided original-entry linking for installed local Steam games; preserve ZIP transfer and non-Steam installation |
+| **0.1.2.0** | Deferred maintenance | Release-feedback fixes, diagnostics and source artwork provenance |
 | **0.2.0** | GameMakerFrame + coverage baseline | GameMaker support and a 35-title test matrix |
 | **0.3.0** | WebFrame | Construct and compatible packaged HTML5 game support |
 | **0.4.0** | Compatibility Engine | Reusable, versioned repair recipes and local compatibility data |
@@ -43,19 +44,24 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 
 **Release gate:** Each advertised stable backend has an end-to-end GUI conversion, regression coverage, and at least one real-hardware gameplay check. A successful build alone does not count as playable. **Portable device-side finishing for STS2, automatic on-device compilation and zero-SSH installation are explicitly out of scope for 0.1.0.**
 
-## v0.1.1 — Maintenance
+## v0.1.1.0 — Steam Library Integration
 
-0.1.0 is published. The next patch release prioritizes reproducible release
-feedback, conversion safety, actionable diagnostics, source artwork provenance,
-and compatibility records tied to exact game/runtime/application versions.
+v0.1.0.3 is published and immutable. This release improves the shared extracted
+ZIP installer: detect original games installed through Steam on this Frame,
+including secondary libraries; guide supported native packages toward original
+entries; retain non-Steam registration and artwork. Preserve original files and
+Steam context, record reversible setup, and keep Steam running.
+Add guarded post-extraction asset deduplication for byte-identical, explicitly
+selected read-only assets, with recovery and restoration. Deduplication remains
+experimental until backend-specific Frame gameplay/write-safety gates pass.
 
-The Linux ARM64 app will also coordinate local preparation, native compilation
-where needed (including STS2), verification and Steam registration in one
-operation. Direct Steam-installation patching will include backups, restoration
-and update detection; portable ZIP export remains available. Windows retains its
-prepare-and-transfer workflow.
+Direct game-file patching moves to 0.4.0 safety research. Coordinated local
+installation and native compilation, including STS2, move to 0.5.0. Broader
+diagnostics, feedback maintenance and artwork provenance move to 0.1.2.0.
 
 See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md).
+The [integration guide](steam-library-integration.md) lists backend limits and
+pending hardware acceptance. No v0.1.1.0 publication before those checks.
 SMAPI, new engine families and major runtime migrations remain separate work.
 The release date follows validated fixes and passing final artifacts, not a
 calendar commitment.

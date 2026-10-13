@@ -1,5 +1,19 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
+The **v0.1.1.0 development candidate** adds shared Steam library integration.
+After ZIP transfer and extraction, run `./install-to-steam.sh` to choose guided
+original-entry linking for an approved backend or the existing non-Steam entry
+with artwork. **The original game must be installed through Steam on this Steam
+Frame before linking is available.** Secondary libraries are detected; missing
+games can be installed through Steam and rescanned without another transfer.
+Original files are preserved and Steam stays running. See the
+[integration guide, backend limits and device checklist](docs/steam-library-integration.md).
+Hardware acceptance remains pending; v0.1.0.3 remains the current public release.
+Optional [post-extraction asset deduplication](docs/steam-asset-deduplication.md)
+compares static assets by size/SHA-256 and uses guarded read-only launches.
+Celeste/Stardew XNB candidates are experimental; no backend is advertised as
+safely deduplicated before real-game Frame acceptance.
+
 **Convert supported PC games you already own into ARM64 packages for Linux.**
 Initially built for the **Steam Frame**, with portable AArch64 Linux output as the broader goal.
 Most backends use native Linux runtimes; experimental UnityFrame runs a matching
