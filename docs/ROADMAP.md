@@ -239,3 +239,13 @@ Use one authoritative application release number and **four-component** public v
 - Use the same version source in GUI About/status, CLI `--version`, package metadata and build scripts. Do not hardcode conflicting versions across backends.
 - Handle old unversioned ZIPs gracefully and never silently overwrite a different release's package. Update packaging, repackage/artwork commands, Frame installation/manifests, and automated tests together.
 - Verify full provenance in clean frozen builds and backend packages before publishing; version identity alone does not establish hardware compatibility.
+
+## Next revision feedback
+
+- GUI conversion currently leaves both the extracted working directory and the
+  completed game archive on the desktop. After the ZIP is successfully created
+  and verified, remove only the converter-owned temporary working directory.
+  Preserve the working output if archiving fails or is interrupted, and preserve
+  original source folders and any output the user explicitly chose to keep.
+  Verify successful cleanup and failure recovery across the shared GUI backend
+  workflow before considering this feedback resolved.
