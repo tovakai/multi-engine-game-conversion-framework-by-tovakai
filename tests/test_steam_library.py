@@ -136,6 +136,7 @@ def test_prepare_idempotent_restore_and_original_preservation(tmp_path, package,
     record = lib.prepare(root, meta, launcher, 504230, 'old user options', record_path, detected)
     assert record['status'] == 'pending'
     wrapper = Path(record['wrapper'])
+    assert wrapper.parent == record_path.parent
     body = wrapper.read_text()
     assert '%command%' in record['generated']
     assert 'exec ' in body and '"$@"' not in body
@@ -150,6 +151,16 @@ def test_prepare_idempotent_restore_and_original_preservation(tmp_path, package,
     assert lib.restore(record_path, record['generated'], True) == 'old user options'
     assert json.loads(record_path.read_text())['status'] == 'restored'
     assert original.read_bytes() == before
+
+
+def test_stable_wrapper_survives_deleted_package_for_repair(tmp_path, package, installed):
+    import shutil
+    root, launcher, meta = package
+    record = lib.prepare(root, meta, launcher, 504230, '', tmp_path / 'records/504230.json', lib.installation(504230, [installed]))
+    wrapper = Path(record['wrapper'])
+    shutil.rmtree(root)
+    assert wrapper.is_file()
+    assert 'Converted package moved or deleted' in wrapper.read_text()
 
 
 def test_move_repair_preserves_original_backup(tmp_path, package, installed):

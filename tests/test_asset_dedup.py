@@ -113,7 +113,7 @@ def test_link_repeat_restore_preserves_original(trees):
     launch_bytes = (root / 'launch.sh').read_bytes()
     first = dedup.enable(root, meta, detected, experimental=True)
     assert first['linked'] == 1
-    assert target.is_symlink() and os.readlink(target) == str(source)
+    assert dedup.link_matches(target, source)
     assert source.stat().st_nlink == 1
     assert dedup.validate(root, detected=detected) == [str(original)]
     assert metadata(source) == before

@@ -66,7 +66,9 @@ no trustworthy identity can always use the non-Steam workflow.
 ## Repair and restoration
 
 Records live at `~/.local/share/megcfbt/steam-links/<AppID>.json`, outside the
-original game directory. They contain package and launcher paths, AppID,
+original game directory. The stable `launch-<AppID>.sh` wrapper lives there too,
+so a moved/deleted conversion can still produce repair guidance. Records contain
+package and launcher paths, AppID,
 converter identity, profile, mode, generated options, user-preserved previous
 options, installation paths, status and timestamps. Records are atomically
 written before wrapper activation. A failed operation retains recovery data.
@@ -88,9 +90,9 @@ wrapper are retained.
 
 If the conversion was moved or deleted, run the installer at its new location
 and select repair, or restore the original options in Steam using the record.
-A surviving wrapper reports missing launchers. If the entire folder was deleted,
-Steam cannot execute that wrapper; open the original game's Properties and use
-the preserved record to restore its options.
+The stable wrapper reports missing launchers even if the entire conversion
+folder was deleted. Open the original game's Properties and use the preserved
+record to restore its options, or repair from a newly extracted ZIP.
 
 ## Required Steam Frame acceptance
 

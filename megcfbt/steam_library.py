@@ -213,7 +213,11 @@ def prepare(root, meta, launcher, number, previous, record_path, detected):
     # Steam expands %command%; do not permit substitution inside our own path.
     if any(c in str(root) for c in '\n\r%'):
         raise ValueError('Move the converted package to a path without newlines or percent signs.')
-    wrapper = root / '.megcfbt/launch-original-steam.sh'
+    # Keep the entry point outside the conversion so deleted/moved packages can
+    # still emit repair guidance from the original Steam entry.
+    wrapper = record_path.parent / f'launch-{number}.sh'
+    if any(c in str(wrapper) for c in '\n\r%'):
+        raise ValueError('Integration record path contains unsafe launch-option characters')
     if wrapper.is_symlink():
         raise ValueError('Unsafe wrapper symlink')
     generated = shlex.quote(str(wrapper)) + ' %command%'
@@ -234,6 +238,8 @@ def prepare(root, meta, launcher, number, previous, record_path, detected):
               ' echo "Launch the original installed game through Steam. Rerun install-to-steam.sh to repair." >&2\n exit 1\nfi\n'
               f'if [ ! -f {shlex.quote(str(launcher))} ]; then\n'
               ' echo "Converted package moved or deleted. Restore Launch Options in Steam or rerun the installer at the new location." >&2\n exit 1\nfi\n'
+              f'if [ ! -f {shlex.quote(str(root / ".megcfbt/steam_library.py"))} ]; then\n'
+              ' echo "Bundled installer helper missing. Re-extract the conversion ZIP and rerun install-to-steam.sh to repair." >&2\n exit 1\nfi\n'
               f'python3 {shlex.quote(str(root / ".megcfbt/steam_library.py"))} --receipt {shlex.quote(str(record_path))} {shlex.quote(generated)}\n'
               f'exec {shlex.quote(str(launcher))}\n')
     fd, temporary = tempfile.mkstemp(prefix='.wrapper-', dir=wrapper.parent)

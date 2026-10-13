@@ -108,6 +108,17 @@ def allocated(path):
     return value * 512 if value is not None else None
 
 
+def link_matches(target, source):
+    if not target.is_symlink():
+        return False
+    value = os.readlink(target)
+    # Windows synthetic fixtures expose the same absolute link with an NT
+    # namespace prefix. Real Linux linking requires the exact recorded target.
+    if os.name == 'nt' and value.startswith('\\\\?\\'):
+        value = value[4:]
+    return value == str(source)
+
+
 def candidates(root, meta, detected):
     if detected.get('state') != 'installed':
         raise ValueError('Original Steam game must be installed locally before deduplication')
@@ -245,7 +256,7 @@ def validate(root, data=None, detected=None):
             raise ValueError('Incomplete asset transaction; restore/recover before launching')
         source = source_for(entry, detected)
         target = path_inside(root, entry['path'], linked=True)
-        if not target.is_symlink() or os.readlink(target) != str(source):
+        if not link_matches(target, source):
             raise ValueError('Converted asset link changed/broken. Rerun installer to recover or re-extract the conversion ZIP.')
         roots.append(entry['source_root'])
     return sorted(set(roots))
@@ -336,7 +347,7 @@ def _enable(root, meta, detected, *, experimental=False):
             temporary.symlink_to(source)
             os.replace(temporary, target)
             sync_directory(target.parent)
-            if os.readlink(target) != str(source) or digest(source, source=True) != entry['sha256']:
+            if not link_matches(target, source) or digest(source, source=True) != entry['sha256']:
                 raise ValueError('Replacement source changed; converted backup retained')
             entry['status'] = 'linked'
             save(root, data)
@@ -388,7 +399,7 @@ def _restore_assets(root, detected=None):
             sync_directory(target.parent)
             count += 1
         else:
-            if target.is_symlink() and os.readlink(target) != entry['source']:
+            if target.is_symlink() and not link_matches(target, entry['source']):
                 raise ValueError('User changed asset link; restoration refused')
             source = source_for(entry, detected)
             fd, temporary = tempfile.mkstemp(prefix='.restore-asset-', dir=target.parent)
