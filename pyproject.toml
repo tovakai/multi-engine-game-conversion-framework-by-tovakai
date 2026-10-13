@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "GPL-3.0-only AND AGPL-3.0-only" }
 authors = [{ name = "Tovakai" }]
-keywords = ["renpy", "rpg-maker", "godot", "arm64", "linux", "steam-frame"]
+keywords = ["renpy", "rpg-maker", "godot", "arm64", "linux", "steam-frame", "framebench"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -35,9 +35,11 @@ multi-engine-game-conversion-framework-by-tovakai = "megcfbt.cli:main"
 multi-engine-game-conversion-framework-by-tovakai-gui = "megcfbt.gui:main"
 renframe = "renframe.cli:main"
 rpgmframe = "rpgmframe.cli:main"
+framebench = "framebench.cli:main"
+framebench-gui = "framebench.gui:main"
 
 [tool.setuptools.packages.find]
-include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*", "monoframe*", "unityframe*", "celesteframe*"]
+include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*", "monoframe*", "unityframe*", "celesteframe*", "framebench*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "megcfbt.version.__version__"}

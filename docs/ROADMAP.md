@@ -205,6 +205,7 @@ For each title, record the game version, detected engine/runtime, conversion out
 - Community-maintained compatibility recipes and reports.
 - Android portability for selected compatible engines.
 - Performance analysis and automated optimization profiles.
+- FrameBench hardware validation of native-versus-FEX battery life on Steam Frame (companion tool; see [FrameBench](framebench.md)). This work stays on a separate feature branch and is not part of the v0.1.1.0 installer milestone.
 
 ## Project-wide rules
 
