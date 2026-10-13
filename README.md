@@ -77,6 +77,7 @@ results and sanitized logs. **Never upload proprietary SDKs, game assets or conv
 - [Architecture](#architecture)
 - [Install for development](#install-for-development)
 - [CLI](#cli)
+- [FrameBench](#framebench)
 - [Steam Frame install flow](#steam-frame-install-flow)
 - [Optional SteamGridDB artwork](#optional-steamgriddb-artwork-for-non-steam-games)
 - [Ren'Py runtime resolution](#renpy-runtime-resolution)
@@ -239,6 +240,30 @@ multi-engine-game-conversion-framework-by-tovakai gui
 There is also a second executable named
 `multi-engine-game-conversion-framework-by-tovakai-gui`, because apparently
 one long command was not enough.
+
+## FrameBench
+
+FrameBench is a **separate companion tool** for comparing the same Steam game
+running as a native ARM64 conversion versus the original Steam/FEX (or Proton)
+path. Power consumption and battery endurance are first-class results. It does
+not replace the converter and is developed on its own feature branch so it
+cannot destabilize the v0.1.1 installer work.
+
+```bash
+framebench detect-sensors
+framebench gui
+framebench protocol stardew
+```
+
+Ordinary headset sessions use the GUI: pick an installed Steam game that has a
+converted package, choose Native ARM64 or Original Steam, start the benchmark.
+FrameBench switches the launch path, starts the real Steam entry, verifies the
+running architecture, records power, then restores the previous linked
+configuration. The CLI remains for automation.
+
+See [FrameBench](docs/framebench.md) and the [Stardew protocol](docs/framebench-protocol.md).
+All current automated tests are **simulated sysfs fixtures**, not Steam Frame
+hardware observations.
 
 ## Steam Frame install flow
 
