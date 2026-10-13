@@ -97,14 +97,27 @@ def _load_gui_dependencies() -> None:
 
 
 def _make_root():
+    global _HAS_DND
     _load_gui_dependencies()
     ctk.set_appearance_mode("dark")
     if _HAS_DND:
+        class DnDUnavailable(RuntimeError):
+            pass
+
         class CTkDnD(ctk.CTk, TkinterDnD.DnDWrapper):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
-                self.TkdndVersion = TkinterDnD._require(self)
-        root = CTkDnD()
+                try:
+                    self.TkdndVersion = TkinterDnD._require(self)
+                except (RuntimeError, tk.TclError) as exc:
+                    self.destroy()
+                    raise DnDUnavailable(str(exc)) from exc
+        try:
+            root = CTkDnD()
+        except DnDUnavailable as exc:
+            _HAS_DND = False
+            sys.stderr.write(f'Drag and drop unavailable; folder picker remains available: {exc}\n')
+            root = ctk.CTk()
     else:
         root = ctk.CTk()
 
