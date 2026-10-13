@@ -82,6 +82,21 @@ recover using relative paths, then relink at their new location.
 
 ## Acceptance evidence
 
+### Follow-up for the next revision
+
+The first real Stardew Valley deduplication run on Frame continued processing
+assets but appeared stuck because the installer showed no progress. At one
+observation, 1,103 of approximately 3,550 assets were linked after about ten
+minutes; repeated full recovery-journal writes contributed to the delay.
+
+- [ ] Add a progress bar with completed/total files and the current phase for
+      asset comparison and deduplication.
+- [ ] Before asking the user to enable deduplication, warn that it can take a
+      while, especially for large games and packages on SD cards. Explain that
+      progress will be shown; do not promise a fixed completion time.
+
+These are follow-up requirements, not implemented behavior in the current build.
+
 Automated fixtures cover matching/modified assets, hashes, missing installs,
 unsafe paths/symlinks, rejected backends, isolation failures, repeated setup,
 interrupted replacement, updates/deletions and restoration. On the connected
