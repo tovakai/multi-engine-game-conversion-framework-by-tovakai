@@ -63,6 +63,20 @@ shared linking. Source manifests or the explicit hash-gated profiles supply
 identity. Conflicting identities fail closed. Other-store games and packages with
 no trustworthy identity can always use the non-Steam workflow.
 
+Package metadata keeps the historical source `engine` field (for example,
+`monogame`) and separately records the canonical converter `backend` (for example,
+`monoframe`). The unified router preserves backend-produced Steam manifest
+evidence, runtime AppID, audited profile and conversion provenance in both the
+wrapper and payload metadata. Runtime AppIDs alone never establish Steam identity.
+Exact historical backend names remain supported; generic engine names never
+establish a backend by themselves.
+
+Conversions from the affected development candidates, including
+`0.1.1.0.dev180+g9b17575828f8`, must be reconverted with a fixed converter and the
+new ZIP transferred/extracted. Those ZIPs lost backend identity and Steam evidence;
+rerunning their old installer or editing an AppID cannot safely recover that
+provenance. Keep existing saves and user data when selecting the new output.
+
 ## Repair and restoration
 
 Records live at `~/.local/share/megcfbt/steam-links/<AppID>.json`, outside the

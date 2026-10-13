@@ -21,8 +21,8 @@ from datetime import datetime, timezone
 
 SCHEMA = 'megcfbt.asset-links/v1'
 DENIED = {'saves', 'save', 'mods', 'config', 'userdata', 'userconfig', 'runtime', 'patches'}
-PROFILES = {('CelesteFrame', 'celeste-steam-xna-1.4.0.0'),
-            ('MonoFrame', 'stardew-steam-1.6.15-net6')}
+PROFILES = {('celesteframe', 'celeste-steam-xna-1.4.0.0'),
+            ('monoframe', 'stardew-steam-1.6.15-net6')}
 
 
 def library():
@@ -122,7 +122,7 @@ def link_matches(target, source):
 def candidates(root, meta, detected):
     if detected.get('state') != 'installed':
         raise ValueError('Original Steam game must be installed locally before deduplication')
-    if (meta.get('engine'), meta.get('compatibility_profile')) not in PROFILES:
+    if (library().backend(meta), meta.get('compatibility_profile')) not in PROFILES:
         return [], 'No experimental read-only asset allowlist for this backend; full converted package retained.'
     if library().identity(meta) is None or not library().capability(meta)[0]:
         raise ValueError('Deduplication requires a validated native linking identity')

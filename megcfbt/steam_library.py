@@ -13,10 +13,27 @@ import tempfile
 
 # Explicit source-profile identities, never title matching or sidecar guesses.
 PROFILES = {
-    ('CelesteFrame', 'celeste-steam-xna-1.4.0.0'): 504230,
-    ('MonoFrame', 'stardew-steam-1.6.15-net6'): 413150,
+    ('celesteframe', 'celeste-steam-xna-1.4.0.0'): 504230,
+    ('monoframe', 'stardew-steam-1.6.15-net6'): 413150,
 }
-NATIVE = {'GameMaker', 'LÖVE', 'AGS', 'CelesteFrame', 'MonoFrame'}
+LEGACY_BACKENDS = {'GameMaker': 'gamemakerframe', 'LÖVE': 'loveframe',
+                   'AGS': 'agsframe', 'CelesteFrame': 'celesteframe', 'MonoFrame': 'monoframe'}
+NATIVE = set(LEGACY_BACKENDS.values())
+
+
+def backend(meta):
+    """Use explicit converter identity; accept only exact historical backend names.
+
+    Generic engine names and game titles never establish a backend or Steam identity.
+    An explicit unsupported/invalid backend cannot fall back to a legacy name.
+    """
+    legacy = LEGACY_BACKENDS.get(meta.get('engine'))
+    if 'backend' in meta:
+        value = meta['backend']
+        if not isinstance(value, str) or (legacy and value != legacy):
+            return None
+        return value
+    return legacy
 
 
 def appid(value):
@@ -134,7 +151,7 @@ def installation(number, roots=None):
 
 
 def identity(meta):
-    known = PROFILES.get((meta.get('engine'), meta.get('compatibility_profile')))
+    known = PROFILES.get((backend(meta), meta.get('compatibility_profile')))
     evidence = meta.get('steam_identity')
     value = None
     if evidence is not None:
@@ -156,9 +173,9 @@ def capability(meta):
         return False, 'Original-entry linking requires validated AArch64 package metadata.'
     if meta.get('target_platform') != 'linux-aarch64':
         return False, 'Windows ARM64/ARM64 Proton retains its specialized launcher; original-entry linking is deferred.'
-    if meta.get('engine') not in NATIVE:
+    if backend(meta) not in NATIVE:
         return False, 'This backend launch contract has not been approved for shared linking.'
-    if meta.get('engine') in {'CelesteFrame', 'MonoFrame'} and (meta.get('engine'), meta.get('compatibility_profile')) not in PROFILES:
+    if backend(meta) in {'celesteframe', 'monoframe'} and (backend(meta), meta.get('compatibility_profile')) not in PROFILES:
         return False, 'This managed backend requires an audited compatibility profile.'
     return True, 'Native launch wrapper; Steam Input, playtime and achievements require separate device verification.'
 

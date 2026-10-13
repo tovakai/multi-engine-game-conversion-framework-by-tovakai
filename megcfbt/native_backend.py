@@ -77,6 +77,9 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
     if runtime is None:
         raise NativeBuildError(f'{engine} requires a Linux ARM64 runtime bundle containing {executable}; select it with --backend-runtime.')
     try:
+        from megcfbt.steam_context import verified_source_identity
+        app_id = steam_app_id or steam_app_id_for_source(source)
+        steam_identity = verified_source_identity(source, app_id)
         validate_copy_tree(source)
         runtime_root = validate_runtime(Path(runtime), executable)
         if runtime_version is None:
@@ -102,7 +105,6 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
         except ValueError as exc:
             raise NativeBuildError(str(exc)) from exc
         prepare_game(stage / 'game')
-        app_id = steam_app_id or steam_app_id_for_source(source)
         if app_id:
             write_steam_app_id(app_id, stage, stage/'runtime', stage/'game')
         binary = stage / 'runtime' / executable
@@ -124,12 +126,14 @@ def build_native(source: Path, *, output: Path, runtime: Path | None,
             encoding='utf-8', newline='\n')
         launcher.chmod(0o755)
         from megcfbt.frame_package import write_frame_metadata
-        from megcfbt.steam_context import verified_source_identity
         write_frame_metadata(stage, name=game_name, launcher_path=launcher,
                              engine=engine, engine_version=engine_version,
+                             backend={'CelesteFrame': 'celesteframe', 'MonoFrame': 'monoframe',
+                                      'GameMaker': 'gamemakerframe', 'LÖVE': 'loveframe',
+                                      'AGS': 'agsframe'}.get(engine),
                              runtime_engine_version=runtime_version, game_version=game_version,
                              compatibility_profile=compatibility_profile,
-                             steam_identity=verified_source_identity(source, app_id),
+                             steam_identity=steam_identity,
                              steam_runtime_appid=app_id)
         (stage / 'native-runtime.json').write_text(json.dumps({
             'engine': engine, 'source_engine_version': engine_version,
