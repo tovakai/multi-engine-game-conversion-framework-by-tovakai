@@ -35,10 +35,42 @@ These downloads contain **the converter, not games**. The project does not distr
 
 The existing [Slay the Spire 2 experimental workflow](docs/sts2-integrated-workflow.md) is different: Windows prepares a transfer package using a user-supplied FMOD Linux SDK, and the Frame finishes native components on-device. It is **not** the same one-step conversion path as the simpler engines.
 
+## Tested game compatibility
+
+These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizable games and different engine backends. The results come from real **Steam Frame hardware tests**, but not every older result was rerun with the exact v0.1.0.3 application binary. For **all 36 recorded games**, including less-famous gems, incomplete tests and known problems, see the [full game compatibility catalog](games/README.md). Every game has its own page under `games/<game-slug>/README.md`.
+
+| Featured game | Backend | Steam Frame hardware result |
+| --- | --- | --- |
+| [Stardew Valley](games/stardew-valley/README.md) | MonoFrame | Playable, including input and save/load on exact vanilla 1.6.15 |
+| [Slay the Spire 2](games/slay-the-spire-2/README.md) | Experimental STS2 | Reported working; **two-stage** installation and Frame-side finishing required |
+| [Undertale](games/undertale/README.md) | GameMakerFrame | Playable through second savepoint; save/load confirmed |
+| [Balatro](games/balatro/README.md) | LÖVEFrame | Reported working; exact package/version depth not recorded |
+| [Brotato](games/brotato/README.md) | Godot / GodotSteam | Playable; full run completed with pinned custom runtime |
+| [Doki Doki Literature Club!](games/doki-doki-literature-club/README.md) | RenFrame | Original 1.1.1 reported working; later acts and file transitions not certified |
+| [Fear & Hunger](games/fear-and-hunger/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [Fear & Hunger 2: TERMINA](games/fear-and-hunger-2-termina/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [To the Moon](games/to-the-moon/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
+| [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
+| [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
+| [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
+| [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
+
+**Status is scoped to what was observed**, not a promise of full completion, all mods,
+Steam features, game updates or universal engine compatibility. A detected engine,
+successful ZIP build or menu screenshot alone is not a gameplay pass. Individual
+records distinguish *Playable*, *Reported working*, *Launches*, *Issues* and
+*Needs retest*, and identify which packages use experimental workflows.
+
+To contribute a result, follow the [per-game entry instructions](games/README.md#adding-or-updating-a-game)
+or open a [GitHub issue](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues)
+with the game version, engine, converter build, tested ARM64 device, gameplay/input/save
+results and sanitized logs. **Never upload proprietary SDKs, game assets or converted packages.**
+
 ## Contents
 
 - [Download v0.1.0.3](#download-v0103-cassette-beasts-and-guided-fmod-setup)
 - [Quick start](#quick-start)
+- [Tested game compatibility](#tested-game-compatibility)
 - [Why should I care?](#why-should-i-care)
 - [Current engine backends](#current-engine-backends)
 - [Roadmap](#roadmap)
@@ -50,7 +82,6 @@ The existing [Slay the Spire 2 experimental workflow](docs/sts2-integrated-workf
 - [Ren'Py runtime resolution](#renpy-runtime-resolution)
 - [Custom Godot / GodotSteam compatibility runtime](#custom-godot--godotsteam-compatibility-runtime)
 - [Launching converted games on Linux ARM64](#launching-converted-games-on-linux-arm64)
-- [Tested game compatibility](#tested-game-compatibility)
 - [Known issues and testing limits](#known-issues-and-testing-limits)
 - [Support the project](#support-the-project-)
 - [Design rule](#design-rule)
@@ -404,37 +435,6 @@ file for your own desktop. For example, Frametop uses a session-specific
 Xwayland display and authentication file; **do not hardcode its Xauthority
 filename**, and do not disable X11 authentication. A successful main-menu
 event loop doesn't necessarily mean its window is visible on your headset.
-
-## Tested game compatibility
-
-These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizable games and different engine backends. The results come from real **Steam Frame hardware tests**, but not every older result was rerun with the exact v0.1.0.3 application binary. For **all 36 recorded games**, including less-famous gems, incomplete tests and known problems, see the [full game compatibility catalog](games/README.md). Every game has its own page under `games/<game-slug>/README.md`.
-
-| Featured game | Backend | Steam Frame hardware result |
-| --- | --- | --- |
-| [Stardew Valley](games/stardew-valley/README.md) | MonoFrame | Playable, including input and save/load on exact vanilla 1.6.15 |
-| [Slay the Spire 2](games/slay-the-spire-2/README.md) | Experimental STS2 | Reported working; **two-stage** installation and Frame-side finishing required |
-| [Undertale](games/undertale/README.md) | GameMakerFrame | Playable through second savepoint; save/load confirmed |
-| [Balatro](games/balatro/README.md) | LÖVEFrame | Reported working; exact package/version depth not recorded |
-| [Brotato](games/brotato/README.md) | Godot / GodotSteam | Playable; full run completed with pinned custom runtime |
-| [Doki Doki Literature Club!](games/doki-doki-literature-club/README.md) | RenFrame | Original 1.1.1 reported working; later acts and file transitions not certified |
-| [Fear & Hunger](games/fear-and-hunger/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
-| [Fear & Hunger 2: TERMINA](games/fear-and-hunger-2-termina/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
-| [To the Moon](games/to-the-moon/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
-| [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
-| [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
-| [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
-| [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
-
-**Status is scoped to what was observed**, not a promise of full completion, all mods,
-Steam features, game updates or universal engine compatibility. A detected engine,
-successful ZIP build or menu screenshot alone is not a gameplay pass. Individual
-records distinguish *Playable*, *Reported working*, *Launches*, *Issues* and
-*Needs retest*, and identify which packages use experimental workflows.
-
-To contribute a result, follow the [per-game entry instructions](games/README.md#adding-or-updating-a-game)
-or open a [GitHub issue](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/issues)
-with the game version, engine, converter build, tested ARM64 device, gameplay/input/save
-results and sanitized logs. **Never upload proprietary SDKs, game assets or converted packages.**
 
 ## Known issues and testing limits
 
