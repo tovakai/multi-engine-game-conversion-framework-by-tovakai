@@ -118,7 +118,7 @@ def validate_release(tag: str, info: dict) -> None:
 
 def packaged_build_info(target: str | None = None) -> dict:
     info = get_build_info().copy()
-    info.update(platform=target, architecture={"windows-x64": "x86_64", "linux-aarch64": "aarch64"}.get(target, platform.machine()),
+    info.update(platform=target, architecture={"windows-x64": "x86_64", "linux-aarch64": "aarch64", "linux-x64": "x86_64"}.get(target, platform.machine()),
                 built_utc=utc_now())
     return info
 

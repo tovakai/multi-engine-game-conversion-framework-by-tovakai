@@ -24,7 +24,7 @@ read-only isolation produce zero links and zero claimed storage savings.
 
 | Engine family | Investigation and current policy |
 | --- | --- |
-| MonoGame / CelesteFrame | Audited vanilla Celeste XNA and Stardew .NET 6 profiles: only `game/Content/**/*.xnb` with an XNB header; experimental opt-in, hardware gameplay gate pending |
+| MonoFrame / MonoGame and FNA | Audited vanilla Celeste XNA and Stardew .NET 6 profiles: only `game/Content/**/*.xnb` with an XNB header; experimental opt-in, hardware gameplay gate pending |
 | Ren'Py | Loose images/audio may be static, but `.rpa` archives can include scripts and variants need their own launch contract; deferred |
 | Godot | `.pck` may contain scripts, patched resources and engine-sensitive content; deferred |
 | GameMaker | FORM/VM `.win` resources combine program and assets; runner behavior is not assumed read-only; deferred |

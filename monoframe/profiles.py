@@ -19,3 +19,9 @@ def matches_stardew(root: Path) -> bool:
         if not isinstance(frameworks,list) or config.get('tfm')!='net6.0' or not any(isinstance(f,dict) and f.get('name')=='Microsoft.NETCore.App' and f.get('version')=='6.0.32' for f in frameworks):return False
         return all(hashlib.sha256((root/name).read_bytes()).hexdigest()==digest for name,digest in STARDEW_HASHES.items())
     except (OSError,ValueError,KeyError,TypeError):return False
+def is_celeste_inspection(inspection):
+    """Select the audited Celeste recipe by profile, retaining legacy routing."""
+    backend = getattr(inspection, 'backend', None)
+    return backend == 'celesteframe' or (
+        backend == 'monoframe' and getattr(inspection, 'runtime_kind', None) in {
+            'celeste-steam-xna-1.4.0.0', 'celeste-profile-required'})

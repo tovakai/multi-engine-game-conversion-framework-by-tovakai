@@ -63,7 +63,10 @@ diagnostics, feedback maintenance and artwork provenance move to 0.1.2.0.
 
 See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md).
 The [integration guide](steam-library-integration.md) lists backend limits and
-pending hardware acceptance. No v0.1.1.0 publication before those checks.
+pending hardware acceptance. Linux x64 GUI packaging and verified GUI work-copy
+cleanup are part of this candidate. Celeste is a separate audited MonoFrame
+profile; legacy CelesteFrame metadata/imports remain supported. No v0.1.1.0
+publication before the [release acceptance ledger](releases/0.1.1.0-acceptance.md) is complete.
 SMAPI, new engine families and major runtime migrations remain separate work.
 The user-selected Until Then compatibility profile stays an explicitly
 experimental addition to the existing Godot backend. Its opening-scene research

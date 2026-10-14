@@ -14,7 +14,9 @@ remain unverified. Playtime and achievements require separate evidence.
 
 Use Python 3.12 to build. On Windows run `powershell -ExecutionPolicy Bypass -File
 build/build_windows.ps1`; on native Linux ARM64 run
-`bash build/build_linux_aarch64.sh`. The builders install the declared GUI/build
+`bash build/build_linux_aarch64.sh`. For native Linux x86_64 run
+`bash build/build_linux_x64.sh`; both wrappers use the shared native builder.
+A mismatched host architecture fails before dependency installation. The builders install the declared GUI/build
 dependencies and generate versioned archives with executable architecture checks.
 
 The Windows and native ARM64 CI workflows also build the application, start the
@@ -50,7 +52,7 @@ receipt against archive metadata, names and checksums. Full history is fetched.
    A local official build must also use the exact matching tag and clean tree.
    Inspect both workflows before uploading assets. Do not move or recreate old tags.
 5. Publish the application release with reviewed notes, the Windows ZIP, native
-   Linux ARM64 tarball, and checksums. Use a notes file with `gh release create`;
+   Linux ARM64 and Linux x64 tarballs, and checksums. Use a notes file with `gh release create`;
    verify release asset names and hashes after upload.
 
 Release publication is a manual final step. The workflows do not automatically

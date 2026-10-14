@@ -54,7 +54,7 @@ configuration files.
 
 | Backend | Shared linking | Identity and limitations |
 | --- | --- | --- |
-| CelesteFrame | Automatic native, device acceptance pending | Hash-gated vanilla Steam XNA 1.4.0.0 profile, AppID 504230; existing user FMOD and controller launcher retained |
+| MonoFrame / Celeste (legacy CelesteFrame accepted) | Automatic native, device acceptance pending | Hash-gated vanilla Steam XNA 1.4.0.0 profile, AppID 504230; existing user FMOD and controller launcher retained |
 | MonoFrame / Stardew Valley | Automatic native, device acceptance pending | Hash-gated Steam 1.6.15 .NET 6 profile, AppID 413150; Steam online features remain unverified |
 | GameMakerFrame | Automatic native, device acceptance pending | Exact source Steam manifest required; offline runtime stubs gain no achievements |
 | LÖVEFrame | Automatic native, device acceptance pending | Exact source Steam manifest required; no general Steamworks guarantee |
@@ -136,8 +136,12 @@ x86/FEX/Proton game suffix is replaced. Preserving this harness and its graphics
 context was necessary for SteamVR and controller input on the tested Frame.
 A wrapper receipt alone is never counted as proof of an ARM64 game process.
 
-Ordinary Steam restart persistence and original-runtime gameplay after restoration
-remain unverified, as do playtime and achievements. Other backends still require
+The user confirmed successful Stardew launch and controller input after an ordinary
+Steam/Frame restart on 2026-10-14. Original-runtime gameplay after restoration,
+playtime and achievements remain unverified. A subsequent live restore/relink cycle
+restored the exact prior options; the user confirmed the original runtime launches
+after a startup delay, then confirmed the relinked ARM64 version works. Its actual
+executable was verified as AArch64 dotnet. Other backends still require
 real-game acceptance. The [asset deduplication checklist](steam-asset-deduplication.md)
 is also mandatory; this test does not approve every candidate backend.
 
@@ -151,8 +155,8 @@ is also mandatory; this test does not approve every candidate backend.
 - [ ] Playtime attribution verified separately, or explicitly unverified.
 - [ ] Achievements verified using a genuinely supported backend and an actual
       unlock, or explicitly unverified; initialization alone is insufficient.
-- [ ] Restore previous options; original runtime launches normally.
-- [ ] Live options persist across an ordinary user-initiated Steam restart;
+- [x] Restore previous options; original Stardew runtime launches; ARM64 relink verified.
+- [x] Stardew live options persist across an ordinary user-initiated Steam restart;
       installer does not restart Steam or SteamVR.
 - [ ] Duplicate installer runs, conversion updates, moved/deleted packages and
       interrupted setup recover without duplicate modifications.
@@ -160,7 +164,7 @@ is also mandatory; this test does not approve every candidate backend.
 - [ ] Non-Steam registration and all artwork slots still work with Steam running.
 - [ ] Celeste FMOD/controller and Stardew saves remain correct; Hollow Knight
       ARM64 Proton and STS2 two-stage workflows have no regressions.
-- [ ] Windows x64 and Linux AArch64 candidate archives, notices, identities,
+- [ ] Windows x64, Linux AArch64 and Linux x64 candidate archives, notices, identities,
       SHA256 checksums and frozen GUI receipts pass on clean hosts.
 
 Do not publish `v0.1.1.0` until mandatory acceptance evidence is reviewed.

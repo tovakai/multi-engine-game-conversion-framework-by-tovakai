@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from monoframe.profiles import is_celeste_inspection
+
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
@@ -42,7 +44,7 @@ from megcfbt.native_runtime import automatic_runtime_available
 
 
 def automatic_native_runtime_available(inspection: UnifiedInspection) -> bool:
-    if inspection.backend == 'celesteframe':
+    if is_celeste_inspection(inspection):
         from celesteframe.runtime import automatic_runtime_available as celeste_available
         return inspection.buildable and celeste_available()
     if inspection.backend == 'unityframe':
@@ -64,10 +66,9 @@ def _native_backends():
     from constructframe import backend as construct
     from monoframe import backend as mono
     from unityframe import backend as unity
-    from celesteframe import backend as celeste
     return {'gamemakerframe': gamemaker, 'loveframe': love,
             'agsframe': ags, 'constructframe': construct, 'monoframe':mono, 'unityframe':unity,
-            'celesteframe': celeste}
+            'celesteframe': mono}
 
 
 class ConversionError(RuntimeError):
@@ -566,11 +567,11 @@ def build_source(
                     result = _native_backends()[inspection.backend].build_game(
                         selected.source_path, output=output_path, runtime=backend_runtime,
                         runtime_version=(None if runtime_version == DEFAULT_NWJS_VERSION else runtime_version)
-                            if inspection.backend in {'unityframe', 'celesteframe'} else runtime_version,
+                            if (inspection.backend == 'unityframe' or is_celeste_inspection(inspection)) else runtime_version,
                         force=force, progress=progress,
                         download_progress=download_progress,
                         steam_app_id=steam_app_id_for_source(_prepared_source.root if _prepared_source else path),
-                        **({'fmod_sdk': celeste_sdk} if inspection.backend == 'celesteframe' else {}),
+                        **({'fmod_sdk': celeste_sdk} if is_celeste_inspection(inspection) else {}),
                     )
                 except NativeBuildError as exc:
                     raise ConversionError(str(exc)) from exc
@@ -612,12 +613,12 @@ def build_source(
             steam_runtime_appid=existing_metadata.get('steam_runtime_appid'),
             conversion=existing_metadata.get('conversion'),
             engine_version=engine_version,
-            game_version='1.4.0.0' if inspection.backend == 'celesteframe' else existing_metadata.get('game_version'),
+            game_version='1.4.0.0' if is_celeste_inspection(inspection) else existing_metadata.get('game_version'),
             target_platform=target_platform,
             **({'runtime_engine_version': '6000.0.61f1', 'compatibility_profile': 'hollow-knight-steam-unity-6000.0.61f1-managed-input-v1'}
                if inspection.backend == 'unityframe' else
                {'runtime_engine_version': 'FNA 23.10 / .NET 8.0.31', 'compatibility_profile': 'celeste-steam-xna-1.4.0.0'}
-               if inspection.backend == 'celesteframe' else
+               if is_celeste_inspection(inspection) else
                {"runtime_engine_version": result.runtime_version,
                 "compatibility_profile": "experimental-ddlc-111-renpy-753"}
                if renpy_ddlc_753_migration else

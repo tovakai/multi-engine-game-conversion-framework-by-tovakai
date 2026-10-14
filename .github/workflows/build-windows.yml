@@ -74,6 +74,11 @@ jobs:
           if ($process.ExitCode -ne 0) { throw "Long-path GUI startup failed: $($process.ExitCode)" }
           python build/verify_build_identity.py --application $app --receipt $receipt --platform windows-x64
           if ($LASTEXITCODE -ne 0) { throw "Long-path frozen identity validation failed" }
+      - name: Verify frozen GUI conversion and work cleanup
+        shell: pwsh
+        run: |
+          python build/verify_frozen_conversion.py --executable "dist/windows/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai.exe" --receipt build/frozen-gui-conversion.json
+          if ($LASTEXITCODE -ne 0) { throw "Frozen GUI conversion verification failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: multi-engine-game-conversion-framework-by-tovakai-windows-x64
@@ -82,4 +87,5 @@ jobs:
             dist/SHA256SUMS-windows-x64.txt
             build/frozen-gui-startup.json
             build/frozen-gui-long-path.json
+            build/frozen-gui-conversion.json
           if-no-files-found: error

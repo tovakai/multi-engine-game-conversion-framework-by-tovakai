@@ -96,7 +96,8 @@ def convert(tmp_path, monkeypatch, backend, trusted=True):
     before = {p.relative_to(source): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in source.rglob('*') if p.is_file()}
     inspection = router.inspect_source(source)
-    assert inspection.buildable and inspection.backend == backend
+    canonical_backend = 'monoframe' if backend == 'celesteframe' else backend
+    assert inspection.buildable and inspection.backend == canonical_backend
     # Observe the real backend's metadata just before the router enriches it.
     original_write = router.write_frame_metadata
     emitted = []
@@ -128,7 +129,7 @@ def convert(tmp_path, monkeypatch, backend, trusted=True):
     spec.loader.exec_module(installer)
     for meta in metas:
         assert meta['engine'] == inspection.engine
-        assert meta['backend'] == backend
+        assert meta['backend'] == canonical_backend
         for key in ('steam_identity', 'steam_runtime_appid', 'compatibility_profile',
                     'runtime_engine_version', 'game_version', 'conversion'):
             if not emitted[0] and key == 'conversion':

@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 SCHEMA = 'megcfbt.asset-links/v1'
 DENIED = {'saves', 'save', 'mods', 'config', 'userdata', 'userconfig', 'runtime', 'patches'}
 PROFILES = {('celesteframe', 'celeste-steam-xna-1.4.0.0'),
+            ('monoframe', 'celeste-steam-xna-1.4.0.0'),
             ('monoframe', 'stardew-steam-1.6.15-net6')}
 ORIGINS_SCHEMA = 'megcfbt.asset-origins/v1'
 LEGACY_GRAPHICS_PREAMBLE_SHA = 'deee20d22b3867be8149d81fee063bf37d6ec050b4dd2ca4cc5ded72a969f768'

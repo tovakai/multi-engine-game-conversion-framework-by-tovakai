@@ -1,9 +1,13 @@
-# CelesteFrame
+# MonoFrame: Celeste profile
 
-CelesteFrame converts the verified vanilla Steam **Windows XNA Celeste 1.4.0.0**
+MonoFrame's Celeste profile converts the verified vanilla Steam **Windows XNA Celeste 1.4.0.0**
 installation into a native Linux ARM64 FNA package for Steam Frame. It preserves
 the owned game content and prepares a separate managed executable. It uses real
 Steam initialization and stats interfaces through the Frame's installed client.
+
+CelesteFrame is the historical module/package name, retained for compatibility.
+New GUI/CLI conversions route through MonoFrame and keep the same audited
+Celeste profile and AppID 504230. Stardew's separate .NET 6 recipe is unchanged.
 
 The converter automatically downloads and verifies the matching Celeste runtime
 SDK. Supply the separately obtained **FMOD Studio API 2.03.15 Linux SDK** archive.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from monoframe.profiles import is_celeste_inspection
+
 import os
 import json
 import queue
@@ -682,7 +684,7 @@ class ConverterApp:
                 self.until_then_sdk = None
             self.runtime_button.configure(state='normal',
                 text='FMOD SDK SELECTED' if self.until_then_sdk else 'GET FMOD SDK • UNTIL THEN')
-        elif result.backend == 'celesteframe':
+        elif is_celeste_inspection(result):
             from celesteframe.runtime import find_fmod_sdk
             try:
                 self.celeste_sdk = find_fmod_sdk()
@@ -831,9 +833,9 @@ class ConverterApp:
             from megcfbt.fmod_sdk_setup import FmodSdkDialog
             self.fmod_sdk_dialog = FmodSdkDialog(self, 'until-then')
             return
-        if self.inspection and self.inspection.backend in {'sts2', 'celesteframe'}:
+        if self.inspection and (self.inspection.backend == 'sts2' or is_celeste_inspection(self.inspection)):
             from megcfbt.fmod_sdk_setup import FmodSdkDialog
-            self.fmod_sdk_dialog = FmodSdkDialog(self, self.inspection.backend)
+            self.fmod_sdk_dialog = FmodSdkDialog(self, 'celesteframe' if is_celeste_inspection(self.inspection) else self.inspection.backend)
             return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
@@ -1005,7 +1007,7 @@ class ConverterApp:
                 self.until_then_sdk = None
                 self._pick_runtime()
                 return
-        if self.inspection.backend == 'celesteframe':
+        if is_celeste_inspection(self.inspection):
             from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
             if self.backend_runtime is None and not automatic_native_runtime_available(self.inspection):
                 self._pick_backend_runtime()
@@ -1045,7 +1047,7 @@ class ConverterApp:
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
                     **({'until_then_sdk': self.until_then_sdk} if self.inspection.runtime_kind == 'godot-until-then' else {}),
-                    **({'celeste_sdk': self.celeste_sdk} if self.inspection.backend == 'celesteframe' else {}),
+                    **({'celeste_sdk': self.celeste_sdk} if is_celeste_inspection(self.inspection) else {}),
                     **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
                        if self.inspection.backend == "sts2" else {}),
                     force=force,
@@ -1055,6 +1057,8 @@ class ConverterApp:
                     stage_progress=self._set_progress,
                     download_progress=self._download_progress,
                 )
+                from megcfbt.output_cleanup import finish_gui_conversion
+                result = finish_gui_conversion(result, self._progress_log)
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
                 message = str(exc)
@@ -1099,7 +1103,8 @@ class ConverterApp:
         messagebox.showinfo(
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
-            f"Build directory:\n{result.output_path}\n\n"
+            + ("Temporary conversion directory removed after ZIP verification.\n\n"
+               if result.work_directory_removed else f"Build directory:\n{result.output_path}\n\n")
             + (f"Steam Frame package:\n{result.archive_path}\n\n"
               f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else "")
             + ('\nRequires ARM64 Proton 11.0 installed through Steam; the launcher selects a supported version automatically.\n'

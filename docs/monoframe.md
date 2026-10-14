@@ -1,4 +1,17 @@
-# MonoFrame: experimental Stardew Valley support
+# MonoFrame: audited managed-game profiles
+
+MonoFrame includes separate Stardew Valley MonoGame/.NET 6 and
+[Celeste XNA/FNA/.NET 8](backends/celesteframe.md) profiles. Each retains its own
+source hashes, runtime SDK, dependencies, launcher and Steam capability contract.
+Celeste requires the owner-supplied FMOD 2.03.15 Linux SDK. Legacy CelesteFrame
+imports and packages remain supported; new conversions report MonoFrame.
+
+Windows uses the existing self-contained host preparers. Linux ARM64 uses its
+native SDK runtime; Linux x64 uses a native `dotnet` on PATH with the preparer's
+required .NET runtime. Missing/wrong-architecture host tools fail with setup
+guidance rather than trying to execute the ARM64 game runtime on a PC.
+
+## Stardew Valley
 
 MonoFrame prepares the unmodified Steam Windows installation of Stardew Valley
 1.6.15.24356 for a native Linux ARM64 .NET 6.0.32 runtime. Detection checks the
