@@ -59,7 +59,10 @@ def finish_gui_conversion(result, progress=None):
                         with path.open('rb') as stream:
                             while chunk := stream.read(1 << 20):
                                 crc = zlib.crc32(chunk, crc)
-                        if path.stat() != before or before.st_size != info.file_size or crc != info.CRC:
+                        after = path.stat()
+                        fields = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode')
+                        if (any(getattr(before, key) != getattr(after, key) for key in fields)
+                                or before.st_size != info.file_size or crc != info.CRC):
                             raise ValueError(f'file changed after packaging: {relative}')
                     else:
                         raise ValueError(f'unsupported work-copy file: {relative}')

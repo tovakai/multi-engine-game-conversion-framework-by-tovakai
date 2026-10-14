@@ -71,3 +71,23 @@ def test_symlink_root_rejected(conversion, tmp_path):
         pytest.skip('symlinks unavailable')
     assert finish_gui_conversion(replace(conversion, output_path=link)).warnings
     assert conversion.output_path.is_dir()
+
+
+def test_benign_access_time_updates_do_not_prevent_cleanup(conversion, monkeypatch):
+    from types import SimpleNamespace
+    original_stat = Path.stat
+    reads = 0
+    def stat_with_atime_update(path, *args, **kwargs):
+        nonlocal reads
+        value = original_stat(path, *args, **kwargs)
+        if path == conversion.output_path / 'data':
+            reads += 1
+            fields = {key: getattr(value, key) for key in dir(value) if key.startswith('st_')}
+            fields['st_atime'] += reads
+            fields['st_atime_ns'] += reads * 10**9
+            return SimpleNamespace(**fields)
+        return value
+    monkeypatch.setattr(Path, 'stat', stat_with_atime_update)
+    result = finish_gui_conversion(conversion)
+    assert result.work_directory_removed and not result.output_path.exists()
+    assert result.archive_path.exists()

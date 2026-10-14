@@ -1,6 +1,8 @@
 """Verify the real frozen GUI's conversion/ZIP/cleanup flow using synthetic assets."""
 import argparse
 import json
+import os
+import time
 from pathlib import Path
 import struct
 import subprocess
@@ -22,6 +24,10 @@ def verify(executable, receipt):
         header[:6] = b'\x7fELF\x02\x01'
         struct.pack_into('<H', header, 18, 183)
         (runtime / 'mkxp-z.aarch64').write_bytes(header)
+        support = runtime / 'frame_steam_env.c'
+        support.write_text('/* synthetic runtime support */\n', encoding='utf-8')
+        old = time.time() - 172800
+        os.utime(support, (old, old))
         output = root / 'output'
         output.mkdir()
         subprocess.run([str(executable.resolve()), '--verify-gui-conversion', str(source),
