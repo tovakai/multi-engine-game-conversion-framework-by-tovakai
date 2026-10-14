@@ -1,0 +1,8 @@
+﻿#!/usr/bin/env python
+import os
+
+env = SConscript('godot-cpp/SConstruct')
+env.Append(CPPPATH=['third-party'])
+# nlohmann JSON reports malformed saved patches through exceptions.
+env.Append(CXXFLAGS=['-fexceptions'])
+Default(env.SharedLibrary('bin/libuntilthen' + env['suffix'] + env['SHLIBSUFFIX'], ['replacements.cpp']))
