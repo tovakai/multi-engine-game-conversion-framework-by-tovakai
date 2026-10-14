@@ -42,8 +42,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build Windows GUI
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: pwsh
-        run: ./build/build_windows.ps1
+        run: |
+          python build/stage_runtime_bundles.py
+          if ($LASTEXITCODE -ne 0) { throw "Pinned runtime staging failed" }
+          ./build/build_windows.ps1
       - name: Check frozen GUI startup
         shell: pwsh
         run: |
