@@ -275,6 +275,56 @@ def test_missing_game_opens_only_official_steam_flow(package, monkeypatch, capsy
     assert not (tmp_path / 'records').exists()
 
 
+def test_install_flow_failure_allows_rescan_or_cancel(package, monkeypatch, capsys, tmp_path):
+    root, launcher, _ = package
+    monkeypatch.setattr(lib, 'records', lambda: tmp_path / 'records')
+    monkeypatch.setattr(lib, 'installation', lambda n: {'state': 'missing', 'errors': []})
+    answers = iter(['1', '3'])
+    monkeypatch.setattr('builtins.input', lambda prompt: next(answers))
+    def failed(*args, **kwargs):
+        raise lib.subprocess.CalledProcessError(3, args[0])
+    monkeypatch.setattr(lib.subprocess, 'run', failed)
+    assert lib.menu(root, 'Celeste', launcher) is False
+    assert 'could not be opened' in capsys.readouterr().out
+    assert not (tmp_path / 'records').exists()
+
+
+@pytest.mark.parametrize('number', [0, -1, True, '504230', 2**31])
+def test_install_flow_rejects_invalid_appid(number, monkeypatch):
+    monkeypatch.setattr(lib.subprocess, 'run', lambda *a, **kw: pytest.fail('invalid URI dispatched'))
+    with pytest.raises(ValueError, match='AppID'):
+        lib.open_install_flow(number)
+
+
+def test_frame_install_flow_forwards_without_bootstrap(tmp_path, monkeypatch):
+    import stat
+    from types import SimpleNamespace
+    config = tmp_path / '.steam'
+    helper = config / 'root/steamrtarm64/steam'
+    helper.parent.mkdir(parents=True)
+    helper.write_bytes(b'fixture')
+    (config / 'steam.pid').write_text('123')
+    proc = tmp_path / 'proc/123'
+    proc.mkdir(parents=True)
+    (proc / 'comm').write_text('steam\n')
+    monkeypatch.setattr(Path, 'home', lambda: tmp_path)
+    original_stat, original_lstat = Path.stat, Path.lstat
+    monkeypatch.setattr(Path, 'stat', lambda self, **kw: SimpleNamespace(st_uid=42) if self == Path('/proc/123') else original_stat(self, **kw))
+    monkeypatch.setattr(Path, 'lstat', lambda self, **kw: SimpleNamespace(st_uid=42, st_mode=stat.S_IFIFO | 0o600) if self == config / 'steam.pipe' else original_lstat(self, **kw))
+    original_read = Path.read_text
+    monkeypatch.setattr(Path, 'read_text', lambda self, **kw: 'steam\n' if self == Path('/proc/123/comm') else original_read(self, **kw))
+    monkeypatch.setattr(lib.os, 'getuid', lambda: 42, raising=False)
+    monkeypatch.setattr(lib.os, 'access', lambda *args: True)
+    calls = []
+    monkeypatch.setattr(lib.subprocess, 'run', lambda args, **kw: calls.append((args, kw)))
+    lib.open_install_flow(2121980)
+    assert calls == [([str(helper), 'steam://install/2121980'], {'check': True, 'timeout': 15})]
+    # A stale PID must never execute the forwarding helper or bootstrap Steam.
+    (config / 'steam.pid').write_text('-1')
+    lib.open_install_flow(2121980)
+    assert calls[-1][0] == ['xdg-open', 'steam://install/2121980']
+
+
 def test_conflicting_identity_still_offers_nonsteam(package, monkeypatch, capsys):
     root, launcher, meta = package
     meta['steam_identity'] = {'appid': 123, 'source': 'installed-source-manifest'}

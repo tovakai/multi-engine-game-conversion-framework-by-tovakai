@@ -739,7 +739,11 @@ def menu(root, name, launcher):
         if answer == '4':
             continue
         if answer == '1':
-            subprocess.run(['xdg-open', f'steam://install/{number}'], check=True)
+            try:
+                open_install_flow(number)
+            except ValueError as exc:
+                print(str(exc))
+                continue
             if choose('Complete installation in Steam. Press R to rescan, or rerun this installer later: ').lower() == 'r':
                 continue
         return False
@@ -763,6 +767,40 @@ def menu(root, name, launcher):
     print('Launch the original game through Steam, then rerun installer → Verify existing link while it is running.')
     print('Game runtime, gameplay, Steam Input, playtime and achievements require separate verification.')
     return False
+
+
+def open_install_flow(number):
+    """Forward an official install URI; never bootstrap or restart Steam.
+
+    Frame's packaged launcher exposes this ARM64 forwarding executable in
+    forward_command_line(). Unlike xdg-open it also works over SSH without a
+    desktop session. Only use it with a live same-user Steam process and FIFO.
+    """
+    if type(number) is not int or not 0 < number < 2**31:
+        raise ValueError('Invalid original Steam AppID')
+    uri = f'steam://install/{number}'
+    config = Path.home() / '.steam'
+    helper = config / 'root/steamrtarm64/steam'
+    try:
+        pid = int((config / 'steam.pid').read_text().strip())
+        if pid <= 0:
+            raise ValueError('Invalid Steam PID')
+        process = Path('/proc') / str(pid)
+        running = (process.stat().st_uid == os.getuid() and
+                   (process / 'comm').read_text().strip() == 'steam')
+        pipe = (config / 'steam.pipe').lstat()
+        forwarding = (running and stat.S_ISFIFO(pipe.st_mode) and
+                      pipe.st_uid == os.getuid() and helper.is_file() and
+                      os.access(helper, os.X_OK))
+    except (OSError, ValueError, AttributeError):
+        forwarding = False
+    command = [str(helper), uri] if forwarding else ['xdg-open', uri]
+    try:
+        subprocess.run(command, check=True, timeout=15)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError('Steam official installation dialog could not be opened. '
+                         'Install this AppID through the running Steam client, '
+                         'then select Rescan or rerun this installer.') from exc
 
 
 def automatic_unavailable(root, exc):
