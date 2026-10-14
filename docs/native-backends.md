@@ -163,3 +163,9 @@ native contracts with trustworthy identity, alongside non-Steam registration.
 The original game must be installed through Steam on this Frame first. See the
 [backend matrix and device acceptance checklist](steam-library-integration.md).
 GameMaker offline stubs do not gain Steamworks features from library linking.
+
+Train45 build 25227748 now has an experimental shared GUI/CLI conversion
+recipe using Godot 4.5.0 and GodotSteam 4.19.1 ARM64 release binaries. Research
+gameplay passed on Frame; production-package acceptance, full-game coverage,
+achievements and playtime remain separate checks. Shared Godot original-entry
+linking and asset deduplication remain deferred. See [Train45 setup](backends/train45.md).

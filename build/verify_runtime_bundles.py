@@ -7,11 +7,13 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from rpgmframe.godot_extension_runtime import recipe_entry, REQUIRED
+from rpgmframe.godot_extension_runtime import recipe_entry, REQUIRED, RECIPE, TRAIN_RECIPE, TRAIN_REQUIRED
 
 
 def verify(archive: Path):
-    entry = recipe_entry()
+    entries = [recipe_entry(recipe) for recipe in (RECIPE, TRAIN_RECIPE)]
+    entry = next((e for e in entries if e and archive.name == e["archive_name"]), None)
+    required = TRAIN_REQUIRED if entry and entry["recipe_id"] == TRAIN_RECIPE else REQUIRED
     if entry is None or archive.name != entry['archive_name']:
         raise ValueError('No allowlisted recipe for embedded runtime archive')
     if hashlib.sha256(archive.read_bytes()).hexdigest() != entry['sha256']:
@@ -29,7 +31,7 @@ def verify(archive: Path):
             if member.name == 'runtime.json':
                 if json.loads(data)['files'] != entry['files']:
                     raise ValueError('Embedded runtime manifest disagrees with pinned index')
-            if member.name in REQUIRED and (data[:6] != b'\x7fELF\x02\x01'
+            if member.name in required and (data[:6] != b'\x7fELF\x02\x01'
                     or len(data) < 20 or int.from_bytes(data[18:20], 'little') != 183):
                 raise ValueError('Embedded runtime binary is not Linux AArch64')
     if seen != set(entry['archive_files']):

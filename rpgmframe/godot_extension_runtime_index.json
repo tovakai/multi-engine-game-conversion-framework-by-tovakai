@@ -94,6 +94,30 @@
       "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-until-then-arm64-v1/godot-4.1.4-until-then-native-arm64-v1.tar.gz",
       "sha256": "40037f8f3272d4481049607180d6a2ded4ada487f512745fdcd056cff8dcc2b9",
       "status": "experimental-opening-gameplay-verified"
+    },
+    "godot-4.5-train45-native-arm64-v1": {
+      "recipe_id": "godot-4.5-train45-native-arm64-v1",
+      "executable": "godot.arm64",
+      "archive_name": "godot-4.5-train45-native-arm64-v1.tar.gz",
+      "archive_files": [
+        "NOTICE.txt",
+        "extensions/godotsteam/libgodotsteam.linux.template_release.arm64.so",
+        "godot.arm64",
+        "licenses/COPYRIGHT-Godot.txt",
+        "licenses/LICENSE-Godot.txt",
+        "licenses/LICENSE-GodotSteam.md",
+        "runtime.json"
+      ],
+      "files": {
+        "godot.arm64": "4e3b68065033d270ae931efc677dd679fca0cb97f7018304b77a838e0fc85fe6",
+        "extensions/godotsteam/libgodotsteam.linux.template_release.arm64.so": "1df04d060c28a39931e980bf9a8bc02606dc502bf888bd1a59e365659a3523ff",
+        "licenses/LICENSE-GodotSteam.md": "a3bbe23be1563f3e0772dc22cbd4e51f348a7be2bd6bae451cedebc598f7acee",
+        "licenses/LICENSE-Godot.txt": "b0435e3b3e4e55238f05f4b306f30524a1b2e20147810d436eaa554fa6855c80",
+        "licenses/COPYRIGHT-Godot.txt": "2039020f520ebd55592070ede2ef38dfbc28a6550140008da004143872789e5d",
+        "NOTICE.txt": "c4878a5bc3f6aaed885623e1cc6442054b29e3de007ab2f8edb5c8ca7b5c8d4e"
+      },
+      "sha256": "0a5a7c9dede73b96e6c9b3529f28e1111e3b8bcb4e6280671251587cfd23eb52",
+      "url": "https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/runtime-train45-arm64-v1/godot-4.5-train45-native-arm64-v1.tar.gz"
     }
   }
 }

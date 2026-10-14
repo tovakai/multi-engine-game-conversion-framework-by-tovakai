@@ -672,6 +672,8 @@ class ConverterApp:
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
         elif result.backend == 'unityframe':
             self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
+        elif result.runtime_kind == 'godot-train45':
+            self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC ARM64 + GODOTSTEAM')
         elif result.runtime_kind == 'godot-until-then':
             from rpgmframe.until_then import find_fmod_sdk
             try:
@@ -761,6 +763,11 @@ class ConverterApp:
             self.notes_box.configure(state="normal")
             self.notes_box.delete("1.0", "end")
             self.notes_box.insert("1.0", advisory)
+            self.notes_box.configure(state="disabled")
+        elif result.runtime_kind == 'godot-train45':
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Click CONVERT. The audited Train45 build uses an automatic Godot 4.5 ARM64 release runtime and GodotSteam 4.19.1. Research gameplay passed on Frame; full-game and achievements remain unverified.")
             self.notes_box.configure(state="disabled")
         elif result.runtime_kind == 'godot-until-then':
             self.notes_box.configure(state="normal")

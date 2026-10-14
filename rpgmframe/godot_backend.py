@@ -167,6 +167,11 @@ def build_godot_game(
     pack = find_godot_pack(inspection.game_root)
     if pack is None:
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
+    from rpgmframe import train45
+    if train45.candidate(pack, inspection.game_root):
+        return train45.build_game(source_path=source_path, output_path=output_path,
+            inspection=inspection, runtime=runtime, force=force, archive_type=archive_type,
+            progress=progress, stage_progress=stage_progress, download_progress=download_progress)
     from rpgmframe import until_then
     if until_then.candidate(pack, inspection.game_root):
         return until_then.build_game(source_path=source_path, output_path=output_path,

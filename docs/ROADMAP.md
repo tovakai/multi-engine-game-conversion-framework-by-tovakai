@@ -253,3 +253,9 @@ Use one authoritative application release number and **four-component** public v
   original source folders and any output the user explicitly chose to keep.
   Verify successful cleanup and failure recovery across the shared GUI backend
   workflow before considering this feedback resolved.
+
+Train45 build 25227748 now has an experimental shared GUI/CLI conversion
+recipe using Godot 4.5.0 and GodotSteam 4.19.1 ARM64 release binaries. Research
+gameplay passed on Frame; production-package acceptance, full-game coverage,
+achievements and playtime remain separate checks. Shared Godot original-entry
+linking and asset deduplication remain deferred. See [Train45 setup](backends/train45.md).

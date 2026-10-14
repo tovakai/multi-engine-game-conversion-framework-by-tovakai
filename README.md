@@ -70,6 +70,7 @@ These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizabl
 | [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
 | [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
 | [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
+| [Train45](docs/backends/train45.md) | Godot 4.5.0 / GodotSteam 4.19.1 | Experimental audited Steam build 25227748; native ARM64 research gameplay passed; automatic release runtime, no SDK required |
 | [Until Then](docs/backends/until-then.md) | Godot 4.1.4 / native extensions | Experimental audited Steam build 23785927; opening gameplay, audio, controller, save/reload and normal exit confirmed in research testing. Requires owner-supplied FMOD 2.02.35 Linux SDK |
 | [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
 

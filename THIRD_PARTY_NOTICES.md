@@ -194,3 +194,15 @@ license from the owner's checksum-verified FMOD Studio API 2.02.35 Linux SDK.
 FMOD's terms apply to those libraries; the framework license does not replace
 them. Genuine Steam calls use the Frame's installed native Steam API. See
 [the experimental profile](docs/backends/until-then.md).
+
+## Train45 experimental native runtime
+
+The optional Train45 runtime bundle contains the official Godot 4.5 ARM64
+release export template (MIT and bundled third-party notices) and GodotSteam
+GDExtension 4.19.1 for 4.4+ (MIT). Exact input, binary, license and archive
+checksums are pinned in the runtime index and reproducible export recipe.
+License/copyright texts and source references accompany converted packages.
+See `experiments/train45/README.md` and its preserved license texts.
+No Train45 content or Valve Steam API binary is redistributed in this bundle.
+The launcher resolves Frame's installed native Steam API inside the converted
+package; genuine API behavior is retained.
