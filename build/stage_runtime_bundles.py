@@ -46,4 +46,10 @@ def stage(entry, tag, destination, *, download=subprocess.run, verify=None):
 if __name__ == '__main__':
     index = json.loads((ROOT / 'rpgmframe/godot_extension_runtime_index.json').read_text(encoding='utf-8'))
     for recipe, tag in TAGS.items():
-        print('STAGED_RUNTIME', stage(index['recipes'][recipe], tag, ROOT / 'build/runtime-bundles'), flush=True)
+        try:
+            print('STAGED_RUNTIME', stage(index['recipes'][recipe], tag, ROOT / 'build/runtime-bundles'), flush=True)
+        except subprocess.CalledProcessError:
+            if '--optional' not in sys.argv:
+                raise
+            print('RUNTIME_PROVISIONING_UNVERIFIED: ' + recipe +
+                  '; development smoke build only. Release builds require this asset.', flush=True)

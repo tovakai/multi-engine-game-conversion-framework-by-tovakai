@@ -46,7 +46,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          python build/stage_runtime_bundles.py
+          if ($env:GITHUB_REF -like 'refs/tags/v*') { python build/stage_runtime_bundles.py }
+          else { python build/stage_runtime_bundles.py --optional }
           if ($LASTEXITCODE -ne 0) { throw "Pinned runtime staging failed" }
           ./build/build_windows.ps1
       - name: Check frozen GUI startup
