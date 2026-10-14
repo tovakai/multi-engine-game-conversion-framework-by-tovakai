@@ -83,14 +83,16 @@ On Steam Frame, the experimental non-Steam entry launches visibly, plays audio,
 accepts controller input and works through its menus. After the binding fix,
 the initial morning scene and transition toward school are playable. Saving
 works. The running executable was verified through /proc as a native Linux
-AArch64 ELF, not FEX or Proton. Saved-game reload and normal shutdown with the
-latest FMOD fix still require confirmation.
+AArch64 ELF, not FEX or Proton. The user also confirmed saved-game reload and normal menu exit with the FMOD
+cleanup fix. The final log records FMOD shutdown and no game process remains.
+Engine logs retain texture/resource cleanup warnings and scripted missing
+Visibility-node messages; their wider impact is not established by this test.
 
 ## Remaining gates
 
 Broader story/Ink serialization coverage, audio throughout gameplay, camera
-transitions, NPC appearance, saved-game reload and normal exit with the latest
-cleanup fix remain required. The successful opening scenes are not full-game
+transitions, NPC appearance and the remaining resource-cleanup/Visibility warnings
+require investigation. The successful opening scenes are not full-game
 compatibility acceptance. No GUI support, original-entry linking,
 asset deduplication, playtime or achievement support is authorized by these
 prototype/build results. Do not publish v0.1.1.0 or merge this research into its
