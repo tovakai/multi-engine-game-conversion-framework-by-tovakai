@@ -106,6 +106,7 @@ def godot_launcher_body(
     library_directories: tuple[str, ...] = (),
     preserve_launch_environment: bool = False,
     require_native_steam: bool = False,
+    steam_app_id: int | None = None,
 ) -> str:
     pack = shlex.quote(pack_relative)
     zink = (
@@ -129,6 +130,16 @@ export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
     additions = ":".join('$ROOT/' + resource_path(name) for name in library_directories)
     prefix = additions + ":" if additions else ""
     overlay = ('export MEGCFBT_RESOURCE_OVERLAY="$ROOT"/' + shlex.quote(resource_path(resource_overlay)) + '\n\n') if resource_overlay else ''
+    steam_context = ''
+    if steam_app_id is not None:
+        if type(steam_app_id) is not int or not 0 < steam_app_id < 2**31:
+            raise ValueError('Invalid original Steam AppID for native launch context')
+        # Only audited profile callers supply this value. Non-Steam shortcuts
+        # can supply their own synthetic ID, which is invalid for real APIs.
+        # Selecting the genuine app context does not grant ownership: native
+        # Steam initialization and the game's subscription checks still run.
+        steam_context = (f'# Audited original app context for genuine Steam API calls.\n'
+                         f'export SteamAppId={steam_app_id}\nexport SteamGameId={steam_app_id}\n\n')
     preamble = _FRAME_ENV_PREAMBLE
     if preserve_launch_environment:
         preamble = preamble.replace('if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]]',
@@ -145,6 +156,6 @@ else
     export LD_LIBRARY_PATH="{prefix}$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 fi
 
-{overlay}{zink}{zink_compatibility}cd "$ROOT/game"
+{overlay}{steam_context}{zink}{zink_compatibility}cd "$ROOT/game"
 exec "$ROOT/godot.arm64"{' --path "$ROOT/game"' if resource_overlay else ''}{pack_argument}{video_argument} "$@"
 '''

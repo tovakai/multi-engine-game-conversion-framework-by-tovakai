@@ -10,7 +10,7 @@ build requires a new audited profile; matching a title or an AppID is insufficie
 1. Select or drop the installed `Until Then` game directory into the converter.
 2. Supply the **FMOD Studio API 2.02.35 Linux SDK**, kept unextracted as
    `fmodstudioapi20235linux.tar.gz`. Downloads is checked automatically; the
-   shared **GET FMOD SDK • UNTIL THEN** dialog can select another location.
+   shared **GET FMOD SDK â€¢ UNTIL THEN** dialog can select another location.
    Obtain the SDK from [FMOD downloads](https://www.fmod.com/download#fmodengine)
    under its terms. Celeste/STS2's 2.03.15 SDK is incompatible with this profile.
 3. Click **CONVERT**. The tested ARM64 engine and extensions are resolved and
@@ -74,9 +74,12 @@ shutdown regressions were fixed and retested. Native behavioral comparisons
 pass 255 JSON cases, 36 camera checks and 2,560 coloring cases.
 
 The production converter's inspection/backend/router/ZIP/installer path has
-synthetic regression coverage. A fresh package produced by the frozen GUI also
-requires its own device check; earlier research evidence is not automatically
-production-package acceptance. Full-game coverage, thumbnail scheduling, NPC
+synthetic regression coverage. A fresh frozen-GUI package was tested on Steam Frame: gameplay, audio,
+controllers and saving passed after correcting its non-Steam launch context.
+The running production engine was verified as an AArch64 Linux ELF. The
+converter now writes the audited original AppID explicitly for genuine Steam
+API initialization and writes LF-only AppID sidecars. Steam ownership checks
+remain intact; a shortcut ID is not a valid original-game API context. Full-game coverage, thumbnail scheduling, NPC
 appearance, playtime, achievements and Steam Cloud remain unverified. Logs retain
 texture/resource cleanup warnings, scripted missing Visibility-node messages
 and headless font warnings. This remains an experimental profile, and does not

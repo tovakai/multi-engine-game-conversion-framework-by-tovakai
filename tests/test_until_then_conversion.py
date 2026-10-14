@@ -118,6 +118,8 @@ def test_complete_pipeline_preserves_audited_identity_and_native_contract(tmp_pa
     assert b"linux.release" in read_resource(overlay, "addons/inkcpp/inkcpp.gdextension")
     launcher = (output / "launch.sh").read_text()
     assert "MEGCFBT_RESOURCE_OVERLAY" in launcher and "--path" in launcher
+    assert 'export SteamAppId=1574820' in launcher and 'export SteamGameId=1574820' in launcher
+    assert (output / 'game/steam_appid.txt').read_bytes() == b'1574820\n'
     assert "MESA_LOADER_DRIVER_OVERRIDE" not in launcher
     assert '-z "${DISPLAY:-}"' in launcher and "libsteam_api.so" in launcher
     assert "proton" not in launcher.casefold() and "fex" not in launcher.casefold()
@@ -254,3 +256,21 @@ def test_overlay_resource_checksum_rejects_modified_content(tmp_path):
     path.write_bytes(data)
     with pytest.raises(ValueError, match="checksum"):
         read_resource(path, "file.gd")
+
+
+@pytest.mark.parametrize("appid,expected", [(1574820, "1574820"), (None, "7557288")])
+def test_launcher_executes_with_correct_steam_context(tmp_path, appid, expected):
+    import os
+    import shutil
+    import subprocess
+    from rpgmframe.launchers import godot_launcher_body
+    bash = shutil.which("bash")
+    if not bash:
+        pytest.skip("Bash unavailable")
+    (tmp_path / "game").mkdir()
+    (tmp_path / "godot.arm64").write_bytes(b'#!/usr/bin/env bash\nprintf "%s|%s|%s" "$SteamAppId" "$SteamGameId" "$DISPLAY"\n')
+    launcher = tmp_path / "launch.sh"
+    launcher.write_bytes(godot_launcher_body("game/test.pck", preserve_launch_environment=True, steam_app_id=appid).encode())
+    env = dict(os.environ, SteamAppId="7557288", SteamGameId="7557288", DISPLAY=":verified", MEGCFBT_FRAME_ENV_IMPORTED="1")
+    result = subprocess.run([bash, str(launcher)], env=env, capture_output=True, text=True, check=True)
+    assert result.stdout == f"{expected}|{expected}|:verified"

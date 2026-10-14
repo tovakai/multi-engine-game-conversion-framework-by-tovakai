@@ -215,12 +215,13 @@ def build_game(*, source_path, output_path, inspection, runtime, fmod_sdk,
         # keeps converted saves usable across package updates and new ZIPs.
         (game / "override.cfg").write_text('[application]\nconfig/use_custom_user_dir=true\nconfig/custom_user_dir_name="megcfbt/until-then"\n', encoding="utf-8", newline="\n")
         for folder in (staging, game):
-            (folder / "steam_appid.txt").write_text(str(APPID) + "\n", encoding="ascii")
+            (folder / "steam_appid.txt").write_bytes((str(APPID) + "\n").encode("ascii"))
         launcher = staging / "launch.sh"
         launcher.write_text(godot_launcher_body("game/" + pack.path.name,
             resource_overlay="game/untilthen-native-overlay.pck",
             library_directories=("game/addons/fmod/native/linux", "game/addons/godotsteam/linux"),
-            preserve_launch_environment=True, require_native_steam=True), encoding="utf-8", newline="\n")
+            preserve_launch_environment=True, require_native_steam=True,
+            steam_app_id=APPID), encoding="utf-8", newline="\n")
         launcher.chmod(0o755)
         (staging / "godot-compatibility.json").write_text(json.dumps({
             "profile_id": PROFILE, "status": "experimental-opening-gameplay-verified",
