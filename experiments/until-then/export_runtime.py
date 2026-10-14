@@ -36,6 +36,14 @@ for path in own.rglob("*"):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, target)
         sources[name] = "portable-runtime-sources/" + path.relative_to(own).as_posix()
+for name, filename in {
+    'sources/steam_sdk_compat.py': 'steam_sdk_compat.py',
+    'licenses/LICENSE-GameNetworkingSockets.txt': 'LICENSE-GameNetworkingSockets.txt',
+}.items():
+    target = output / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(Path(__file__).parent / filename, target)
+    sources[name] = filename
 (output / "NOTICE.txt").write_text(
     "Experimental Until Then native Godot runtime. Opening gameplay, audio, input, "
     "save/reload and normal exit tested on Steam Frame. Full-game coverage, playtime "
@@ -45,7 +53,8 @@ for path in own.rglob("*"):
     "FMOD SDK, FMOD vendor runtime libraries, Steam SDK headers, Steam runtime libraries "
     "and all game data are excluded. Supply the licensed FMOD 2.02.35 Linux SDK yourself; "
     "the genuine Steam API is resolved from the running Frame installation.\n"
-    "The nlohmann JSON 3.10.4 MIT license is included with the replacement sources.\n")
+    "The nlohmann JSON 3.10.4 MIT license is included with the replacement sources.\n"
+    "Networking inline compatibility helpers: Valve GameNetworkingSockets BSD-3-Clause notice included in licenses/LICENSE-GameNetworkingSockets.txt.\n")
 sources["NOTICE.txt"] = None
 files = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in sources}
 manifest = {"recipe_id": recipe, "architecture": "aarch64", "engine_version": "4.1.4",
