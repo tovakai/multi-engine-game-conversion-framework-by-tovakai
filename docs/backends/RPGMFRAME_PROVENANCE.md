@@ -6,3 +6,6 @@ Imported from `tovakai/RPGMFrame` at commit
 The package remains a first-class backend inside the combined repository. It owns
 RPG Maker XP/VX/VX Ace, MV/MZ, and Godot conversion until those backends are
 factored further.
+
+The shared mkxp-z input compatibility preload and its audited in-memory Ruby
+syntax adaptation are documented in [The Last Sovereign validation](last-sovereign.md).
