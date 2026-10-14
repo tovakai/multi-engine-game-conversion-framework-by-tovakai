@@ -70,6 +70,7 @@ These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizabl
 | [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
 | [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
 | [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
+| [Until Then](docs/backends/until-then.md) | Godot 4.1.4 / native extensions | Experimental audited Steam build 23785927; opening gameplay, audio, controller, save/reload and normal exit confirmed in research testing. Requires owner-supplied FMOD 2.02.35 Linux SDK |
 | [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
 
 **Status is scoped to what was observed**, not a promise of full completion, all mods,
@@ -413,6 +414,11 @@ Set `MEGCFBT_CACHE_DIR` to relocate the shared runtime cache. RenFrame also
 honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 ## Custom Godot / GodotSteam compatibility runtime
+
+Until Then's audited Windows Steam build now has an experimental GUI/CLI
+conversion profile using the tested native engine and all six extensions.
+Supply FMOD Studio API **2.02.35 Linux**, then convert and use the shared ZIP and
+non-Steam installer workflow. See [setup, runtime availability and limits](docs/backends/until-then.md).
 
 Matching GodotSteam ARM64 release-template downloads are now available for
 Godot 4.6.0 and 4.7.2, with a separate pinned source recipe for Godot 3.5.1.

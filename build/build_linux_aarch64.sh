@@ -18,6 +18,13 @@ fi
 APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
 "$PY" build/build_identity.py --platform linux-aarch64
 
+runtime_arguments=()
+for bundle in build/runtime-bundles/*.tar.gz; do
+  [[ -f "$bundle" ]] || continue
+  "$PY" build/verify_runtime_bundles.py "$bundle"
+  runtime_arguments+=(--add-data "$bundle:rpgmframe/runtime_support")
+done
+
 "$PY" -m PyInstaller \
   --noconfirm \
   --clean \
@@ -40,6 +47,7 @@ APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
   --collect-all unityframe \
   --collect-all celesteframe \
   --add-data "experiments/sts2-steamworks:sts2-tools" \
+  "${runtime_arguments[@]}" \
   app/main.py
 
 RELEASE="dist/linux-aarch64/$APP_NAME"

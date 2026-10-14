@@ -8,7 +8,7 @@ class RuntimeDownloadError(RuntimeError):
     pass
 
 
-def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, download_progress=None) -> Path:
+def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, download_progress=None, archive_path: Path | None = None) -> Path:
     names=entry.get('archive_files',[])
     for name in names:
         if (not isinstance(name,str) or PurePosixPath(name).is_absolute()
@@ -24,10 +24,11 @@ def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, downloa
     with tempfile.TemporaryDirectory(prefix='.runtime-',dir=target.parent) as temporary:
         work=Path(temporary);archive=work/'runtime.tar.gz';stage=work/'extracted';stage.mkdir()
         digest=hashlib.sha256();received=0
-        if progress:progress('Downloading native ARM64 runtime…')
+        if progress:progress('Reading bundled native ARM64 runtime…' if archive_path else 'Downloading native ARM64 runtime…')
         try:
-            with urllib.request.urlopen(entry['url'],timeout=45) as response,archive.open('wb') as output:
-                size=response.headers.get('Content-Length')
+            source = archive_path.open('rb') if archive_path else urllib.request.urlopen(entry['url'],timeout=45)
+            with source as response,archive.open('wb') as output:
+                size=str(archive_path.stat().st_size) if archive_path else response.headers.get('Content-Length')
                 total=int(size) if size and size.isdigit() else None
                 while chunk:=response.read(1024*1024):
                     received+=len(chunk)

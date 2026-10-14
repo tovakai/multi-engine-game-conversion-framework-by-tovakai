@@ -65,6 +65,10 @@ See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md)
 The [integration guide](steam-library-integration.md) lists backend limits and
 pending hardware acceptance. No v0.1.1.0 publication before those checks.
 SMAPI, new engine families and major runtime migrations remain separate work.
+The user-selected Until Then compatibility profile stays an explicitly
+experimental addition to the existing Godot backend. Its opening-scene research
+acceptance does not expand shared Steam linking/deduplication capabilities or
+replace the production-package and broader gameplay gates.
 The release date follows validated fixes and passing final artifacts, not a
 calendar commitment.
 

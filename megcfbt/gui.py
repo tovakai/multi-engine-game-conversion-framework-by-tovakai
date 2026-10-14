@@ -150,6 +150,7 @@ class ConverterApp:
         self.backend_runtime: Path | None = None
         self.sts2_sdk: Path | None = None
         self.celeste_sdk: Path | None = None
+        self.until_then_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
@@ -671,6 +672,14 @@ class ConverterApp:
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
         elif result.backend == 'unityframe':
             self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
+        elif result.runtime_kind == 'godot-until-then':
+            from rpgmframe.until_then import find_fmod_sdk
+            try:
+                self.until_then_sdk = find_fmod_sdk()
+            except (OSError, ValueError, RuntimeError):
+                self.until_then_sdk = None
+            self.runtime_button.configure(state='normal',
+                text='FMOD SDK SELECTED' if self.until_then_sdk else 'GET FMOD SDK • UNTIL THEN')
         elif result.backend == 'celesteframe':
             from celesteframe.runtime import find_fmod_sdk
             try:
@@ -753,6 +762,11 @@ class ConverterApp:
             self.notes_box.delete("1.0", "end")
             self.notes_box.insert("1.0", advisory)
             self.notes_box.configure(state="disabled")
+        elif result.runtime_kind == 'godot-until-then':
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Until Then uses the tested experimental ARM64 profile. Select the FMOD Studio API 2.02.35 Linux SDK, then click CONVERT. The native runtime and extensions are provided automatically. On Frame, run install-to-steam.sh and add the package as a non-Steam game. Opening gameplay, audio, controllers and save/reload passed; full-game compatibility and achievements remain unverified.")
+            self.notes_box.configure(state="disabled")
         elif auto_custom_runtime:
             self.notes_box.configure(state="normal")
             self.notes_box.delete("1.0", "end")
@@ -806,6 +820,10 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
+        if self.inspection and getattr(self.inspection, 'runtime_kind', None) == 'godot-until-then':
+            from megcfbt.fmod_sdk_setup import FmodSdkDialog
+            self.fmod_sdk_dialog = FmodSdkDialog(self, 'until-then')
+            return
         if self.inspection and self.inspection.backend in {'sts2', 'celesteframe'}:
             from megcfbt.fmod_sdk_setup import FmodSdkDialog
             self.fmod_sdk_dialog = FmodSdkDialog(self, self.inspection.backend)
@@ -969,6 +987,17 @@ class ConverterApp:
             if self.backend_runtime is None:
                 return
 
+        if self.inspection.runtime_kind == 'godot-until-then':
+            from rpgmframe.until_then import find_fmod_sdk, validate_fmod_sdk
+            try:
+                self.until_then_sdk = validate_fmod_sdk(self.until_then_sdk) if self.until_then_sdk else find_fmod_sdk()
+                if self.until_then_sdk is None:
+                    self._pick_runtime()
+                    return
+            except (OSError, ValueError, RuntimeError):
+                self.until_then_sdk = None
+                self._pick_runtime()
+                return
         if self.inspection.backend == 'celesteframe':
             from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
             if self.backend_runtime is None and not automatic_native_runtime_available(self.inspection):
@@ -1008,6 +1037,7 @@ class ConverterApp:
                     renpy_ddlc_753_migration=ddlc_753_approved,
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
+                    **({'until_then_sdk': self.until_then_sdk} if self.inspection.runtime_kind == 'godot-until-then' else {}),
                     **({'celeste_sdk': self.celeste_sdk} if self.inspection.backend == 'celesteframe' else {}),
                     **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
                        if self.inspection.backend == "sts2" else {}),

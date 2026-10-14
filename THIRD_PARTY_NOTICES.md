@@ -178,3 +178,19 @@ The Frame graphics guard and legacy Steam API bridge are GPL-3.0-only with sourc
 included. They call the installed Frame Steam API; its proprietary library is
 not redistributed in the SDK. Retail game assemblies, assets and saves are
 never part of public runtime downloads.
+
+## Until Then compatibility runtime
+
+The experimental Godot 4.1.4 native-extension bundle retains Godot/GodotCpp
+component notices and the MIT licenses for InkCPP, Threen, GodotSteam and the
+public FMOD binding. Independently authored JSON/camera/color replacements use
+the converter's GPL-3.0-only license, with nlohmann JSON 3.10.4 under MIT.
+The bundle includes pinned source references, compatibility build recipes and
+license texts. It contains no game content, proprietary FMOD libraries, Steam
+runtime libraries or Steam SDK headers.
+
+Personal Until Then conversions copy ARM64 audio libraries and the vendor
+license from the owner's checksum-verified FMOD Studio API 2.02.35 Linux SDK.
+FMOD's terms apply to those libraries; the framework license does not replace
+them. Genuine Steam calls use the Frame's installed native Steam API. See
+[the experimental profile](docs/backends/until-then.md).

@@ -17,6 +17,7 @@ from contextlib import contextmanager
 PROFILES = {
     ('celesteframe', 'celeste-steam-xna-1.4.0.0'): 504230,
     ('monoframe', 'stardew-steam-1.6.15-net6'): 413150,
+    ('rpgmframe', 'experimental-until-then-build23785927-native-v1'): 1574820,
 }
 LEGACY_BACKENDS = {'GameMaker': 'gamemakerframe', 'LÖVE': 'loveframe',
                    'AGS': 'agsframe', 'CelesteFrame': 'celesteframe', 'MonoFrame': 'monoframe'}

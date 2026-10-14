@@ -36,6 +36,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Build a Linux ARM64 package with the matching engine runtime.",
     )
     build_parser.add_argument("path", type=Path, help="Game directory or .zip archive")
+    build_parser.add_argument("--fmod-sdk", type=Path,
+        help="Owner-supplied FMOD Studio API 2.02.35 Linux SDK for the Until Then profile")
     build_parser.add_argument(
         "--runtime",
         type=Path,
@@ -139,6 +141,7 @@ def main(argv: list[str] | None = None) -> int:
                 output=args.output,
                 force=args.force,
                 progress=lambda message: print(message, file=sys.stderr),
+                fmod_sdk=args.fmod_sdk,
             )
             archive_path = (
                 create_tar_gz(result.output_path, force=args.force)

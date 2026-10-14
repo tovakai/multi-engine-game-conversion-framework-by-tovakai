@@ -4,6 +4,13 @@ import webbrowser
 from megcfbt.fmod_sdk import FMOD_URL, remember_sdk
 
 def requirement(backend):
+    if backend == 'until-then':
+        from rpgmframe import until_then
+        return dict(title='Until Then', version='2.02.35', filename=until_then.FMOD_FILENAME,
+            attribute='until_then_sdk', discover=until_then.find_fmod_sdk,
+            validate=until_then.validate_fmod_sdk, save=None,
+            purpose='This game needs FMOD for audio and its native extension.',
+            workflow='Select this exact Linux SDK, then press Convert to prepare the complete Frame ZIP.')
     if backend == 'sts2':
         from megcfbt import sts2
         return dict(title='Slay the Spire 2', version='2.03.15', filename=sts2.FMOD_FILENAME,

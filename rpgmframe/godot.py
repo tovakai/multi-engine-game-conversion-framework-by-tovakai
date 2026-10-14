@@ -513,11 +513,21 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
         compatibility = Compatibility.UNKNOWN
         warnings.append("Native Godot extensions require matching Linux ARM64 libraries: " + ", ".join(native_extensions))
 
+    from rpgmframe.until_then import candidate, RUNTIME_KIND
+    until_then = not encrypted and not csharp and candidate(pack, current)
+    if until_then:
+        compatibility = Compatibility.NEEDS_TESTING
+        warnings = [warning for warning in warnings if not warning.startswith((
+            "Native Godot extensions require", "Custom built-in Godot modules require",
+            "Custom Godot development build detected"))]
+        warnings.append("Experimental Until Then native profile: source hashes are verified during conversion. Requires the owner-supplied FMOD Studio API 2.02.35 Linux SDK. Opening gameplay, audio, controller and save/reload tested on Frame; full-game compatibility remains unverified.")
+
     return GameInspection(
         source_path=root,
         family=EngineFamily.GODOT,
         engine=EngineVariant.GODOT,
         runtime=(
+            RUNTIME_KIND if until_then else
             "godot-encrypted" if encrypted else
             "godot-native-extensions" if native_extensions else
             "godot-custom"

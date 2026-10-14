@@ -97,6 +97,13 @@ the tested SDL/media dependencies.
 
 ## GodotSteam candidates
 
+Until Then uses an experimental audited Godot 4.1.4 native-extension profile in
+the unified converter. It preserves the source PCK, installs an overlay and the
+tested ARM64 extensions, and uses separately supplied FMOD 2.02.35 libraries.
+Opening gameplay/input/audio and save/reload passed research testing; full-game
+compatibility and achievements remain unverified. Shared original-entry linking
+and deduplication remain deferred. See [Until Then setup](backends/until-then.md).
+
 Godot 4.6.0 and 4.7.2 use checksum-pinned upstream ARM64 release templates and
 their matching Steam API library. These are export runtimes rather than editors.
 Runtime capability `pack_loading: adjacent` selects a PCK beside `godot.arm64`

@@ -409,6 +409,7 @@ def build_source(
     download_progress: Callable[[int, int | None], None] | None = None,
     sts2_sdk: Path | str | None = None,
     celeste_sdk: Path | str | None = None,
+    until_then_sdk: Path | str | None = None,
     sts2_frame=None,
     sts2_retry: bool = False,
     sts2_handoff: bool | None = None,
@@ -590,6 +591,7 @@ def build_source(
                 progress=progress,
                 stage_progress=backend_stage,
                 download_progress=download_progress,
+                **({'fmod_sdk': until_then_sdk} if inspection.runtime_kind == 'godot-until-then' else {}),
                 **({'prepared_source': _prepared_source} if _prepared_source else {}),
             )
             launcher_path = result.launcher_path
