@@ -102,6 +102,11 @@ def godot_launcher_body(
     adjacent_pack: bool = False,
     disable_zink_render_pass_optimizations: bool = False,
     force_gles3: bool = False,
+    resource_overlay: str | None = None,
+    library_directories: tuple[str, ...] = (),
+    preserve_launch_environment: bool = False,
+    require_native_steam: bool = False,
+    steam_app_id: int | None = None,
 ) -> str:
     pack = shlex.quote(pack_relative)
     zink = (
@@ -121,15 +126,36 @@ export GALLIUM_DRIVER="${GALLIUM_DRIVER:-zink}"
         'export ZINK_DEBUG="${ZINK_DEBUG:+${ZINK_DEBUG},}norp"\n\n'
         if disable_zink_render_pass_optimizations else ''
     )
-    return _FRAME_ENV_PREAMBLE + f'''# Custom Godot modules such as GodotSteam
+    from rpgmframe.godot_overlay import resource_path
+    additions = ":".join('$ROOT/' + resource_path(name) for name in library_directories)
+    prefix = additions + ":" if additions else ""
+    overlay = ('export MEGCFBT_RESOURCE_OVERLAY="$ROOT"/' + shlex.quote(resource_path(resource_overlay)) + '\n\n') if resource_overlay else ''
+    steam_context = ''
+    if steam_app_id is not None:
+        if type(steam_app_id) is not int or not 0 < steam_app_id < 2**31:
+            raise ValueError('Invalid original Steam AppID for native launch context')
+        # Only audited profile callers supply this value. Non-Steam shortcuts
+        # can supply their own synthetic ID, which is invalid for real APIs.
+        # Selecting the genuine app context does not grant ownership: native
+        # Steam initialization and the game's subscription checks still run.
+        steam_context = (f'# Audited original app context for genuine Steam API calls.\n'
+                         f'export SteamAppId={steam_app_id}\nexport SteamGameId={steam_app_id}\n\n')
+    preamble = _FRAME_ENV_PREAMBLE
+    if preserve_launch_environment:
+        preamble = preamble.replace('if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]]',
+            'if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" && "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]]')
+    steam_check = ('if [[ ! -f "$steam_arm64_dir/libsteam_api.so" ]]; then\n'
+        '    echo "ERROR: Native Steam API unavailable. Run this package on Steam Frame with Steam installed and running." >&2\n'
+        '    exit 1\nfi\n\n') if require_native_steam else ''
+    return preamble + f'''# Custom Godot modules such as GodotSteam
 # may ship shared libraries beside the engine runtime.
 steam_arm64_dir="/opt/steamvr/bin/linuxarm64"
-if [[ -d "$steam_arm64_dir" ]]; then
-    export LD_LIBRARY_PATH="$ROOT:$steam_arm64_dir${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+{steam_check}if [[ -d "$steam_arm64_dir" ]]; then
+    export LD_LIBRARY_PATH="{prefix}$ROOT:$steam_arm64_dir${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 else
-    export LD_LIBRARY_PATH="$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
+    export LD_LIBRARY_PATH="{prefix}$ROOT${{LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}}"
 fi
 
-{zink}{zink_compatibility}cd "$ROOT/game"
-exec "$ROOT/godot.arm64"{pack_argument}{video_argument} "$@"
+{overlay}{steam_context}{zink}{zink_compatibility}cd "$ROOT/game"
+exec "$ROOT/godot.arm64"{' --path "$ROOT/game"' if resource_overlay else ''}{pack_argument}{video_argument} "$@"
 '''

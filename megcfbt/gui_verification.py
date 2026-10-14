@@ -28,7 +28,7 @@ def main(argv=None) -> int:
     parser.add_argument('--backend-runtime', type=Path,
                         help='Explicit runtime directory selected for this acceptance run')
     parser.add_argument('--fmod-sdk', type=Path,
-                        help='Owner FMOD Linux SDK selected for Celeste acceptance')
+                        help='Owner FMOD Linux SDK selected for Celeste or Until Then acceptance')
     parser.add_argument('--approve-renpy-prerelease-migration',action='store_true',
                         help='Explicitly approve the experimental full-engine nightly migration for this acceptance run')
     args=parser.parse_args(argv)
@@ -73,7 +73,7 @@ def main(argv=None) -> int:
     app.root.withdraw()
     app.output_dir=output
     state={'state':'inspecting','source':str(source),'output_dir':str(output),
-           'frozen':bool(getattr(sys,'frozen',False)),
+           'frozen':bool(getattr(sys,'frozen',False)), 'build_info':get_build_info(),
            'runtime_override':False,'download_progress':[]}
     started=time.monotonic()
     initiated=False
@@ -120,6 +120,8 @@ def main(argv=None) -> int:
                 state['runtime_override'] = True
             if args.fmod_sdk is not None and app.inspection.backend == 'celesteframe':
                 app.celeste_sdk = args.fmod_sdk.expanduser().resolve()
+            if args.fmod_sdk is not None and app.inspection.runtime_kind == 'godot-until-then':
+                app.until_then_sdk = args.fmod_sdk.expanduser().resolve()
             state['inspection']={'engine':app.inspection.engine,'version':app.inspection.engine_version,
                                  'runtime_kind':app.inspection.runtime_kind,'evidence':app.inspection.evidence}
             state['convert_enabled']=app.convert_btn.cget('state')=='normal'

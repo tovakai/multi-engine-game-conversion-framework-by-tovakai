@@ -1,0 +1,13 @@
+{
+  "status": "research-only",
+  "steam_appid": 1574820,
+  "source_buildid": "23785927",
+  "godot_version": "4.1.4",
+  "oracle_dll_sha256": {
+    "internal.dll": "dc8f23a667668fa288617ae196644b4f47b105e2be48930437a39959bfae0ac6",
+    "jsonutils.dll": "868980d3b72e1db996f4b50324fbc37f1cd1d37a19ef6a206a72b693d59d0342"
+  },
+  "does_not_authorize_library_linking": true,
+  "source_pack_sha256": "303f6f2bba7e912b9868437ec75811c7a46c657e999f8032a6a0823b867b6ef0",
+  "source_pack_size": 3488040345
+}

@@ -65,6 +65,10 @@ See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md)
 The [integration guide](steam-library-integration.md) lists backend limits and
 pending hardware acceptance. No v0.1.1.0 publication before those checks.
 SMAPI, new engine families and major runtime migrations remain separate work.
+The user-selected Until Then compatibility profile stays an explicitly
+experimental addition to the existing Godot backend. Its opening-scene research
+acceptance does not expand shared Steam linking/deduplication capabilities or
+replace the production-package and broader gameplay gates.
 The release date follows validated fixes and passing final artifacts, not a
 calendar commitment.
 
@@ -249,3 +253,9 @@ Use one authoritative application release number and **four-component** public v
   original source folders and any output the user explicitly chose to keep.
   Verify successful cleanup and failure recovery across the shared GUI backend
   workflow before considering this feedback resolved.
+
+Train45 build 25227748 now has an experimental shared GUI/CLI conversion
+recipe using Godot 4.5.0 and GodotSteam 4.19.1 ARM64 release binaries. Research
+gameplay passed on Frame; production-package acceptance, full-game coverage,
+achievements and playtime remain separate checks. Shared Godot original-entry
+linking and asset deduplication remain deferred. See [Train45 setup](backends/train45.md).
