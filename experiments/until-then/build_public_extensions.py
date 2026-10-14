@@ -14,7 +14,7 @@ def checkout(directory,url,commit):
  return directory
 
 def recipe(directory,sources,includes=(),defines=(),libraries=(),libpaths=(),name='extension'):
- text="env=Environment(CXX='g++',CCFLAGS=['-fPIC','-std=c++17','-O2'],CPPDEFINES="+repr(['NDEBUG']+list(defines))+",CPPPATH="+repr([str(cpp/'include'),str(cpp/'gen/include'),str(cpp/'gdextension')]+list(includes))+",LIBPATH="+repr([str(cpp/'bin')]+list(libpaths))+",LIBS="+repr(['godot-cpp.linux.template_release.arm64']+list(libraries))+",LINKFLAGS=[\"-Wl,-rpath,'$$ORIGIN'\"])\nDefault(env.SharedLibrary('bin/lib"+name+".megcfbt.arm64.so',"+repr(sources)+"))\n"
+ text="env=Environment(CXX='g++',CCFLAGS=['-fPIC','-std=c++17','-O2','-fno-gnu-unique','-fvisibility=hidden'],CPPDEFINES="+repr(['NDEBUG']+list(defines))+",CPPPATH="+repr([str(cpp/'include'),str(cpp/'gen/include'),str(cpp/'gdextension')]+list(includes))+",LIBPATH="+repr([str(cpp/'bin')]+list(libpaths))+",LIBS="+repr(['godot-cpp.linux.template_release.arm64']+list(libraries))+",LINKFLAGS=[\"-Wl,-rpath,'$$ORIGIN'\",\"-Wl,-Bsymbolic\",\"-Wl,--exclude-libs,ALL\"])\nDefault(env.SharedLibrary('bin/lib"+name+".megcfbt.arm64.so',"+repr(sources)+"))\n"
  (directory/'SConstruct.megcfbt').write_text(text)
  run(python,'-m','SCons','-f','SConstruct.megcfbt','-j2',cwd=directory)
 
@@ -32,6 +32,12 @@ if component=='inkcpp':
  recipe(directory,files,['src','inkcpp/include','shared/private','shared/public'],['INK_ENABLE_GODOT'],name='inkcpp')
 elif component=='threen':
  directory=checkout(base/'threen','https://github.com/akien-mga/threen.git','4ee5588cb8ee203048ab66c89377e29e78ab82a3')
+ entry=directory/'src/register_types.cpp';text=entry.read_text()
+ marker='// MEGCFBT: explicit UI bindings for old lazy engine-class registration'
+ if marker not in text:
+  text=text.replace('#include "threen.h"','#include "threen.h"\n#include <godot_cpp/classes/control.hpp>\n#include <godot_cpp/classes/v_box_container.hpp>')
+  text=text.replace('ClassDB::register_class<Threen>();',marker+'\n godot::internal::EngineClassRegistration<godot::Control>::callback();\n godot::internal::EngineClassRegistration<godot::VBoxContainer>::callback();\n ClassDB::register_class<Threen>();')
+  entry.write_text(text)
  files=[str(p.relative_to(directory)) for p in (directory/'src').glob('*.cpp')]
  if not files:files=[str(p.relative_to(directory)) for p in directory.glob('*.cpp')]
  recipe(directory,files,['src','.'],name='threen')

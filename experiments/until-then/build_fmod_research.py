@@ -30,15 +30,33 @@ header.write_text(text)
 header=native/'src/fmod_assets.h'
 text=header.read_text()
 if '#include <utility>' not in text:header.write_text('#include <utility>\n'+text)
+# Stop real FMOD workers before Godot unloads their callbacks/library.
+header=native/'src/fmod_studio_module.h'
+text=header.read_text().replace('FMOD::Studio::System* studio_system;', 'FMOD::Studio::System* studio_system = nullptr;')
+header.write_text(text)
+module=native/'src/fmod_studio_module.cpp'
+text=module.read_text().replace('if (studio_system->isValid())','if (studio_system != nullptr && studio_system->isValid())')
+old='if (ERROR_CHECK(studio_system->release()))\n\t\t{\n\t\t\treturn true;'
+new='if (ERROR_CHECK(studio_system->release()))\n\t\t{\n\t\t\tstudio_system = nullptr;\n\t\t\treturn true;'
+if old in text:text=text.replace(old,new)
+assert 'studio_system = nullptr;' in text
+module.write_text(text)
+entry=native/'src/register_types.cpp'
+text=entry.read_text()
+old='Engine::get_singleton()->unregister_singleton("FMODStudioModule");'
+new='if (fmod_module != nullptr) { fmod_module->shutdown(); }\n\t\t'+old
+if 'fmod_module->shutdown();' not in text:text=text.replace(old,new)
+assert 'fmod_module->shutdown();' in text
+entry.write_text(text)
 recipe=native/'SConstruct.megcfbt'
 recipe.write_text('''from pathlib import Path
 root=Path.home()/'.cache/megcfbt/research/until-then'
 cpp=root/'godot-cpp'
 sdk=root/'sdk/fmodstudioapi20235linux'
-env=Environment(CXX='g++',CCFLAGS=['-fPIC','-std=c++17','-O2'],CPPDEFINES=['FMOD_LINUX','NDEBUG'],
+env=Environment(CXX='g++',CCFLAGS=['-fPIC','-std=c++17','-O2','-fno-gnu-unique','-fvisibility=hidden'],CPPDEFINES=['FMOD_LINUX','NDEBUG'],
  CPPPATH=[str(cpp/'include'),str(cpp/'gen/include'),str(cpp/'gdextension'),'src',str(sdk/'api/core/inc'),str(sdk/'api/studio/inc')],
  LIBPATH=[str(cpp/'bin'),str(sdk/'api/core/lib/arm64'),str(sdk/'api/studio/lib/arm64')],
- LIBS=['godot-cpp.linux.template_release.arm64','fmod','fmodstudio'],LINKFLAGS=['-Wl,-rpath,$$ORIGIN'])
+ LIBS=['godot-cpp.linux.template_release.arm64','fmod','fmodstudio'],LINKFLAGS=["-Wl,-rpath,'$$ORIGIN'","-Wl,-Bsymbolic","-Wl,--exclude-libs,ALL"])
 sources=[str(path) for path in Path('src').rglob('*.cpp')]
 Default(env.SharedLibrary('bin/libfmod.megcfbt.arm64.so',sources))
 ''')

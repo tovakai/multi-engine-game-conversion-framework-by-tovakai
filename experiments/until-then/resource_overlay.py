@@ -40,6 +40,44 @@ if __name__=='__main__':
         'addons/godotsteam/godotsteam.gdextension':extension('godotsteam_init','addons/godotsteam/linux/libgodotsteam.so',['addons/godotsteam/linux/libsteam_api.so']),
         'addons/fmod/fmod.gdextension':extension('fmod_library_init','addons/fmod/native/linux/libfmod.release.so',['addons/fmod/native/linux/libfmod.so','addons/fmod/native/linux/libfmodstudio.so']),
     }
+    # One custom-engine-only thumbnail call uses a fifth loader parameter.
+    # Existing-resource parity was measured in the original engine; scheduling
+    # semantics remain unverified. Keep this adaptation experimental and hash-gated.
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--source-pack',type=Path)
+    args=parser.parse_args()
+    if args.source_pack:
+        profile=json.loads((root/'source-profile.json').read_text())
+        sha=hashlib.sha256()
+        with args.source_pack.open('rb') as stream:
+            while chunk:=stream.read(8*1024*1024):sha.update(chunk)
+        if sha.hexdigest()!=profile['source_pack_sha256']:raise ValueError('Unverified game pack')
+        name='res://ui/components/Game/SceneView/SceneView.gd'
+        data=None
+        with args.source_pack.open('rb') as stream:
+            header=stream.read(96)
+            if struct.unpack('<6I',header[:24])!=(0x43504447,2,4,1,4,0):raise ValueError('Unexpected pack layout')
+            base=struct.unpack_from('<Q',header,24)[0]
+            count=struct.unpack('<I',stream.read(4))[0]
+            if count>1000000:raise ValueError('Unbounded pack directory')
+            for _ in range(count):
+                length=struct.unpack('<I',stream.read(4))[0]
+                if length>65536:raise ValueError('Unsafe pack path')
+                current=stream.read(length).rstrip(b'\0').decode()
+                offset,size=struct.unpack('<QQ',stream.read(16))
+                stream.read(16)
+                flags=struct.unpack('<I',stream.read(4))[0]
+                if current==name:
+                    if flags or size>1024*1024:raise ValueError('Unexpected script encoding')
+                    stream.seek(base+offset)
+                    data=stream.read(size)
+                    break
+        if data is None:raise ValueError('Expected thumbnail script missing')
+        old=b'ResourceLoader.load_threaded_request(_path, "", false, ResourceLoader.CACHE_MODE_REUSE, true)'
+        new=b'ResourceLoader.load_threaded_request(_path, "", false, ResourceLoader.CACHE_MODE_REUSE)'
+        if data.count(old)!=1:raise ValueError('Unexpected custom loader call')
+        descriptors[name.removeprefix('res://')]=data.replace(old,new)
     write_pack(output/'untilthen-native-overlay.pck',descriptors)
     (output/'overlay-manifest.json').write_text(json.dumps({'status':'experimental-not-gameplay-verified','files':{name:hashlib.sha256(data).hexdigest() for name,data in descriptors.items()}},indent=2))
     print(output/'untilthen-native-overlay.pck')
