@@ -1,21 +1,14 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
-The **v0.1.1.0 development candidate** adds shared Steam library integration.
-After ZIP transfer and extraction, run `./install-to-steam.sh` to choose automatic
-original-entry linking for an approved backend or the existing non-Steam entry
-with artwork. **The original game must be installed through Steam on this Steam
-Frame before linking is available.** Secondary libraries are detected; missing
-games can be installed through Steam and rescanned without another transfer.
-Original files are preserved and Steam stays running. Linking backs up and
-verifies launch options through an existing local Steam client interface; when
-that interface is unavailable, use the non-Steam option. No launch-command
-copying or Properties editing is required. See the
-[integration guide, backend limits and device checklist](docs/steam-library-integration.md).
-Hardware acceptance remains pending; v0.1.0.3 remains the current public release.
-Optional [post-extraction asset deduplication](docs/steam-asset-deduplication.md)
-compares static assets by size/SHA-256 and uses guarded read-only launches.
-Celeste/Stardew XNB candidates are experimental; no backend is advertised as
-safely deduplicated before real-game Frame acceptance.
+**v0.1.1.0** improves the shared Steam Frame installer and adds a Linux x64 GUI.
+Transfer and extract the converted ZIP, then run `./install-to-steam.sh`.
+**Add as non-Steam game (recommended)** installs the shortcut and artwork while
+Steam stays running. Original-entry linking and
+[asset deduplication](docs/steam-asset-deduplication.md) are optional
+**[experimental]** features with incomplete hardware qualification; keep the ZIP
+for recovery. **The original game must be installed through Steam on this Steam
+Frame before linking is available.** Original Steam files are never rewritten.
+See the [integration guide and backend limits](docs/steam-library-integration.md).
 
 **Convert supported PC games you already own into ARM64 packages for Linux.**
 Initially built for the **Steam Frame**, with portable AArch64 Linux output as the broader goal.
@@ -24,15 +17,18 @@ Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-## Download v0.1.0.3: Cassette Beasts and guided FMOD setup
+## Download v0.1.1.0: shared installer and experimental Steam library integration
 
-**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.3)**
+**[Release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.1.0)**
 
 | Converter application | Download |
 | --- | --- |
-| Windows x64 | [v0.1.0.3 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/multi-engine-game-conversion-framework-by-tovakai-0.1.0.3-windows-x64.zip) |
-| Linux ARM64 / AArch64 | [v0.1.0.3 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/multi-engine-game-conversion-framework-by-tovakai-0.1.0.3-linux-aarch64.tar.gz) |
-| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/SHA256SUMS.txt) |
+| Windows x64 | [v0.1.1.0 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.1.0 ARM64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-aarch64.tar.gz) |
+| Linux x64 | [v0.1.1.0 x64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-x64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/SHA256SUMS.txt) |
+
+The previous [v0.1.0.3 release](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.3) and its tag remain unchanged.
 
 **Cassette Beasts 1.8.3 now has tested native ARM64 graphical compatibility on
 Steam Frame**, including movement, transitions, battle and save/load. Controller
