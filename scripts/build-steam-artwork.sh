@@ -10,7 +10,8 @@ PY="${ARTWORK_PYTHON:-python3}"
 identity_arguments=()
 if [[ -n "${ARTWORK_BUILD_IDENTITY:-}" ]]; then
   test -f "$ARTWORK_BUILD_IDENTITY"
-  identity_arguments+=(--add-data "$ARTWORK_BUILD_IDENTITY:steamartwork")
+  identity_path="$("$PY" -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' "$ARTWORK_BUILD_IDENTITY")"
+  identity_arguments+=(--add-data "$identity_path:steamartwork")
 fi
 "$PY" -c 'import tkinter, PIL.ImageTk'
 "$PY" -m PyInstaller --noconfirm --clean --windowed \

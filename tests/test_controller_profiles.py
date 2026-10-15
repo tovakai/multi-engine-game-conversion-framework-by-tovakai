@@ -82,6 +82,7 @@ def test_prepare_publishes_only_own_templates_and_portable_helper(tmp_path):
     build = tmp_path / "build"
     directory = prepare_profile(build, "mv")
     manifest = json.loads((directory / "profile.json").read_text())
+    assert b"\r\n" not in (build / "setup-controller-profile.sh").read_bytes()
     for entry in manifest["controllers"].values():
         assert hashlib.sha256((directory / entry["file"]).read_bytes()).hexdigest() == entry["sha256"]
     # The portable helper imports from its own directory without the repository.

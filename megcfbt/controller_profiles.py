@@ -106,7 +106,7 @@ def prepare_profile(build: Path, engine: str, *, sensitivity=100, deadzone=8000)
     files = {}
     for kind, text in rendered.items():
         name = f"{PROFILE_ID}-{engine}-{kind}.vdf"
-        (destination / name).write_text(text, encoding="utf-8")
+        (destination / name).write_bytes(text.encode("utf-8"))
         files[kind] = {"file": name, "sha256": hashlib.sha256(text.encode()).hexdigest()}
     resources = Path(__file__).with_name("controller_support")
     for name in ("setup.py", "steam_cdp.py"):
@@ -115,6 +115,6 @@ def prepare_profile(build: Path, engine: str, *, sensitivity=100, deadzone=8000)
                 "activation": "explicit-per-shortcut", "initial_mode": "Game controls",
                 "toggle": "R3", "sensitivity": sensitivity, "deadzone": deadzone, "controllers": files}
     (destination / "profile.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    script.write_text('#!/usr/bin/env bash\nset -euo pipefail\nROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\nexec python3 "$ROOT/.megcfbt/controllers/setup.py" "$@"\n', encoding="utf-8")
+    script.write_bytes(('#!/usr/bin/env bash\nset -euo pipefail\nROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\nexec python3 "$ROOT/.megcfbt/controllers/setup.py" "$@"\n').encode("utf-8"))
     script.chmod(0o755)
     return destination

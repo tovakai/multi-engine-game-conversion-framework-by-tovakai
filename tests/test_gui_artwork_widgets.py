@@ -4,6 +4,7 @@ from megcfbt import gui
 
 
 def test_artwork_dialog_masks_key_and_reuses_session_fields(monkeypatch):
+    pytest.importorskip('customtkinter')
     tk = pytest.importorskip('tkinter')
     try:
         probe = tk.Tk()
