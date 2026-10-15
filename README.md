@@ -1,5 +1,15 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
+**v0.1.1.0** improves the shared Steam Frame installer and adds a Linux x64 GUI.
+Transfer and extract the converted ZIP, then run `./install-to-steam.sh`.
+**Add as non-Steam game (recommended)** installs the shortcut and artwork while
+Steam stays running. Original-entry linking and
+[asset deduplication](docs/steam-asset-deduplication.md) are optional
+**[experimental]** features with incomplete hardware qualification; keep the ZIP
+for recovery. **The original game must be installed through Steam on this Steam
+Frame before linking is available.** Original Steam files are never rewritten.
+See the [integration guide and backend limits](docs/steam-library-integration.md).
+
 **Convert supported PC games you already own into ARM64 packages for Linux.**
 Initially built for the **Steam Frame**, with portable AArch64 Linux output as the broader goal.
 Most backends use native Linux runtimes; experimental UnityFrame runs a matching
@@ -7,15 +17,18 @@ Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-## Download v0.1.0.3: Cassette Beasts and guided FMOD setup
+## Download v0.1.1.0: shared installer and experimental Steam library integration
 
-**[Latest release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.3)**
+**[Release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.1.0)**
 
 | Converter application | Download |
 | --- | --- |
-| Windows x64 | [v0.1.0.3 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/multi-engine-game-conversion-framework-by-tovakai-0.1.0.3-windows-x64.zip) |
-| Linux ARM64 / AArch64 | [v0.1.0.3 Linux tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/multi-engine-game-conversion-framework-by-tovakai-0.1.0.3-linux-aarch64.tar.gz) |
-| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.0.3/SHA256SUMS.txt) |
+| Windows x64 | [v0.1.1.0 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.1.0 ARM64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-aarch64.tar.gz) |
+| Linux x64 | [v0.1.1.0 x64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-x64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/SHA256SUMS.txt) |
+
+The previous [v0.1.0.3 release](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.3) and its tag remain unchanged.
 
 **Cassette Beasts 1.8.3 now has tested native ARM64 graphical compatibility on
 Steam Frame**, including movement, transitions, battle and save/load. Controller
@@ -26,7 +39,12 @@ These downloads contain **the converter, not games**. The project does not distr
 
 ### Quick start
 
-1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux ARM64.
+For v0.1.1.0, **installing as a non-Steam game is the recommended workflow**.
+Original Steam entry linking and asset deduplication are **[experimental]**,
+optional features with incomplete hardware coverage. Keep the converted ZIP
+for recovery if you choose them.
+
+1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. v0.1.1.0 provides Windows x64, Linux x64 and Linux ARM64 host builds; converted games retain their ARM64 targets.
 2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
 3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
 4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
@@ -51,8 +69,10 @@ These are **selected v0.1.0.3 compatibility highlights**, chosen for recognizabl
 | [Fear & Hunger 2: TERMINA](games/fear-and-hunger-2-termina/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
 | [To the Moon](games/to-the-moon/README.md) | RPGMFrame | Reported working; detailed coverage not recorded |
 | [The Cat Lady](games/the-cat-lady/README.md) | AGSFrame | Playable with keyboard/mouse; native controller not confirmed |
-| [Celeste](games/celeste/README.md) | CelesteFrame / FNA | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
+| [Celeste](games/celeste/README.md) | MonoFrame / FNA (Celeste) | Playable, controller and save/load confirmed; owner-supplied FMOD SDK required |
 | [Cassette Beasts](games/cassette-beasts/README.md) | Godot / GodotSteam | Playable in tested 1.8.3 profile; **v0.1.0.3** graphics fix; controller unverified |
+| [Train45](docs/backends/train45.md) | Godot 4.5.0 / GodotSteam 4.19.1 | Experimental audited Steam build 25227748; native ARM64 research gameplay passed; automatic release runtime, no SDK required |
+| [Until Then](docs/backends/until-then.md) | Godot 4.1.4 / native extensions | Experimental audited Steam build 23785927; opening gameplay, audio, controller, save/reload and normal exit confirmed in research testing. Requires owner-supplied FMOD 2.02.35 Linux SDK |
 | [Hollow Knight](games/hollow-knight/README.md) | UnityFrame | Playable with controller and save/load on exact edition; **Windows ARM64 under ARM64 Proton**, not native Linux ELF |
 
 **Status is scoped to what was observed**, not a promise of full completion, all mods,
@@ -123,7 +143,7 @@ it pretend it has one?**
 | Engine family | Backend | Conversion strategy | Hardware status |
 | --- | --- | --- | --- |
 | Ren'Py | RenFrame | match official Linux ARM64 Ren'Py runtimes; opt-in full-engine migrations for original DDLC 6.99.12, exact 7.3.5, and legacy 7.4.x | Ren'Py 8, legacy 7.3.5/7.4.11 (via 7.5.0), and original DDLC 6.99.12 (via 7.5.3) launched successfully on Steam Frame; deeper compatibility varies |
-| RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame |
+| RPG Maker XP / VX / VX Ace | RPGMFrame / mkxp-z | replace RGSS player with Linux ARM64 mkxp-z plus compatibility migration | XP boots on Steam Frame; The Last Sovereign 1.2.2 startup/input fix tested ([details](docs/backends/last-sovereign.md)) |
 | RPG Maker MV / MZ | RPGMFrame / NW.js | replace Windows NW.js with Linux ARM64 NW.js plus generic compatibility repairs | MV and MZ validated on Steam Frame |
 | RPG Maker 2000 / 2003 | RPGMFrame / EasyRPG | copy LCF data and automatically package portable native EasyRPG | Experimental; no separate target player installation required |
 | Construct 2 / 3 | ConstructFrame / NW.js | discover web exports, including `package.nw`, and replace the desktop wrapper with ARM64 NW.js | Experimental; game addons require testing |
@@ -133,7 +153,7 @@ it pretend it has one?**
 | MonoGame / .NET | MonoFrame | automatically download a verified .NET/MonoGame SDK and prepare a copied installation | Experimental; vanilla Steam Stardew Valley 1.6.15: character creation, movement, tools, save/load and pointer/gamepad input user-confirmed through Steam; SMAPI and other versions excluded |
 | Godot | RPGMFrame / Godot | preserve PCK; use an exact official ARM64 runtime for stable exports or a pinned compatibility runtime for supported custom/GodotSteam exports | Godot 4.3 validated; Brotato Godot 3.7 custom + GodotSteam played ~30 minutes on Steam Frame |
 | Unity / Hollow Knight | UnityFrame | exact tested Steam edition: replace Windows x64 player/Mono/plugins with pinned Windows ARM64 components under ARM64 Proton | Experimental; menu, controller gameplay, audio and bench save/load after relaunch confirmed on Steam Frame; GUI-generated package installed and launched through Steam |
-| Celeste / XNA to FNA | CelesteFrame | verified Steam Windows XNA Celeste 1.4.0.0; FNA 23.10 / .NET 8 ARM64 runtime and separately supplied FMOD Linux SDK | Experimental; menu, music, controller gameplay and save/load confirmed on Steam Frame; select the desired primary controller through Steam. [Setup and limits](docs/backends/celesteframe.md) |
+| Celeste / XNA to FNA | MonoFrame (Celeste profile) | verified Steam Windows XNA Celeste 1.4.0.0; FNA 23.10 / .NET 8 ARM64 runtime and separately supplied FMOD Linux SDK | Experimental; menu, music, controller gameplay and save/load confirmed on Steam Frame; select the desired primary controller through Steam. [Setup and limits](docs/backends/celesteframe.md) |
 
 The combined application routes by detected engine. The backend packages remain
 visible in the repository so engine-specific fixes can stay focused instead of
@@ -397,6 +417,11 @@ honors `RENFRAME_CACHE_DIR` for its own runtime cache.
 
 ## Custom Godot / GodotSteam compatibility runtime
 
+Until Then's audited Windows Steam build now has an experimental GUI/CLI
+conversion profile using the tested native engine and all six extensions.
+Supply FMOD Studio API **2.02.35 Linux**, then convert and use the shared ZIP and
+non-Steam installer workflow. See [setup, runtime availability and limits](docs/backends/until-then.md).
+
 Matching GodotSteam ARM64 release-template downloads are now available for
 Godot 4.6.0 and 4.7.2, with a separate pinned source recipe for Godot 3.5.1.
 See [native backends and GodotSteam tests](docs/native-backends.md) for SDK setup,
@@ -421,8 +446,8 @@ requirements.
 
 ## Launching converted games on Linux ARM64
 
-The **converter application** is distributed as a Windows ZIP or Linux ARM64
-tarball. The standard **converted game** output is a separate ZIP. Do not
+The **converter application** is distributed as a Windows ZIP or Linux tarball.
+v0.1.1.0 has separate Linux x64 and Linux ARM64 host builds. The standard **converted game** output is a separate ZIP. Do not
 confuse the application download with the game package: transfer and extract
 the converted game ZIP on the target device, then use its included launcher or
 Steam installer. If file copying loses executable permissions, restore the

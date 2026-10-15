@@ -259,6 +259,9 @@ def _migration_preloads(
     if not bundled_win32 and runtime_win32.is_file():
         add("../scripts/preload/win32_wrap.rb")
 
+    if bundled_win32 or runtime_win32.is_file():
+        add("../scripts/preload/megcfbt_rgss_input.rb")
+
     return preloads
 
 
@@ -379,6 +382,12 @@ def build_mkxp_game(
             symlinks=True,
             ignore=_ignore_junk,
             ignore_dangling_symlinks=True,
+        )
+        compat_dir = staging / "scripts" / "preload"
+        compat_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(
+            Path(__file__).parent / "runtime_support" / "rgss_input_compat.rb",
+            compat_dir / "megcfbt_rgss_input.rb",
         )
         game_destination = staging / "game"
         shutil.copytree(

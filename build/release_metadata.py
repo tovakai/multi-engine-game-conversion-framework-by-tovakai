@@ -43,7 +43,9 @@ def package(application: Path, platform: str) -> Path:
             signature = stream.read(6)
             valid = signature[:4] == b'PE\0\0' and struct.unpack_from('<H', signature, 4)[0] == 0x8664
         else:
-            valid = header[:6] == b'\x7fELF\x02\x01' and struct.unpack_from('<H', header, 18)[0] == 183
+            machine = {'linux-aarch64': 183, 'linux-x64': 62}.get(platform)
+            valid = (machine is not None and header[:6] == b'\x7fELF\x02\x01'
+                     and struct.unpack_from('<H', header, 18)[0] == machine)
         if not valid:
             raise ValueError(f'Application architecture does not match {platform}')
     commit = metadata['commit']
@@ -103,6 +105,6 @@ def package(application: Path, platform: str) -> Path:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--application', type=Path, required=True)
-    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64'], required=True)
+    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64', 'linux-x64'], required=True)
     args = parser.parse_args()
     package(args.application, args.platform)

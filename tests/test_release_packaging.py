@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import struct
 import zipfile
+import tarfile
 
 import pytest
 
@@ -88,3 +89,31 @@ def test_release_tag_mismatch_rejected(release, monkeypatch):
     monkeypatch.setenv('GITHUB_REF_NAME', 'v0.1.0.1')
     with pytest.raises(ValueError, match='does not match'):
         module.package(application, 'windows-x64')
+
+
+@pytest.mark.parametrize('target,machine,architecture', [('linux-x64', 62, 'x86_64'), ('linux-aarch64', 183, 'aarch64')])
+def test_native_linux_archive_identity_architecture_and_notices(release, monkeypatch, target, machine, architecture):
+    module, application = release
+    embedded = application / '_internal/megcfbt/_build_info.json'
+    identity = json.loads(embedded.read_text())
+    identity.update(platform=target, architecture=architecture)
+    embedded.write_text(json.dumps(identity))
+    monkeypatch.setattr(module, 'resolve_source', lambda root: identity)
+    header = bytearray(64)
+    header[:6] = b'\x7fELF\x02\x01'
+    struct.pack_into('<H', header, 18, machine)
+    binary = application / module.APP_NAME
+    binary.write_bytes(header)
+    binary.chmod(0o755)
+    archive = module.package(application, target)
+    assert target in archive.name
+    with tarfile.open(archive) as packaged:
+        build = json.load(packaged.extractfile(module.APP_NAME + '/BUILD.json'))
+        assert (build['platform'], build['architecture']) == (target, architecture)
+        for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md', 'RELEASE-NOTES.md'):
+            assert packaged.extractfile(module.APP_NAME + '/' + name).read()
+    assert hashlib.sha256(archive.read_bytes()).hexdigest() == (archive.parent / f'SHA256SUMS-{target}.txt').read_text().split()[0]
+    struct.pack_into('<H', header, 18, 183 if machine == 62 else 62)
+    binary.write_bytes(header)
+    with pytest.raises(ValueError, match='architecture'):
+        module.package(application, target)

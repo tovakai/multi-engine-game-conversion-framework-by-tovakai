@@ -42,8 +42,14 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build Windows GUI
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: pwsh
-        run: ./build/build_windows.ps1
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') { python build/stage_runtime_bundles.py }
+          else { python build/stage_runtime_bundles.py --optional }
+          if ($LASTEXITCODE -ne 0) { throw "Pinned runtime staging failed" }
+          ./build/build_windows.ps1
       - name: Check frozen GUI startup
         shell: pwsh
         run: |
@@ -54,6 +60,31 @@ jobs:
           if ($receipt.state -ne 'complete' -or -not $receipt.frozen) { throw "Invalid startup receipt" }
           python build/verify_build_identity.py --application "dist/windows/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-startup.json --platform windows-x64
           if ($LASTEXITCODE -ne 0) { throw "Frozen build identity verification failed" }
+      - name: Check frozen GUI with long font paths
+        shell: pwsh
+        run: |
+          $appName = "Multi-Engine Game Conversion Framework by tovakai"
+          $source = Join-Path (Get-Location) "dist/windows/$appName"
+          $fontRelative = "$appName/_internal/customtkinter/assets/fonts/CustomTkinter_shapes_font.otf"
+          $base = Join-Path (Get-Location) "build/gui-long-path-"
+          $padding = [Math]::Max(1, 270 - (Join-Path $base $fontRelative).Length)
+          $destination = $base + ("x" * $padding)
+          New-Item -ItemType Directory -Path $destination | Out-Null
+          Copy-Item -LiteralPath $source -Destination $destination -Recurse
+          $app = Join-Path $destination $appName
+          $font = Join-Path $app "_internal/customtkinter/assets/fonts/CustomTkinter_shapes_font.otf"
+          if ($font.Length -le 260 -or -not (Test-Path -LiteralPath $font)) { throw "Long-path font fixture missing" }
+          $receipt = Join-Path (Get-Location) "build/frozen-gui-long-path.json"
+          $process = Start-Process -FilePath (Join-Path $app "$appName.exe") -ArgumentList @('--verify-gui-startup', '--receipt', $receipt) -WindowStyle Hidden -PassThru
+          if (-not $process.WaitForExit(60000)) { $process.Kill(); throw "Long-path GUI startup timed out" }
+          if ($process.ExitCode -ne 0) { throw "Long-path GUI startup failed: $($process.ExitCode)" }
+          python build/verify_build_identity.py --application $app --receipt $receipt --platform windows-x64
+          if ($LASTEXITCODE -ne 0) { throw "Long-path frozen identity validation failed" }
+      - name: Verify frozen GUI conversion and work cleanup
+        shell: pwsh
+        run: |
+          python build/verify_frozen_conversion.py --executable "dist/windows/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai.exe" --receipt build/frozen-gui-conversion.json
+          if ($LASTEXITCODE -ne 0) { throw "Frozen GUI conversion verification failed" }
       - uses: actions/upload-artifact@v4
         with:
           name: multi-engine-game-conversion-framework-by-tovakai-windows-x64
@@ -61,4 +92,6 @@ jobs:
             dist/*-windows-x64.zip
             dist/SHA256SUMS-windows-x64.txt
             build/frozen-gui-startup.json
+            build/frozen-gui-long-path.json
+            build/frozen-gui-conversion.json
           if-no-files-found: error

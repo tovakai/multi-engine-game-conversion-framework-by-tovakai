@@ -1,0 +1,89 @@
+name: build linux x64
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - "megcfbt/**"
+      - "renframe/**"
+      - "rpgmframe/**"
+      - "gamemakerframe/**"
+      - "loveframe/**"
+      - "constructframe/**"
+      - "agsframe/**"
+      - "monoframe/**"
+      - "unityframe/**"
+      - "celesteframe/**"
+      - "build/build_linux_x64.sh"
+      - "build/build_linux.sh"
+      - "build/release_metadata.py"
+      - "build/build_identity.py"
+      - "build/verify_build_identity.py"
+      - "build/verify_frozen_conversion.py"
+      - "setup.py"
+      - "docs/releases/**"
+      - "experiments/sts2-steamworks/**"
+      - "pyproject.toml"
+      - ".github/workflows/build-linux-x64.yml"
+  push:
+    branches: [integration/working-main]
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tk runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb
+
+      - name: Build native x64 app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install --upgrade pip
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            python build/stage_runtime_bundles.py
+          else
+            python build/stage_runtime_bundles.py --optional
+          fi
+          bash build/build_linux_x64.sh
+
+      - name: Run native x64 regression tests
+        run: |
+          python -m pip install -e ".[dev]"
+          pytest -q
+
+      - name: Smoke-check binary architecture
+        run: |
+          APP="dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          test -x "$APP"
+          file "$APP"
+          file "$APP" | grep -Eq 'x86-64|x86_64'
+          xvfb-run -a "$APP" --verify-gui-startup --receipt build/frozen-gui-startup.json
+          python build/verify_build_identity.py --application "dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-startup.json --platform linux-x64
+
+      - name: Verify frozen GUI conversion and work cleanup
+        run: |
+          xvfb-run -a python build/verify_frozen_conversion.py --executable "dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-conversion.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: multi-engine-game-conversion-framework-by-tovakai-linux-x64
+          path: |
+            dist/*-linux-x64.tar.gz
+            dist/SHA256SUMS-linux-x64.txt
+            build/frozen-gui-startup.json
+            build/frozen-gui-conversion.json
+          if-no-files-found: error

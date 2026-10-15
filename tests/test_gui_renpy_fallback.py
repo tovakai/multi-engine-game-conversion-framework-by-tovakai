@@ -77,6 +77,10 @@ def app_for_inspection(tmp_path: Path):
 
 
 def synchronous_threads(monkeypatch):
+    # Consent tests stub build_source and intentionally return no build result.
+    # Filesystem cleanup is covered separately using actual packaged fixtures.
+    from megcfbt import output_cleanup
+    monkeypatch.setattr(output_cleanup, "finish_gui_conversion", lambda result, progress=None: result)
     class ImmediateThread:
         def __init__(self, *, target, daemon):
             self.target = target

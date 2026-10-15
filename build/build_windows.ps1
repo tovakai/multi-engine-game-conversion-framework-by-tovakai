@@ -2,7 +2,8 @@
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
-$py = Join-Path (Get-Location) ".venv-win\Scripts\python.exe"
+$py = $env:MEGCFBT_BUILD_PYTHON
+if (-not $py) { $py = Join-Path (Get-Location) ".venv-win\Scripts\python.exe" }
 if (-not (Test-Path $py)) {
   $py = Join-Path (Get-Location) ".venv\Scripts\python.exe"
 }
@@ -16,6 +17,12 @@ if ($LASTEXITCODE -ne 0) { throw "Build dependency installation failed ($LASTEXI
 $appName = "Multi-Engine Game Conversion Framework by tovakai"
 & $py build/build_identity.py --platform windows-x64
 if ($LASTEXITCODE -ne 0) { throw "Build identity validation failed ($LASTEXITCODE)" }
+$runtimeArguments = @()
+foreach ($bundle in @(Get-ChildItem -LiteralPath "build/runtime-bundles" -Filter "*.tar.gz" -File -ErrorAction SilentlyContinue)) {
+  & $py build/verify_runtime_bundles.py $bundle.FullName
+  if ($LASTEXITCODE -ne 0) { throw "Offline runtime verification failed ($LASTEXITCODE)" }
+  $runtimeArguments += @("--add-data", "$($bundle.FullName);rpgmframe/runtime_support")
+}
 $legacyAppName = "Multi-Engine Game Conversion Framework by Tovakai"
 $buildWorkspace = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\') + '\'
 function Assert-BuildTarget([string]$target) {
@@ -49,6 +56,9 @@ foreach ($path in @(
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
   --collect-data megcfbt `
+  --add-data "megcfbt/steam_library.py;megcfbt" `
+  --add-data "megcfbt/steam_client.py;megcfbt" `
+  --add-data "megcfbt/asset_dedup.py;megcfbt" `
   --add-data "build/_build_info.json;megcfbt" `
   --add-data "build/_build_info.json;sts2-tools" `
   --collect-data gamemakerframe `
@@ -57,6 +67,7 @@ foreach ($path in @(
   --collect-all unityframe `
   --collect-all celesteframe `
   --add-data "experiments/sts2-steamworks;sts2-tools" `
+  @runtimeArguments `
   "app\main.py"
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed ($LASTEXITCODE)" }
 

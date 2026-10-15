@@ -303,8 +303,11 @@ def inspect_godot_executable(
 
     try:
         with executable.open("rb") as handle:
-            while True:
-                chunk = handle.read(_BINARY_SCAN_CHUNK)
+            # Embedded game assets can contain module names but do not prove
+            # that the executable implements those modules. Scan engine only.
+            end = selected_pack.offset if selected_pack.embedded and executable == selected_pack.path else executable.stat().st_size
+            while handle.tell() < end:
+                chunk = handle.read(min(_BINARY_SCAN_CHUNK, end - handle.tell()))
                 if not chunk:
                     break
                 data = carry + chunk
@@ -513,11 +516,29 @@ def inspect_godot(path: Path | str) -> GameInspection | None:
         compatibility = Compatibility.UNKNOWN
         warnings.append("Native Godot extensions require matching Linux ARM64 libraries: " + ", ".join(native_extensions))
 
+    from rpgmframe.until_then import candidate, RUNTIME_KIND
+    until_then = not encrypted and not csharp and candidate(pack, current)
+    if until_then:
+        compatibility = Compatibility.NEEDS_TESTING
+        warnings = [warning for warning in warnings if not warning.startswith((
+            "Native Godot extensions require", "Custom built-in Godot modules require",
+            "Custom Godot development build detected"))]
+        warnings.append("Experimental Until Then native profile: source hashes are verified during conversion. Requires the owner-supplied FMOD Studio API 2.02.35 Linux SDK. Opening gameplay, audio, controller and save/reload tested on Frame; full-game compatibility remains unverified.")
+
+    from rpgmframe import train45
+    train = not encrypted and not csharp and train45.candidate(pack, current)
+    if train:
+        compatibility = Compatibility.NEEDS_TESTING
+        warnings = [w for w in warnings if not w.startswith(("Native Godot extensions require", "Built-in GodotSteam module detected"))]
+        warnings.append("Experimental Train45: audited build 25227748, automatic Godot 4.5 ARM64 release runtime and GodotSteam 4.19.1. Research gameplay passed on Frame; full-game and achievements unverified.")
+
     return GameInspection(
         source_path=root,
         family=EngineFamily.GODOT,
         engine=EngineVariant.GODOT,
         runtime=(
+            train45.RUNTIME_KIND if train else
+            RUNTIME_KIND if until_then else
             "godot-encrypted" if encrypted else
             "godot-native-extensions" if native_extensions else
             "godot-custom"

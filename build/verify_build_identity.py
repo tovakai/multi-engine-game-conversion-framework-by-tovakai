@@ -19,7 +19,7 @@ def verify(application, receipt, target):
     assert frozen['version'] == build['version'], 'Application version mismatch'
     assert frozen['version_display'] == display_version(identity), 'GUI version mismatch'
     assert build['platform'] == target, 'Build target mismatch'
-    assert build['architecture'] == {'windows-x64': 'x86_64', 'linux-aarch64': 'aarch64'}[target]
+    assert build['architecture'] == {'windows-x64': 'x86_64', 'linux-aarch64': 'aarch64', 'linux-x64': 'x86_64'}[target]
     checksum = ROOT / 'dist' / f'SHA256SUMS-{target}.txt'
     digest, filename = checksum.read_text().strip().split('  ', 1)
     assert f"-{build['version']}-{target}." in filename, 'Archive version mismatch'
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--application', type=Path, required=True)
     parser.add_argument('--receipt', type=Path, required=True)
-    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64'], required=True)
+    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64', 'linux-x64'], required=True)
     args = parser.parse_args()
     verify(args.application, args.receipt, args.platform)

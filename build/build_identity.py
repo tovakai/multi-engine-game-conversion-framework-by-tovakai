@@ -21,7 +21,7 @@ def write_identity(target, output, tag=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--platform", choices=["windows-x64", "linux-aarch64"], required=True)
+    parser.add_argument("--platform", choices=["windows-x64", "linux-aarch64", "linux-x64"], required=True)
     parser.add_argument("--output", type=Path, default=ROOT / "build/_build_info.json")
     parser.add_argument("--release-tag", default=os.environ.get("GITHUB_REF_NAME") if os.environ.get("GITHUB_REF_TYPE") == "tag" else None)
     args = parser.parse_args()

@@ -52,7 +52,7 @@ def sdk(tmp_path):
 
 def test_source_routes_and_rejects_changed_or_modded_install(tmp_path, monkeypatch):
     root = source(tmp_path, monkeypatch)
-    assert inspect_source(root).backend == 'celesteframe'
+    assert inspect_source(root).backend == 'monoframe'
     assert inspect_source(root).buildable
     (root/'Mods').mkdir()
     assert not inspect_source(root).buildable

@@ -15,7 +15,8 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 | Version | Theme | Primary outcome |
 | --- | --- | --- |
 | **0.1.0** | Foundation | Reliable existing backends and consistent GUI-to-device workflow |
-| **0.1.1** | Local installation + maintenance | One-operation installation on Frame, direct Steam patching/restoration, release-feedback fixes and diagnostics |
+| **0.1.1.0** | Steam Library Integration | Recommended non-Steam ZIP installation; optional [experimental] original-entry linking and deduplication |
+| **0.1.2.0** | Deferred maintenance | Release-feedback fixes, diagnostics and source artwork provenance |
 | **0.2.0** | GameMakerFrame + coverage baseline | GameMaker support and a 35-title test matrix |
 | **0.3.0** | WebFrame | Construct and compatible packaged HTML5 game support |
 | **0.4.0** | Compatibility Engine | Reusable, versioned repair recipes and local compatibility data |
@@ -43,20 +44,34 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 
 **Release gate:** Each advertised stable backend has an end-to-end GUI conversion, regression coverage, and at least one real-hardware gameplay check. A successful build alone does not count as playable. **Portable device-side finishing for STS2, automatic on-device compilation and zero-SSH installation are explicitly out of scope for 0.1.0.**
 
-## v0.1.1 — Maintenance
+## v0.1.1.0 — Steam Library Integration
 
-0.1.0 is published. The next patch release prioritizes reproducible release
-feedback, conversion safety, actionable diagnostics, source artwork provenance,
-and compatibility records tied to exact game/runtime/application versions.
+v0.1.0.3 is published and immutable. This release improves the shared extracted
+ZIP installer: detect original games installed through Steam on this Frame,
+including secondary libraries; recommend non-Steam registration and artwork,
+with optional **[experimental]** original-entry linking. Preserve original files and
+Steam context, configure/read back launch options through an existing live client
+interface, record exact backups and reversible setup, and keep Steam running.
+No manual launch-command copying or running-client configuration-file edits.
+Add guarded post-extraction asset deduplication for byte-identical, explicitly
+selected read-only assets, with recovery and restoration. Deduplication remains
+experimental until backend-specific Frame gameplay/write-safety gates pass.
 
-The Linux ARM64 app will also coordinate local preparation, native compilation
-where needed (including STS2), verification and Steam registration in one
-operation. Direct Steam-installation patching will include backups, restoration
-and update detection; portable ZIP export remains available. Windows retains its
-prepare-and-transfer workflow.
+Direct game-file patching moves to 0.4.0 safety research. Coordinated local
+installation and native compilation, including STS2, move to 0.5.0. Broader
+diagnostics, feedback maintenance and artwork provenance move to 0.1.2.0.
 
 See the [prioritized 0.1.1 plan and acceptance criteria](releases/0.1.1-plan.md).
+The [integration guide](steam-library-integration.md) lists backend limits and
+pending hardware acceptance. Linux x64 GUI packaging and verified GUI work-copy
+cleanup are part of this candidate. Celeste is a separate audited MonoFrame
+profile; legacy CelesteFrame metadata/imports remain supported. No v0.1.1.0
+publication before the [release acceptance ledger](releases/0.1.1.0-acceptance.md) is complete.
 SMAPI, new engine families and major runtime migrations remain separate work.
+The user-selected Until Then compatibility profile stays an explicitly
+experimental addition to the existing Godot backend. Its opening-scene research
+acceptance does not expand shared Steam linking/deduplication capabilities or
+replace the production-package and broader gameplay gates.
 The release date follows validated fixes and passing final artifacts, not a
 calendar commitment.
 
@@ -231,3 +246,19 @@ Use one authoritative application release number and **four-component** public v
 - Use the same version source in GUI About/status, CLI `--version`, package metadata and build scripts. Do not hardcode conflicting versions across backends.
 - Handle old unversioned ZIPs gracefully and never silently overwrite a different release's package. Update packaging, repackage/artwork commands, Frame installation/manifests, and automated tests together.
 - Verify full provenance in clean frozen builds and backend packages before publishing; version identity alone does not establish hardware compatibility.
+
+## Next revision feedback
+
+- GUI conversion currently leaves both the extracted working directory and the
+  completed game archive on the desktop. After the ZIP is successfully created
+  and verified, remove only the converter-owned temporary working directory.
+  Preserve the working output if archiving fails or is interrupted, and preserve
+  original source folders and any output the user explicitly chose to keep.
+  Verify successful cleanup and failure recovery across the shared GUI backend
+  workflow before considering this feedback resolved.
+
+Train45 build 25227748 now has an experimental shared GUI/CLI conversion
+recipe using Godot 4.5.0 and GodotSteam 4.19.1 ARM64 release binaries. Research
+gameplay passed on Frame; production-package acceptance, full-game coverage,
+achievements and playtime remain separate checks. Shared Godot original-entry
+linking and asset deduplication remain deferred. See [Train45 setup](backends/train45.md).

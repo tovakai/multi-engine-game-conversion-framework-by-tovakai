@@ -5,9 +5,27 @@ artifacts. Runtime-only tags must not imply that a converter release was tested.
 
 ## Build and review a candidate
 
+For v0.1.1.0 Steam Library Integration, use the
+[mandatory Frame acceptance checklist](steam-library-integration.md#required-steam-frame-acceptance).
+Candidate CI archives remain development builds until those checks are reviewed.
+Keep v0.1.0.3 immutable; do not create the public v0.1.1.0 tag or publish final
+artifacts while required installation, launch, restoration or hardware checks
+remain unverified. Playtime and achievements require separate evidence.
+
+Revised v0.1.1.0 scope (2026-10-15): non-Steam installation is the recommended
+main workflow. Original-entry linking and deduplication remain optional
+**[experimental]** features. Their unfinished hardware qualification checks do
+not block publication; they remain required before removing experimental status.
+Safety guards, truthful capability reporting and non-Steam regression checks
+continue to be release requirements. See the acceptance ledger for the current
+publication gates rather than treating the historical experimental matrix as
+mandatory stable-feature acceptance.
+
 Use Python 3.12 to build. On Windows run `powershell -ExecutionPolicy Bypass -File
 build/build_windows.ps1`; on native Linux ARM64 run
-`bash build/build_linux_aarch64.sh`. The builders install the declared GUI/build
+`bash build/build_linux_aarch64.sh`. For native Linux x86_64 run
+`bash build/build_linux_x64.sh`; both wrappers use the shared native builder.
+A mismatched host architecture fails before dependency installation. The builders install the declared GUI/build
 dependencies and generate versioned archives with executable architecture checks.
 
 The Windows and native ARM64 CI workflows also build the application, start the
@@ -43,7 +61,7 @@ receipt against archive metadata, names and checksums. Full history is fetched.
    A local official build must also use the exact matching tag and clean tree.
    Inspect both workflows before uploading assets. Do not move or recreate old tags.
 5. Publish the application release with reviewed notes, the Windows ZIP, native
-   Linux ARM64 tarball, and checksums. Use a notes file with `gh release create`;
+   Linux ARM64 and Linux x64 tarballs, and checksums. Use a notes file with `gh release create`;
    verify release asset names and hashes after upload.
 
 Release publication is a manual final step. The workflows do not automatically

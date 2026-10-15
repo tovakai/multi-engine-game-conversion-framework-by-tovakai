@@ -119,11 +119,15 @@ def write_frame_metadata(
     name: str,
     launcher_path: Path,
     engine: str,
+    backend: str | None = None,
     engine_version: str | None = None,
     runtime_engine_version: str | None = None,
     compatibility_profile: str | None = None,
     game_version: str | None = None,
     target_platform: str = 'linux-aarch64',
+    steam_identity: dict | None = None,
+    steam_runtime_appid: str | None = None,
+    conversion: dict | None = None,
 ) -> Path:
     """Write conversion metadata consumed by the on-device Steam installer."""
 
@@ -152,9 +156,12 @@ def write_frame_metadata(
                 **({"operating_system": "windows", "proton_versions": ["proton-11.0-2c-arm64", "proton-11.0-2e-arm64"]}
                    if target_platform == 'windows-arm64-proton' else {}),
                 "engine": engine,
+                **({"backend": backend} if backend else {}),
+                **({"steam_identity": steam_identity} if steam_identity else {}),
+                **({"steam_runtime_appid": steam_runtime_appid} if steam_runtime_appid else {}),
                 "engine_version": engine_version,
                 "game_version": game_version,
-                "conversion": {"converter": get_build_info(), "converted_utc": utc_now()},
+                "conversion": conversion if conversion is not None else {"converter": get_build_info(), "converted_utc": utc_now()},
                 **({"runtime_engine_version": runtime_engine_version} if runtime_engine_version else {}),
                 **({"compatibility_profile": compatibility_profile,
                     "hardware_verification": "initial-gameplay-save-load-tested" if target_platform == 'windows-arm64-proton' else "pending"}

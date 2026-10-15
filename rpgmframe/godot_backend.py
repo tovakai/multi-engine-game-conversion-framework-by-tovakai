@@ -147,6 +147,7 @@ def build_godot_game(
     progress: Callable[[str], None] | None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
+    fmod_sdk: Path | str | None = None,
 ) -> BuildResult:
     def stage(value: float, message: str) -> None:
         if stage_progress:
@@ -166,6 +167,17 @@ def build_godot_game(
     pack = find_godot_pack(inspection.game_root)
     if pack is None:
         raise GodotBuildError("Could not select one unambiguous Godot PCK")
+    from rpgmframe import train45
+    if train45.candidate(pack, inspection.game_root):
+        return train45.build_game(source_path=source_path, output_path=output_path,
+            inspection=inspection, runtime=runtime, force=force, archive_type=archive_type,
+            progress=progress, stage_progress=stage_progress, download_progress=download_progress)
+    from rpgmframe import until_then
+    if until_then.candidate(pack, inspection.game_root):
+        return until_then.build_game(source_path=source_path, output_path=output_path,
+            inspection=inspection, runtime=runtime, fmod_sdk=fmod_sdk, force=force,
+            archive_type=archive_type, progress=progress, stage_progress=stage_progress,
+            download_progress=download_progress)
     if runtime is None and pack_requires_encryption_key(pack):
         raise GodotBuildError("Encrypted Godot content requires a matching ARM64 runtime built with the game's encryption key. Stock runtime substitution is unavailable.")
     if runtime is None and pack_native_extensions(pack):

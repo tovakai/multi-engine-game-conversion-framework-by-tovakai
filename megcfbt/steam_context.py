@@ -46,3 +46,31 @@ def steam_app_id_for_source(source: Path) -> str | None:
 def write_steam_app_id(app_id: str, *folders: Path) -> None:
     for folder in folders:
         (folder / 'steam_appid.txt').write_text(app_id + '\n',encoding='ascii')
+
+
+def verified_source_identity(source: Path, selected=None) -> dict | None:
+    """Only an exact, unique installed-source manifest authorizes library identity.
+
+    Sidecars and CLI overrides may initialize APIs but are not identity evidence.
+    Conflicts fail conversion rather than silently registering another game.
+    """
+    from megcfbt.steam_library import appid, read_vdf
+    found = set()
+    for common in source.resolve().parents:
+        if common.name.lower() != 'common' or common.parent.name.lower() != 'steamapps':
+            continue
+        folder = source.resolve().relative_to(common).parts[0]
+        for manifest in common.parent.glob('appmanifest_*.acf'):
+            try:
+                data = read_vdf(manifest)['appstate']
+                if data.get('installdir') != folder:
+                    continue
+                number = appid(data['appid'])
+                if manifest.name != f'appmanifest_{number}.acf':
+                    raise ValueError('Conflicting source manifest AppID')
+                found.add(number)
+            except (OSError, KeyError):
+                continue
+    if len(found) > 1 or (found and selected is not None and appid(selected) not in found):
+        raise ValueError('Conflicting source Steam AppIDs; no trustworthy identity')
+    return {'appid': found.pop(), 'source': 'installed-source-manifest'} if found else None

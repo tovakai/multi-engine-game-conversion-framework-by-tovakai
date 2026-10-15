@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 INSTALLER_SHELL = r'''#!/usr/bin/env bash
 set -euo pipefail
 
@@ -17,7 +19,7 @@ if [[ ! -f "$PY" ]]; then
     exit 1
 fi
 
-exec python3 "$PY"
+exec python3 "$PY" "$@"
 '''
 
 INSTALLER_PYTHON = r'''#!/usr/bin/env python3
@@ -73,6 +75,8 @@ def load_metadata() -> tuple[str, Path]:
         data = json.loads(META.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise RuntimeError(f"could not read {META}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise RuntimeError("package metadata must be an object")
     name = str(data.get("name") or ROOT.name).replace("\n", " ").replace("\r", " ").strip()
     launcher_raw = str(data.get("launcher") or "launch.sh").replace("\\", "/")
     launcher = (ROOT / launcher_raw).resolve()
@@ -290,13 +294,49 @@ def apply_artwork(found: dict[Path, int]) -> int:
     return copied
 
 
+def refresh_artwork_live(found: dict[Path, int]) -> bool:
+    # Files remain the reliable fallback; the live setter invalidates UI caches.
+    client = None
+    try:
+        import steam_client
+        client = steam_client.connect()
+        refreshed = 0
+        for appid in sorted(set(found.values())):
+            for slot in ARTWORK:
+                source = artwork_source(slot)
+                if source is None:
+                    continue
+                image_type = 'jpg' if source.suffix.lower() in {'.jpg', '.jpeg'} else 'png'
+                client.artwork(appid, source.read_bytes(), image_type, slot)
+                refreshed += 1
+        if refreshed:
+            print(f'Artwork applied through the running Steam client: {refreshed}.')
+        return bool(refreshed)
+    except (ImportError, OSError, ValueError, RuntimeError) as exc:
+        print(f'Artwork files are installed; live artwork refresh unavailable: {exc}')
+        return False
+    finally:
+        if client is not None:
+            client.close()
+
+
 def main() -> int:
+    if '--help' in sys.argv:
+        print('Run install-to-steam.sh on Frame with Steam running. Add as non-Steam game is recommended, with artwork. Original-entry linking and deduplication are [experimental] with incomplete hardware coverage; retain the ZIP for recovery. The original game must be installed through Steam on this Frame before linking. Rerun to rescan, verify, repair or restore. No Steam configuration files are written.')
+        return 0
     if sys.platform != "linux":
         return fail("this installer is intended for the Steam Frame / Linux")
 
     try:
         name, launcher = load_metadata()
     except RuntimeError as exc:
+        return fail(str(exc))
+
+    try:
+        from steam_library import menu
+        if not menu(ROOT, name, launcher):
+            return 0
+    except (OSError, ValueError, RuntimeError, EOFError, KeyError, TypeError, subprocess.SubprocessError) as exc:
         return fail(str(exc))
 
     try:
@@ -315,7 +355,7 @@ def main() -> int:
         print("Non-Steam AppID: " + ", ".join(str(value) for value in appids))
         print(f"Artwork files refreshed: {copied}.")
         if copied:
-            print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
+            refresh_artwork_live(found)
         return 0
 
     if not steam_running():
@@ -364,7 +404,7 @@ def main() -> int:
         )
     print(f"Artwork files applied: {copied}.")
     if copied:
-        print("Restart the Steam / SteamVR environment if artwork does not appear immediately.")
+        refresh_artwork_live(found)
     print("The game should now be available in the Steam library.")
     return 0
 
@@ -382,7 +422,30 @@ INSTALL_GUIDE = """Steam Frame package
 
    ./install-to-steam.sh
 
-The installer asks the running Steam client to import launch.sh as a normal
+Add as non-Steam game is the recommended installation method, with artwork.
+Original-entry linking and deduplication are [experimental] optional features
+with incomplete hardware coverage. Retain the ZIP for recovery if you opt in.
+Linking requires an approved backend and trustworthy AppID.
+The original game must be installed through Steam on this
+Steam Frame before linking is available. Ownership or installation on another
+computer is not sufficient. Additional mounted Steam libraries are discovered.
+Missing games can be installed through Steam, then rescanned without retransferring.
+Automatic linking reads and backs up custom Launch Options, configures the
+original entry through an existing local SteamClient interface, and verifies
+readback. No copying or editing Steam Properties is needed. If the live interface
+is unavailable, use non-Steam installation. Steam is never restarted and no
+original game files or live Steam configuration files are edited by the installer.
+Rerun to verify, repair or restore automatically. A wrapper receipt does not prove
+that the ARM64 game runtime is running, or verify achievements or playtime.
+Optional experimental asset deduplication compares static Content XNB files by
+size/SHA-256 for audited Celeste/Stardew profiles. It only changes the converted
+package, requires read-only bubblewrap launches and records recovery state.
+No backend is advertised as safely deduplicated before gameplay acceptance.
+Steam updates/broken links require repair or re-extraction of the retained ZIP.
+Non-Steam installation needs no deduplication; existing asset links must first
+be restored to ordinary converted copies.
+
+The recommended workflow asks the running Steam client to import launch.sh as a normal
 non-Steam game. It then reads back the shortcut Steam created and installs any
 bundled portrait, banner, hero, logo, and icon artwork using that shortcut's
 non-Steam AppID. Steam may require a Steam / SteamVR environment restart before
@@ -406,5 +469,8 @@ def installer_files(*, target_platform: str = 'linux-aarch64') -> dict[str, tupl
     return {
         "install-to-steam.sh": (INSTALLER_SHELL.encode("utf-8"), 0o755),
         ".megcfbt/install-to-steam.py": (INSTALLER_PYTHON.encode("utf-8"), 0o755),
+        ".megcfbt/steam_library.py": (Path(__file__).with_name('steam_library.py').read_bytes(), 0o644),
+        ".megcfbt/steam_client.py": (Path(__file__).with_name('steam_client.py').read_bytes(), 0o644),
+        ".megcfbt/asset_dedup.py": (Path(__file__).with_name('asset_dedup.py').read_bytes(), 0o644),
         "INSTALL-ON-FRAME.txt": (guide.encode("utf-8"), 0o644),
     }

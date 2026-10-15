@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 # Change only when preparing a deliberate public release, not on every commit.
-RELEASE_VERSION = "0.1.0.3"
+RELEASE_VERSION = "0.1.1.0"
 ROOT = Path(__file__).resolve().parents[1]
 EMBEDDED = Path(__file__).with_name("_build_info.json")
 
@@ -118,7 +118,7 @@ def validate_release(tag: str, info: dict) -> None:
 
 def packaged_build_info(target: str | None = None) -> dict:
     info = get_build_info().copy()
-    info.update(platform=target, architecture={"windows-x64": "x86_64", "linux-aarch64": "aarch64"}.get(target, platform.machine()),
+    info.update(platform=target, architecture={"windows-x64": "x86_64", "linux-aarch64": "aarch64", "linux-x64": "x86_64"}.get(target, platform.machine()),
                 built_utc=utc_now())
     return info
 

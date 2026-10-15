@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from monoframe.profiles import is_celeste_inspection
+
 import os
 import json
 import queue
@@ -67,6 +69,8 @@ _HAS_DND = False
 
 def _load_gui_dependencies() -> None:
     global ctk, tk, filedialog, messagebox, DND_FILES, TkinterDnD, _HAS_DND
+    from megcfbt.gui_stdio import ensure_gui_streams
+    ensure_gui_streams()
     if ctk is not None:
         return
     try:
@@ -95,14 +99,27 @@ def _load_gui_dependencies() -> None:
 
 
 def _make_root():
+    global _HAS_DND
     _load_gui_dependencies()
     ctk.set_appearance_mode("dark")
     if _HAS_DND:
+        class DnDUnavailable(RuntimeError):
+            pass
+
         class CTkDnD(ctk.CTk, TkinterDnD.DnDWrapper):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
-                self.TkdndVersion = TkinterDnD._require(self)
-        root = CTkDnD()
+                try:
+                    self.TkdndVersion = TkinterDnD._require(self)
+                except (RuntimeError, tk.TclError) as exc:
+                    self.destroy()
+                    raise DnDUnavailable(str(exc)) from exc
+        try:
+            root = CTkDnD()
+        except DnDUnavailable as exc:
+            _HAS_DND = False
+            sys.stderr.write(f'Drag and drop unavailable; folder picker remains available: {exc}\n')
+            root = ctk.CTk()
     else:
         root = ctk.CTk()
 
@@ -135,6 +152,7 @@ class ConverterApp:
         self.backend_runtime: Path | None = None
         self.sts2_sdk: Path | None = None
         self.celeste_sdk: Path | None = None
+        self.until_then_sdk: Path | None = None
         self.last_output: Path | None = None
         self.last_archive: Path | None = None
         self.last_result: UnifiedBuildResult | None = None
@@ -656,7 +674,17 @@ class ConverterApp:
             self.runtime_button.configure(state="normal", text="FMOD SDK SELECTED" if self.sts2_sdk else "GET FMOD SDK • STS2")
         elif result.backend == 'unityframe':
             self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC WINDOWS ARM64 + PROTON')
-        elif result.backend == 'celesteframe':
+        elif result.runtime_kind == 'godot-train45':
+            self.runtime_button.configure(state='disabled', text='RUNTIME // AUTOMATIC ARM64 + GODOTSTEAM')
+        elif result.runtime_kind == 'godot-until-then':
+            from rpgmframe.until_then import find_fmod_sdk
+            try:
+                self.until_then_sdk = find_fmod_sdk()
+            except (OSError, ValueError, RuntimeError):
+                self.until_then_sdk = None
+            self.runtime_button.configure(state='normal',
+                text='FMOD SDK SELECTED' if self.until_then_sdk else 'GET FMOD SDK • UNTIL THEN')
+        elif is_celeste_inspection(result):
             from celesteframe.runtime import find_fmod_sdk
             try:
                 self.celeste_sdk = find_fmod_sdk()
@@ -738,6 +766,16 @@ class ConverterApp:
             self.notes_box.delete("1.0", "end")
             self.notes_box.insert("1.0", advisory)
             self.notes_box.configure(state="disabled")
+        elif result.runtime_kind == 'godot-train45':
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Click CONVERT. The audited Train45 build uses an automatic Godot 4.5 ARM64 release runtime and GodotSteam 4.19.1. Research gameplay passed on Frame; full-game and achievements remain unverified.")
+            self.notes_box.configure(state="disabled")
+        elif result.runtime_kind == 'godot-until-then':
+            self.notes_box.configure(state="normal")
+            self.notes_box.delete("1.0", "end")
+            self.notes_box.insert("1.0", "Until Then uses the tested experimental ARM64 profile. Select the FMOD Studio API 2.02.35 Linux SDK, then click CONVERT. The native runtime and extensions are provided automatically. On Frame, run install-to-steam.sh and add the package as a non-Steam game. Opening gameplay, audio, controllers and save/reload passed; full-game compatibility and achievements remain unverified.")
+            self.notes_box.configure(state="disabled")
         elif auto_custom_runtime:
             self.notes_box.configure(state="normal")
             self.notes_box.delete("1.0", "end")
@@ -791,9 +829,13 @@ class ConverterApp:
             self.out_label.configure(text=f"OUTPUT // {self.output_dir}")
 
     def _pick_runtime(self) -> None:
-        if self.inspection and self.inspection.backend in {'sts2', 'celesteframe'}:
+        if self.inspection and getattr(self.inspection, 'runtime_kind', None) == 'godot-until-then':
             from megcfbt.fmod_sdk_setup import FmodSdkDialog
-            self.fmod_sdk_dialog = FmodSdkDialog(self, self.inspection.backend)
+            self.fmod_sdk_dialog = FmodSdkDialog(self, 'until-then')
+            return
+        if self.inspection and (self.inspection.backend == 'sts2' or is_celeste_inspection(self.inspection)):
+            from megcfbt.fmod_sdk_setup import FmodSdkDialog
+            self.fmod_sdk_dialog = FmodSdkDialog(self, 'celesteframe' if is_celeste_inspection(self.inspection) else self.inspection.backend)
             return
         if self.inspection is None or self.inspection.engine == "renpy":
             self._pick_renpy_runtime()
@@ -954,7 +996,18 @@ class ConverterApp:
             if self.backend_runtime is None:
                 return
 
-        if self.inspection.backend == 'celesteframe':
+        if self.inspection.runtime_kind == 'godot-until-then':
+            from rpgmframe.until_then import find_fmod_sdk, validate_fmod_sdk
+            try:
+                self.until_then_sdk = validate_fmod_sdk(self.until_then_sdk) if self.until_then_sdk else find_fmod_sdk()
+                if self.until_then_sdk is None:
+                    self._pick_runtime()
+                    return
+            except (OSError, ValueError, RuntimeError):
+                self.until_then_sdk = None
+                self._pick_runtime()
+                return
+        if is_celeste_inspection(self.inspection):
             from celesteframe.runtime import find_fmod_sdk, validate_fmod_sdk
             if self.backend_runtime is None and not automatic_native_runtime_available(self.inspection):
                 self._pick_backend_runtime()
@@ -993,7 +1046,8 @@ class ConverterApp:
                     renpy_ddlc_753_migration=ddlc_753_approved,
                     renpy_prerelease_853_migration=prerelease_853_approved,
                     backend_runtime=self.backend_runtime,
-                    **({'celeste_sdk': self.celeste_sdk} if self.inspection.backend == 'celesteframe' else {}),
+                    **({'until_then_sdk': self.until_then_sdk} if self.inspection.runtime_kind == 'godot-until-then' else {}),
+                    **({'celeste_sdk': self.celeste_sdk} if is_celeste_inspection(self.inspection) else {}),
                     **({"sts2_sdk": self.sts2_sdk, "sts2_handoff": True}
                        if self.inspection.backend == "sts2" else {}),
                     force=force,
@@ -1003,6 +1057,8 @@ class ConverterApp:
                     stage_progress=self._set_progress,
                     download_progress=self._download_progress,
                 )
+                from megcfbt.output_cleanup import finish_gui_conversion
+                result = finish_gui_conversion(result, self._progress_log)
                 self._dispatch(lambda: self._done(result))
             except ConversionError as exc:
                 message = str(exc)
@@ -1047,7 +1103,8 @@ class ConverterApp:
         messagebox.showinfo(
             APP_NAME,
             f"Converted {result.game_name or result.output_path.name}.\n\n"
-            f"Build directory:\n{result.output_path}\n\n"
+            + ("Temporary conversion directory removed after ZIP verification.\n\n"
+               if result.work_directory_removed else f"Build directory:\n{result.output_path}\n\n")
             + (f"Steam Frame package:\n{result.archive_path}\n\n"
               f"On the Frame: extract it and run ./install-to-steam.sh\n" if result.archive_path else "")
             + ('\nRequires ARM64 Proton 11.0 installed through Steam; the launcher selects a supported version automatically.\n'

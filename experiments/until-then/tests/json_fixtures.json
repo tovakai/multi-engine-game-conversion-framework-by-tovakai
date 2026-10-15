@@ -1,0 +1,119 @@
+[
+  {
+    "after": {},
+    "before": {},
+    "diff": {
+      "p": []
+    },
+    "patched": {}
+  },
+  {
+    "after": {
+      "a": 2,
+      "b": "new"
+    },
+    "before": {
+      "a": 1
+    },
+    "diff": {
+      "p": [
+        {
+          "op": "replace",
+          "path": "/a",
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/b",
+          "value": "new"
+        }
+      ]
+    },
+    "patched": {
+      "a": 2,
+      "b": "new"
+    }
+  },
+  {
+    "after": {
+      "b": 2
+    },
+    "before": {
+      "a": 1,
+      "b": 2
+    },
+    "diff": {
+      "p": [
+        {
+          "op": "remove",
+          "path": "/a"
+        }
+      ]
+    },
+    "patched": {
+      "b": 2
+    }
+  },
+  {
+    "after": {
+      "array": [
+        1,
+        3,
+        4
+      ]
+    },
+    "before": {
+      "array": [
+        1,
+        2
+      ]
+    },
+    "diff": {
+      "p": [
+        {
+          "op": "replace",
+          "path": "/array/1",
+          "value": 3
+        },
+        {
+          "op": "add",
+          "path": "/array/-",
+          "value": 4
+        }
+      ]
+    },
+    "patched": {
+      "array": [
+        1,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "after": {
+      "a/b": {
+        "~x": 2
+      }
+    },
+    "before": {
+      "a/b": {
+        "~x": 1
+      }
+    },
+    "diff": {
+      "p": [
+        {
+          "op": "replace",
+          "path": "/a~1b/~0x",
+          "value": 2
+        }
+      ]
+    },
+    "patched": {
+      "a/b": {
+        "~x": 2
+      }
+    }
+  }
+]
