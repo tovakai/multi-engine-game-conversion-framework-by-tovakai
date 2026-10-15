@@ -16,8 +16,8 @@ build requires a new audited profile; matching a title or an AppID is insufficie
 3. Click **CONVERT**. The tested ARM64 engine and extensions are resolved and
    validated automatically. The development Windows artifact includes their
    verified offline runtime archive; no compiler or manual runtime selection is
-   required. Runtime-only public distribution is separate from the application
-   release, and remains a release-preparation gate.
+   required. The verified runtime-only prerelease is also publicly available
+   for automatic download; it is separate from the application release.
 4. Transfer the versioned ZIP to Frame, extract it, run `install-to-steam.sh`,
    and choose **Add as non-Steam game**. Artwork uses the shared installer.
 

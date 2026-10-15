@@ -44,7 +44,7 @@ Original Steam entry linking and asset deduplication are **[experimental]**,
 optional features with incomplete hardware coverage. Keep the converted ZIP
 for recovery if you choose them.
 
-1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. The v0.1.1.0 candidate adds Linux x64 host builds alongside Linux ARM64; the published v0.1.0.3 links above remain unchanged.
+1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. v0.1.1.0 provides Windows x64, Linux x64 and Linux ARM64 host builds; converted games retain their ARM64 targets.
 2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
 3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
 4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
@@ -447,7 +447,7 @@ requirements.
 ## Launching converted games on Linux ARM64
 
 The **converter application** is distributed as a Windows ZIP or Linux tarball.
-The v0.1.1.0 candidate has separate Linux x64 and Linux ARM64 host builds. The standard **converted game** output is a separate ZIP. Do not
+v0.1.1.0 has separate Linux x64 and Linux ARM64 host builds. The standard **converted game** output is a separate ZIP. Do not
 confuse the application download with the game package: transfer and extract
 the converted game ZIP on the target device, then use its included launcher or
 Steam installer. If file copying loses executable permissions, restore the
