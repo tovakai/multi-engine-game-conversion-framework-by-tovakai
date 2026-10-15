@@ -3,6 +3,12 @@
 Extract the converted ZIP, keep Steam / SteamVR running, and run
 `./install-to-steam.sh`. Use `--help` for a short description.
 
+**Add as non-Steam game is the recommended installation method.** Original-entry
+linking and asset deduplication are **[experimental]** optional features. Hardware
+coverage is incomplete, especially Steam updates and storage removal; retain
+the conversion ZIP for recovery. Their unfinished checks gate promotion out of
+experimental status, rather than v0.1.1.0 publication.
+
 **The original Steam game must be installed through Steam on this Steam Frame
 before library linking is available.** Owning it, or installing it on another PC,
 is not sufficient. The installer discovers mounted secondary Steam libraries
@@ -18,7 +24,8 @@ or transfer is needed. The converter never downloads the original game itself.
 
 ## Automatic linking
 
-Choose the recommended original-entry option. The installer reads the exact
+Choose the explicitly labeled **[experimental]** original-entry option to opt in.
+The installer reads the exact
 custom launch options through Steam's live `RegisterForAppDetails` callback
 (`strLaunchOptions`), saves them in its recovery record, and calls
 `SteamClient.Apps.SetAppLaunchOptions` with the validated AppID and wrapper command.
@@ -145,7 +152,7 @@ executable was verified as AArch64 dotnet. Other backends still require
 real-game acceptance. The [asset deduplication checklist](steam-asset-deduplication.md)
 is also mandatory; this test does not approve every candidate backend.
 
-- [ ] Installed original on internal storage: recommended link offered.
+- [ ] Installed original on internal storage: recommended non-Steam installation and optional experimental link offered.
 - [ ] Owned but not installed locally: clear requirement; official Steam install
       flow; cancel and later rescan without transferring again.
 - [ ] Original installed on mounted SD/secondary library: detected without reinstall.
@@ -167,7 +174,10 @@ is also mandatory; this test does not approve every candidate backend.
 - [ ] Windows x64, Linux AArch64 and Linux x64 candidate archives, notices, identities,
       SHA256 checksums and frozen GUI receipts pass on clean hosts.
 
-Do not publish `v0.1.1.0` until mandatory acceptance evidence is reviewed.
+The linking/deduplication checks above qualify experimental features; unfinished
+items are retained for future promotion and do not block v0.1.1.0 under its
+revised scope. Non-Steam installation, backend regression and final artifact
+checks remain publication requirements in the release acceptance ledger.
 
 ## Implementation references
 

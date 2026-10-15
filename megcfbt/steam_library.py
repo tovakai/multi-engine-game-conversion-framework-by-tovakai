@@ -621,7 +621,7 @@ def offer_dedup(root, meta, detected):
     print(f'Byte-identical experimental assets: {len(entries)}. Steam files will never be modified.')
     print('Deduplication requires read-only bubblewrap launches. Backend gameplay acceptance is pending; no backend is advertised as safely deduplicated yet.')
     print('Deduplication can take a while, especially for large games or SD cards. A progress bar will show comparison and linking; keep the conversion ZIP for recovery.')
-    if choose('Enable experimental asset deduplication? [y/N]: ').lower() != 'y':
+    if choose('[experimental] Enable asset deduplication? [y/N]: ').lower() != 'y':
         print('Files linked: 0. Disk space reclaimed: 0 bytes. Full converted assets retained.')
         return
     try:
@@ -652,6 +652,8 @@ def menu(root, name, launcher):
     if not isinstance(meta.get('conversion', {}), dict):
         raise ValueError('Invalid conversion metadata')
     safe_file(root, meta.get('launcher'))
+    print('Recommended installation: add as a non-Steam game.')
+    print('[experimental] Original Steam entry linking and asset deduplication have incomplete hardware coverage. Keep the conversion ZIP for recovery.')
     try:
         number = identity(meta)
     except ValueError as exc:
@@ -667,7 +669,7 @@ def menu(root, name, launcher):
         raise ValueError('Unsafe integration record')
     old = json.loads(path.read_text()) if path.exists() else None
     if old and old.get('status') != 'restored':
-        print(f'Existing integration: {old.get("status")} at {old.get("package")}')
+        print(f'[experimental] Existing integration: {old.get("status")} at {old.get("package")}')
         answer = choose('1. Verify existing link\n2. Update or repair link\n3. Restore original Steam launch configuration\n4. Add separate non-Steam shortcut\n5. Cancel\nChoice: ')
         if answer == '4':
             return standalone(root)
@@ -733,12 +735,12 @@ def menu(root, name, launcher):
             break
         print('The original Steam game must be installed through Steam on this Steam Frame before library linking is available.')
         print('Ownership or installation on another computer is not sufficient. Ownership here is unknown.')
-        answer = choose('1. Install original game through Steam, then link\n2. Add as non-Steam game instead\n3. Cancel\n4. Rescan\nChoice: ')
-        if answer == '2':
+        answer = choose('1. Add as non-Steam game (recommended)\n2. [experimental] Install original game through Steam, then link\n3. Cancel\n4. Rescan\nChoice: ')
+        if answer == '1':
             return standalone(root)
         if answer == '4':
             continue
-        if answer == '1':
+        if answer == '2':
             try:
                 open_install_flow(number)
             except ValueError as exc:
@@ -747,10 +749,10 @@ def menu(root, name, launcher):
             if choose('Complete installation in Steam. Press R to rescan, or rerun this installer later: ').lower() == 'r':
                 continue
         return False
-    answer = choose('1. Link converted ARM64 version to existing Steam game (recommended)\n2. Add separate non-Steam game\n3. Cancel\nChoice: ')
-    if answer == '2':
+    answer = choose('1. Add as non-Steam game (recommended)\n2. [experimental] Link converted ARM64 version to existing Steam game\n3. Cancel\nChoice: ')
+    if answer == '1':
         return standalone(root)
-    if answer != '1':
+    if answer != '2':
         return False
     print('Configuring the original entry through running Steam; existing launch options will be backed up and verified. Original game files remain untouched.')
     try:

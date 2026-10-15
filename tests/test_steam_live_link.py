@@ -128,7 +128,7 @@ def test_menu_never_requests_launch_option_input(tmp_path, package, installed, m
     monkeypatch.setattr(lib, 'live_client', lambda: client)
     monkeypatch.setattr(lib, 'native_host_runtime', lambda roots: Path('/synthetic/native-host-runtime'))
     monkeypatch.setattr(lib, 'offer_dedup', lambda *args: None)
-    monkeypatch.setattr(lib, 'choose', lambda prompt: '1')
+    monkeypatch.setattr(lib, 'choose', lambda prompt: '2')
     monkeypatch.setattr('builtins.input', lambda *a: pytest.fail('manual input requested'))
     assert lib.menu(root, meta['name'], launcher) is False
     assert 'read back successfully' in capsys.readouterr().out
@@ -139,7 +139,8 @@ def test_unavailable_client_offers_nonsteam_without_touching_settings(tmp_path, 
     monkeypatch.setattr(lib, 'records', lambda: tmp_path / 'records')
     monkeypatch.setattr(lib, 'installation', lambda number: {'state': 'installed', 'installations': [], 'errors': []})
     monkeypatch.setattr(lib, 'live_client', lambda: (_ for _ in ()).throw(steam_client.Unavailable('no endpoint')))
-    monkeypatch.setattr(lib, 'choose', lambda prompt: '1')
+    answers = iter(['2', '1'])
+    monkeypatch.setattr(lib, 'choose', lambda prompt: next(answers))
     assert lib.menu(root, meta['name'], launcher) is True
     assert not (tmp_path / 'records/504230.json').exists()
     assert 'not reported complete' in capsys.readouterr().out

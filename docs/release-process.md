@@ -12,6 +12,15 @@ Keep v0.1.0.3 immutable; do not create the public v0.1.1.0 tag or publish final
 artifacts while required installation, launch, restoration or hardware checks
 remain unverified. Playtime and achievements require separate evidence.
 
+Revised v0.1.1.0 scope (2026-10-15): non-Steam installation is the recommended
+main workflow. Original-entry linking and deduplication remain optional
+**[experimental]** features. Their unfinished hardware qualification checks do
+not block publication; they remain required before removing experimental status.
+Safety guards, truthful capability reporting and non-Steam regression checks
+continue to be release requirements. See the acceptance ledger for the current
+publication gates rather than treating the historical experimental matrix as
+mandatory stable-feature acceptance.
+
 Use Python 3.12 to build. On Windows run `powershell -ExecutionPolicy Bypass -File
 build/build_windows.ps1`; on native Linux ARM64 run
 `bash build/build_linux_aarch64.sh`. For native Linux x86_64 run

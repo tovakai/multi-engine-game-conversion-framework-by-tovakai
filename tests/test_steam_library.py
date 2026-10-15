@@ -265,7 +265,7 @@ def test_missing_game_opens_only_official_steam_flow(package, monkeypatch, capsy
     root, launcher, _ = package
     monkeypatch.setattr(lib, 'records', lambda: tmp_path / 'records')
     monkeypatch.setattr(lib, 'installation', lambda n: {'state': 'missing', 'errors': []})
-    answers = iter(['1', ''])
+    answers = iter(['2', ''])
     monkeypatch.setattr('builtins.input', lambda prompt: next(answers))
     calls = []
     monkeypatch.setattr(lib.subprocess, 'run', lambda args, **kw: calls.append(args))
@@ -275,11 +275,29 @@ def test_missing_game_opens_only_official_steam_flow(package, monkeypatch, capsy
     assert not (tmp_path / 'records').exists()
 
 
+@pytest.mark.parametrize('state', ['installed', 'missing'])
+def test_nonsteam_is_primary_without_live_link_or_dedup(package, monkeypatch, capsys, tmp_path, state):
+    root, launcher, _ = package
+    monkeypatch.setattr(lib, 'records', lambda: tmp_path / 'records')
+    monkeypatch.setattr(lib, 'installation', lambda n: {'state': state, 'errors': []})
+    monkeypatch.setattr(lib, 'live_client', lambda: pytest.fail('Non-Steam selection must not change original launch options'))
+    monkeypatch.setattr(lib, 'offer_dedup', lambda *a: pytest.fail('Non-Steam selection must not deduplicate'))
+    prompts = []
+    def choose(prompt):
+        prompts.append(prompt)
+        return '1'
+    monkeypatch.setattr('builtins.input', choose)
+    assert lib.menu(root, 'Celeste', launcher) is True
+    assert prompts[-1].startswith('1. Add as non-Steam game (recommended)\n2. [experimental]')
+    assert '[experimental]' in capsys.readouterr().out
+    assert not (tmp_path / 'records').exists()
+
+
 def test_install_flow_failure_allows_rescan_or_cancel(package, monkeypatch, capsys, tmp_path):
     root, launcher, _ = package
     monkeypatch.setattr(lib, 'records', lambda: tmp_path / 'records')
     monkeypatch.setattr(lib, 'installation', lambda n: {'state': 'missing', 'errors': []})
-    answers = iter(['1', '3'])
+    answers = iter(['2', '3'])
     monkeypatch.setattr('builtins.input', lambda prompt: next(answers))
     def failed(*args, **kwargs):
         raise lib.subprocess.CalledProcessError(3, args[0])

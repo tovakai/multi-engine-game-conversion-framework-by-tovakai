@@ -43,6 +43,11 @@ These downloads contain **the converter, not games**. The project does not distr
 
 ### Quick start
 
+For v0.1.1.0, **installing as a non-Steam game is the recommended workflow**.
+Original Steam entry linking and asset deduplication are **[experimental]**,
+optional features with incomplete hardware coverage. Keep the converted ZIP
+for recovery if you choose them.
+
 1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. The v0.1.1.0 candidate adds Linux x64 host builds alongside Linux ARM64; the published v0.1.0.3 links above remain unchanged.
 2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
 3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.

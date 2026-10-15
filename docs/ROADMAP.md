@@ -15,7 +15,7 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 | Version | Theme | Primary outcome |
 | --- | --- | --- |
 | **0.1.0** | Foundation | Reliable existing backends and consistent GUI-to-device workflow |
-| **0.1.1.0** | Steam Library Integration | Guided original-entry linking for installed local Steam games; preserve ZIP transfer and non-Steam installation |
+| **0.1.1.0** | Steam Library Integration | Recommended non-Steam ZIP installation; optional [experimental] original-entry linking and deduplication |
 | **0.1.2.0** | Deferred maintenance | Release-feedback fixes, diagnostics and source artwork provenance |
 | **0.2.0** | GameMakerFrame + coverage baseline | GameMaker support and a 35-title test matrix |
 | **0.3.0** | WebFrame | Construct and compatible packaged HTML5 game support |
@@ -48,8 +48,8 @@ Let users provide their own legitimately acquired PC games, detect the engine an
 
 v0.1.0.3 is published and immutable. This release improves the shared extracted
 ZIP installer: detect original games installed through Steam on this Frame,
-including secondary libraries; guide supported native packages toward original
-entries; retain non-Steam registration and artwork. Preserve original files and
+including secondary libraries; recommend non-Steam registration and artwork,
+with optional **[experimental]** original-entry linking. Preserve original files and
 Steam context, configure/read back launch options through an existing live client
 interface, record exact backups and reversible setup, and keep Steam running.
 No manual launch-command copying or running-client configuration-file edits.

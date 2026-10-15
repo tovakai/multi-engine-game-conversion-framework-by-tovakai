@@ -322,7 +322,7 @@ def refresh_artwork_live(found: dict[Path, int]) -> bool:
 
 def main() -> int:
     if '--help' in sys.argv:
-        print('Run install-to-steam.sh on Frame with Steam running. Choose original-entry linking or the existing non-Steam artwork installer. The original game must be installed through Steam on this Frame before linking. Rerun to rescan, verify, repair or restore. No Steam configuration files are written.')
+        print('Run install-to-steam.sh on Frame with Steam running. Add as non-Steam game is recommended, with artwork. Original-entry linking and deduplication are [experimental] with incomplete hardware coverage; retain the ZIP for recovery. The original game must be installed through Steam on this Frame before linking. Rerun to rescan, verify, repair or restore. No Steam configuration files are written.')
         return 0
     if sys.platform != "linux":
         return fail("this installer is intended for the Steam Frame / Linux")
@@ -422,8 +422,11 @@ INSTALL_GUIDE = """Steam Frame package
 
    ./install-to-steam.sh
 
-The installer prefers original Steam library linking for approved backends with
-a trustworthy AppID. The original game must be installed through Steam on this
+Add as non-Steam game is the recommended installation method, with artwork.
+Original-entry linking and deduplication are [experimental] optional features
+with incomplete hardware coverage. Retain the ZIP for recovery if you opt in.
+Linking requires an approved backend and trustworthy AppID.
+The original game must be installed through Steam on this
 Steam Frame before linking is available. Ownership or installation on another
 computer is not sufficient. Additional mounted Steam libraries are discovered.
 Missing games can be installed through Steam, then rescanned without retransferring.
@@ -442,7 +445,7 @@ Steam updates/broken links require repair or re-extraction of the retained ZIP.
 Non-Steam installation needs no deduplication; existing asset links must first
 be restored to ordinary converted copies.
 
-Alternatively, the installer asks the running Steam client to import launch.sh as a normal
+The recommended workflow asks the running Steam client to import launch.sh as a normal
 non-Steam game. It then reads back the shortcut Steam created and installs any
 bundled portrait, banner, hero, logo, and icon artwork using that shortcut's
 non-Steam AppID. Steam may require a Steam / SteamVR environment restart before

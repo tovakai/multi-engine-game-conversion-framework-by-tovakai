@@ -134,7 +134,10 @@ Before advertising a backend as safely deduplicated:
 - [ ] Restore copies/options; verify standalone and original Steam launching.
 - [ ] Report playtime and achievements separately as verified or unverified.
 
-These gates remain mandatory for final v0.1.1.0 publication.
+These gates remain mandatory before removing **[experimental]** status or
+advertising a backend as safely deduplicated. Per the revised release scope,
+they do not block v0.1.1.0 publication: non-Steam installation is the main workflow,
+and original-entry linking/deduplication remain optional experiments.
 
 ## Measured installer improvement
 
