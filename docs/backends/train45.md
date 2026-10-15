@@ -47,6 +47,10 @@ Steam mode. No game scripts/assets required patches.
 Production inspection/backend/router/ZIP regressions verify both metadata
 copies, identity conflicts, modified assets/runtimes, cached offline provisioning,
 source preservation and repeated conversion. The actual frozen-GUI package
-needs separate Frame acceptance. Full-game coverage, achievements, playtime and
+passed fresh Windows dev212 package acceptance on Frame on 2026-10-15: the user
+confirmed it works after the requested SteamVR/audio/controller/gameplay check.
+Its existing shortcut path was retained, the previous package backed up, and
+every staged file matched the generated ZIP's SHA-256 manifest.
+Full-game coverage, save/relaunch, achievements, playtime and
 Steam Cloud remain unverified. Headless exit reports ObjectDB/resource cleanup
 warnings. This profile does not make v0.1.1.0 release-ready.
