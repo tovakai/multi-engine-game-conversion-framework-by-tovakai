@@ -17,6 +17,12 @@ Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
+**0.1.1.1 is being prepared:** experimental Ren'Py/RPG Maker controller profiles,
+R3 pointer mode, desktop/Steam launch-session handling and GUI artwork settings.
+See the [candidate release notes](docs/releases/0.1.1.1.md) and
+[acceptance status](docs/releases/0.1.1.1-acceptance.md). Published downloads below
+remain the current release until the new artifacts are accepted.
+
 ## Download v0.1.1.0: shared installer and experimental Steam library integration
 
 **[Release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.1.0)**
@@ -299,6 +305,15 @@ Game behavior can bypass the generated launcher or conflict with games that use
 their original Steam AppID.
 
 ## Optional SteamGridDB artwork for non-Steam games
+
+The 0.1.1.1 candidate adds **Artwork Settings** in the converter GUI. Enter a
+masked SteamGridDB API key and, optionally, the numeric ID from the game's
+SteamGridDB page. The key lasts for this session; selecting another source clears
+the game ID. Blank ID keeps automatic matching. Existing/manual and official
+Steam artwork keep their priority; SteamGridDB fills missing slots.
+The independent [Frame artwork companion](docs/steam-artwork-companion.md) also
+supports local images and SteamGridDB for existing non-Steam entries.
+
 
 Set the `STEAMGRIDDB_API_KEY` **process environment variable** before running
 the converter to enable [SteamGridDB](https://www.steamgriddb.com/api/v2) artwork.

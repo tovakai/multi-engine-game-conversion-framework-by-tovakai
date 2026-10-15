@@ -405,6 +405,7 @@ def build_source(
     dry_run: bool = False,
     steam_cover: Path | str | None = None,
     steamgriddb_game_id: int | None = None,
+    steamgriddb_api_key: str | None = None,
     progress: Callable[[str], None] | None = None,
     stage_progress: Callable[[float, str], None] | None = None,
     download_progress: Callable[[int, int | None], None] | None = None,
@@ -414,6 +415,7 @@ def build_source(
     sts2_frame=None,
     sts2_retry: bool = False,
     sts2_handoff: bool | None = None,
+    controller_profile: bool = False,
     _prepared_source: PreparedSource | None = None,
 ) -> UnifiedBuildResult:
     options = locals().copy()
@@ -438,6 +440,10 @@ def build_source(
         except SourceError as exc:
             raise ConversionError(str(exc)) from exc
     inspection = _inspect_prepared(_prepared_source.root) if _prepared_source else inspect_source(path)
+    if controller_profile:
+        from megcfbt.controller_profiles import ENGINES
+        if inspection.engine not in ENGINES:
+            raise ConversionError('The experimental controller profile supports Ren\'Py and RPG Maker only.')
     if renpy_ddlc_753_migration and (
         inspection.backend != "renframe" or not inspection.renpy_ddlc_753_candidate
     ):
@@ -636,12 +642,22 @@ def build_source(
         )
         if steam_cover is not None:
             embed_steam_cover(output_path, steam_cover)
+        if controller_profile:
+            from megcfbt.controller_profiles import prepare_profile
+            try:
+                prepare_profile(output_path, inspection.engine)
+            except (OSError, ValueError) as exc:
+                raise ConversionError(f'Could not prepare controller profile: {exc}') from exc
+            warnings += ('Experimental controller profile bundled. Run setup-controller-profile.sh --list on the Frame, '
+                         'then explicitly apply it to the game shortcut. The tested Frame client also requires --frame-routing --apply. '
+                         'R3 toggles pointer mode; game compatibility checks remain pending.',)
         if not renpy_ddlc_753_migration:
             complete_frame_artwork(
                 output_path,
                 game_name=game_name or inspection.game_name or source_base_name(path),
                 progress=progress,
                 steamgriddb_game_id=steamgriddb_game_id,
+                steamgriddb_api_key=steamgriddb_api_key,
             )
         if archive:
             stage(0.88, "Creating Frame-ready ZIP")

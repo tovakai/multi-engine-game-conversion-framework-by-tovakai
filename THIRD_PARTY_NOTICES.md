@@ -206,3 +206,13 @@ See `experiments/train45/README.md` and its preserved license texts.
 No Train45 content or Valve Steam API binary is redistributed in this bundle.
 The launcher resolves Frame's installed native Steam API inside the converted
 package; genuine API behavior is retained.
+
+## Steam Artwork Companion
+
+The standalone Frame companion is original project code under this repository's
+AGPL-3.0 license. It uses Python and Tcl/Tk, and Pillow for image loading and previews.
+Pillow uses its HPND license; upstream licensing is included with the collected
+Pillow distribution metadata and documented at https://github.com/python-pillow/Pillow.
+PyInstaller uses GPL with its bootloader exception. No Steam client library or
+SteamGridDB artwork is bundled in the companion; images are supplied locally or
+fetched by the user under the provider's terms.

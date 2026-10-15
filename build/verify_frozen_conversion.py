@@ -32,7 +32,7 @@ def verify(executable, receipt):
         output.mkdir()
         subprocess.run([str(executable.resolve()), '--verify-gui-conversion', str(source),
                         '--output-dir', str(output), '--backend-runtime', str(runtime),
-                        '--receipt', str(receipt.resolve()), '--timeout', '120'], check=True, timeout=150)
+                        '--receipt', str(receipt.resolve()), '--controller-profile', '--timeout', '120'], check=True, timeout=150)
         result = json.loads(receipt.read_text(encoding='utf-8'))
         assert result['state'] == 'complete' and result['frozen']
         assert (source / 'Game.rgss3a').read_bytes() == assets
@@ -46,7 +46,17 @@ def verify(executable, receipt):
             metadata = [json.loads(package.read(name)) for name in names if name.endswith('/.megcfbt/package.json')]
             assert len(metadata) == 2
             assert all(item['conversion']['converter'] == result['build_info'] for item in metadata)
+            profiles = [name for name in names if name.endswith('/controllers/profile.json')]
+            assert len(profiles) == 1, 'Frozen converter did not bundle controller resources'
+            manifest = json.loads(package.read(profiles[0]))
+            assert manifest['engine'] == 'vxace' and manifest['toggle'] == 'R3'
+            folder = profiles[0].rsplit('/', 1)[0]
+            import hashlib
+            for item in manifest['controllers'].values():
+                assert hashlib.sha256(package.read(folder + '/' + item['file'])).hexdigest() == item['sha256']
+            assert folder + '/setup.py' in names and folder + '/steam_cdp.py' in names
         result['synthetic_zip_cleanup_verified'] = True
+        result['controller_resources_verified'] = True
         receipt.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
 
 

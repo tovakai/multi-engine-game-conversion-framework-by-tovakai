@@ -633,35 +633,12 @@ def launch(root, args):
 
 
 def import_graphics_environment(*, pid=None, proc_root=None):
-    """Import only existing desktop graphics fields BEFORE entering bubblewrap.
+    """Keep the caller's display before isolation, including unset fields.
 
-    Mount/user isolation can deny /proc/<desktop>/environ despite readable mode
-    bits. Steam identity and session authorization are never fabricated here.
+    The marker also prevents repaired historical launchers from importing
+    Plasma's session after isolation. Steam identities remain inherited.
+    pid/proc_root remain accepted for existing callers and regression probes.
     """
-    if os.environ.get('MEGCFBT_ORIGINAL_STEAM_ENTRY') == '1':
-        os.environ['MEGCFBT_FRAME_ENV_IMPORTED'] = '1'
-        return  # The real Steam harness selected SteamVR graphics/input context.
-    if pid is None:
-        try:
-            result = subprocess.run(['pgrep', '-n', '-u', str(os.getuid()), 'plasmashell'],
-                capture_output=True, text=True, timeout=2)
-            pid = int(result.stdout.strip()) if result.returncode == 0 else None
-        except (OSError, ValueError, subprocess.TimeoutExpired):
-            pid = None
-    if pid is not None:
-        path = (proc_root or Path('/proc')) / str(pid) / 'environ'
-        try:
-            with path.open('rb') as stream:
-                contents = stream.read(1024 * 1024)
-            environment = dict(item.split(b'=', 1) for item in contents.split(b'\0') if b'=' in item)
-            graphics = {key.decode(): environment[key].decode() for key in
-                (b'DISPLAY', b'WAYLAND_DISPLAY', b'XDG_RUNTIME_DIR', b'XAUTHORITY') if key in environment}
-            frame = (graphics.get('XDG_RUNTIME_DIR', '').endswith('/frametop')
-                     or '/frametop/' in graphics.get('XAUTHORITY', ''))
-            if frame or not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY')):
-                os.environ.update(graphics)
-        except (OSError, ValueError):
-            pass  # Keep the inherited graphics context; never fail a native launch.
     os.environ['MEGCFBT_FRAME_ENV_IMPORTED'] = '1'
 
 

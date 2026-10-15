@@ -56,6 +56,7 @@ foreach ($path in @(
   --collect-all customtkinter `
   --collect-all tkinterdnd2 `
   --collect-data megcfbt `
+  --add-data "megcfbt/controller_support;megcfbt/controller_support" `
   --add-data "megcfbt/steam_library.py;megcfbt" `
   --add-data "megcfbt/steam_client.py;megcfbt" `
   --add-data "megcfbt/asset_dedup.py;megcfbt" `

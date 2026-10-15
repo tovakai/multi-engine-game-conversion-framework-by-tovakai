@@ -14,7 +14,7 @@ if [[ -x .venv/bin/python ]]; then
   PY=.venv/bin/python
 fi
 
-"$PY" -m pip install -e ".[gui,build]"
+"$PY" -m pip install -e ".[gui,build,artwork-gui]"
 
 APP_NAME="$("$PY" -c 'from megcfbt import APP_NAME; print(APP_NAME)')"
 "$PY" build/build_identity.py --platform "$TARGET"
@@ -39,6 +39,7 @@ done
   --collect-all customtkinter \
   --collect-all tkinterdnd2 \
   --collect-data megcfbt \
+  --add-data "megcfbt/controller_support:megcfbt/controller_support" \
   --add-data "megcfbt/steam_library.py:megcfbt" \
   --add-data "megcfbt/steam_client.py:megcfbt" \
   --add-data "megcfbt/asset_dedup.py:megcfbt" \
@@ -54,5 +55,10 @@ done
   app/main.py
 
 RELEASE="dist/$TARGET/$APP_NAME"
+if [[ "$TARGET" == linux-aarch64 ]]; then
+  ARTWORK_PYTHON="$PY" ARTWORK_BUILD_IDENTITY=build/_build_info.json bash scripts/build-steam-artwork.sh
+  mkdir -p "$RELEASE/Steam Artwork Companion"
+  cp -a dist/steam-artwork-companion/. "$RELEASE/Steam Artwork Companion/"
+fi
 "$PY" build/release_metadata.py --application "$RELEASE" --platform "$TARGET"
 echo "Built: $RELEASE/$APP_NAME"

@@ -8,10 +8,15 @@ from megcfbt.models import UnifiedBuildResult, UnifiedInspection
 def app_without_window():
     app = gui.ConverterApp.__new__(gui.ConverterApp)
     for name in ('activity_progress', 'activity_label', 'game_label', 'engine_label',
-                 'backend_label', 'compat_label', 'runtime_button', 'convert_btn', 'drop_label', 'notes_box'):
+                 'backend_label', 'compat_label', 'runtime_button', 'convert_btn', 'drop_label', 'notes_box',
+                 'controller_profile_checkbox', 'controller_profile_var'):
         setattr(app, name, mock.Mock())
     for name in ('_log', '_set_status', '_pick_runtime', '_set_progress', '_set_busy'):
         setattr(app, name, mock.Mock())
+    app.steamgriddb_key_var = mock.Mock()
+    app.steamgriddb_key_var.get.return_value = ""
+    app.steamgriddb_id_var = mock.Mock()
+    app.steamgriddb_id_var.get.return_value = ""
     app.sts2_sdk = None
     return app
 

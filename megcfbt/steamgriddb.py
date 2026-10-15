@@ -168,17 +168,21 @@ def fetch_steamgriddb_artwork(
     progress=None,
     steam_appid: str | None = None,
     selected_game_id: int | None = None,
+    api_key: str | None = None,
 ) -> tuple[dict[str, Path], dict | None]:
     """Fill only vacant artwork slots; return newly downloaded assets and provenance.
 
-    Returns no assets without a configured environment key; all network errors
+    Returns no assets without an explicit or environment key; all network errors
     are non-fatal. Incomplete artwork does not block game conversion.
     """
     root = Path(build)
     art = root / ".megcfbt" / "artwork"
-    key = os.environ.get("STEAMGRIDDB_API_KEY", "").strip()
+    key = (os.environ.get("STEAMGRIDDB_API_KEY", "") if api_key is None else api_key).strip()
+    if key and progress is not None:
+        original_progress = progress
+        progress = lambda message: original_progress(str(message).replace(key, "[redacted]"))
     if not key:
-        _notify(progress, "SteamGridDB artwork disabled (STEAMGRIDDB_API_KEY not set)")
+        _notify(progress, "SteamGridDB artwork disabled (no API key configured)")
         return {}, None
 
     missing = [

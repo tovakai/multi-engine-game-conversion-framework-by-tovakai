@@ -191,6 +191,7 @@ def complete_frame_artwork(
     game_name: str,
     progress=None,
     steamgriddb_game_id: int | None = None,
+    steamgriddb_api_key: str | None = None,
 ) -> dict[str, Path]:
     """Fill Frame artwork via manual > official Steam > optional SteamGridDB.
 
@@ -252,6 +253,7 @@ def complete_frame_artwork(
         steam_appid=appid,
         progress=progress,
         selected_game_id=steamgriddb_game_id,
+        api_key=steamgriddb_api_key,
     )
     sources.update({slot: "steamgriddb" for slot in sgdb_assets})
 

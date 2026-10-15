@@ -121,7 +121,7 @@ def test_complete_pipeline_preserves_audited_identity_and_native_contract(tmp_pa
     assert 'export SteamAppId=1574820' in launcher and 'export SteamGameId=1574820' in launcher
     assert (output / 'game/steam_appid.txt').read_bytes() == b'1574820\n'
     assert "MESA_LOADER_DRIVER_OVERRIDE" not in launcher
-    assert '-z "${DISPLAY:-}"' in launcher and "libsteam_api.so" in launcher
+    assert 'import_graphics_env' not in launcher and "libsteam_api.so" in launcher
     assert "proton" not in launcher.casefold() and "fex" not in launcher.casefold()
     assert "megcfbt/until-then" in (output / "game/override.cfg").read_text()
     assert snapshot(source) == before and snapshot(bundle) == runtime_before

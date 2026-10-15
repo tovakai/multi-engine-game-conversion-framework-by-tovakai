@@ -26,8 +26,9 @@ classifiers = [
 dependencies = ["pefile==2024.8.26"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "Pillow>=10.0"]
 gui = ["customtkinter>=5.2.2", "tkinterdnd2>=0.6.3"]
+artwork-gui = ["Pillow>=10.0"]
 build = ["pyinstaller>=6.3.0"]
 
 [project.scripts]
@@ -35,9 +36,10 @@ multi-engine-game-conversion-framework-by-tovakai = "megcfbt.cli:main"
 multi-engine-game-conversion-framework-by-tovakai-gui = "megcfbt.gui:main"
 renframe = "renframe.cli:main"
 rpgmframe = "rpgmframe.cli:main"
+steam-artwork-companion = "steamartwork.gui:main"
 
 [tool.setuptools.packages.find]
-include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*", "monoframe*", "unityframe*", "celesteframe*"]
+include = ["megcfbt*", "renframe*", "rpgmframe*", "gamemakerframe*", "loveframe*", "constructframe*", "agsframe*", "monoframe*", "unityframe*", "celesteframe*", "steamartwork*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "megcfbt.version.__version__"}
@@ -47,7 +49,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.setuptools.package-data]
-megcfbt = ["steam_library.py", "steam_client.py", "asset_dedup.py", "_build_info.json", "native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
+megcfbt = ["controller_support/*.py", "steam_library.py", "steam_client.py", "asset_dedup.py", "_build_info.json", "native_runtime_index.json", "runtime_support/*.c", "runtime_support/*.so", "runtime_support/*.json"]
 gamemakerframe = ["patches/*.patch"]
 rpgmframe = ["godot_runtime_index.json", "godot_extension_runtime_index.json", "runtime_support/*.rb"]
 monoframe = ["runtime_index.json", "runtime_support/*.c", "patches/*.patch"]

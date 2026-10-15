@@ -116,6 +116,7 @@ def test_backend_uses_host_preparer_and_preserves_original(tmp_path,monkeypatch)
         target=Path(command[command.index('--game-dir')+1]);(target/'Stardew Valley.dll').write_bytes(b'prepared')
         return type('Result',(),{'returncode':0,'stdout':'Prepared managed game'})()
     monkeypatch.setattr(backend.subprocess,'run',prepare)
+    monkeypatch.setattr(backend,'preparation_command',lambda sdk,tool:['synthetic-preparer',str(sdk/'prepare/managed'/(tool+'.dll'))])
     result=backend.build_game(root,output=tmp_path/'output',runtime=bundle)
     assert (root/'Stardew Valley.dll').read_bytes()==original
     assert (result.output_path/'game/Stardew Valley.dll').read_bytes()==b'prepared'

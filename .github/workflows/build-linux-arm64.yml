@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - "app/**"
+      - "steamartwork/**"
+      - "scripts/build-steam-artwork.sh"
       - "megcfbt/**"
       - "renframe/**"
       - "rpgmframe/**"
@@ -74,6 +76,15 @@ jobs:
           xvfb-run -a "$APP" --verify-gui-startup --receipt build/frozen-gui-startup.json
           python build/verify_build_identity.py --application "dist/linux-aarch64/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-startup.json --platform linux-aarch64
 
+      - name: Verify standalone Frame artwork companion
+        run: |
+          APP="dist/linux-aarch64/Multi-Engine Game Conversion Framework by tovakai"
+          COMPANION="$APP/Steam Artwork Companion/steam-artwork-companion"
+          test -x "$COMPANION"
+          file "$COMPANION" | grep -Eq 'ARM aarch64|ARM64|aarch64'
+          xvfb-run -a "$COMPANION" --verify-gui-startup --receipt build/frozen-artwork-startup.json
+          python -c 'import json; from pathlib import Path; a=json.loads(Path("build/frozen-artwork-startup.json").read_text()); b=json.loads(Path("dist/linux-aarch64/Multi-Engine Game Conversion Framework by tovakai/BUILD.json").read_text()); assert a["state"]=="complete" and a["frozen"]; assert a["build_info"]=={k:v for k,v in b.items() if k!="app_name"}'
+
       - name: Verify frozen GUI conversion and work cleanup
         run: |
           xvfb-run -a python build/verify_frozen_conversion.py --executable "dist/linux-aarch64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-conversion.json
@@ -85,5 +96,6 @@ jobs:
             dist/*-linux-aarch64.tar.gz
             dist/SHA256SUMS-linux-aarch64.txt
             build/frozen-gui-startup.json
+            build/frozen-artwork-startup.json
             build/frozen-gui-conversion.json
           if-no-files-found: error
