@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO = 'tovakai/multi-engine-game-conversion-framework-by-tovakai'
 TAGS = {'godot-4.1.4-until-then-native-arm64-v1': 'runtime-until-then-arm64-v1',
         'godot-4.5-train45-native-arm64-v1': 'runtime-train45-arm64-v1'}
+ASSET_IDS = {'godot-4.1.4-until-then-native-arm64-v1': 642021919,
+             'godot-4.5-train45-native-arm64-v1': 642024009}
 
 
 def stage(entry, tag, destination, *, download=subprocess.run, verify=None):
@@ -33,9 +35,19 @@ def stage(entry, tag, destination, *, download=subprocess.run, verify=None):
         verify(target)
         return target
     with tempfile.TemporaryDirectory(prefix='runtime-download-', dir=destination) as temporary:
-        download(['gh', 'release', 'download', tag, '--repo', REPO,
-                  '--pattern', name, '--dir', temporary], check=True)
         source = Path(temporary) / name
+        try:
+            download(['gh', 'release', 'download', tag, '--repo', REPO,
+                      '--pattern', name, '--dir', temporary], check=True)
+        except subprocess.CalledProcessError:
+            asset = ASSET_IDS.get(entry.get('recipe_id'))
+            if asset is None:
+                raise
+            # Direct asset access can work when draft tag lookup is unavailable.
+            # Same repository, same authentication, and unchanged hash/member checks.
+            with source.open('wb') as stream:
+                download(['gh', 'api', f'repos/{REPO}/releases/assets/{asset}',
+                          '-H', 'Accept: application/octet-stream'], check=True, stdout=stream)
         if source.is_symlink() or hashlib.sha256(source.read_bytes()).hexdigest() != entry['sha256']:
             raise ValueError('Downloaded runtime checksum mismatch')
         verify(source)

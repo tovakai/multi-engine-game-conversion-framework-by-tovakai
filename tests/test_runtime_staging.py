@@ -50,3 +50,17 @@ def test_existing_unexpected_runtime_preserved(tmp_path):
     with pytest.raises(ValueError, match='Existing runtime'):
         staging.stage(entry(), 'runtime-test', tmp_path, verify=lambda p: None)
     assert path.read_bytes() == b'user content'
+
+
+def test_direct_asset_fallback_still_verifies_pinned_bytes(tmp_path):
+    pinned = entry()
+    pinned['recipe_id'] = 'godot-4.5-train45-native-arm64-v1'
+    calls = []
+    def download(command, **kwargs):
+        calls.append(command)
+        if command[1] == 'release':
+            raise subprocess.CalledProcessError(1, command)
+        kwargs['stdout'].write(b'approved')
+    result = staging.stage(pinned, 'runtime-test', tmp_path, download=download, verify=lambda p: None)
+    assert result.read_bytes() == b'approved'
+    assert calls[1][2] == f'repos/{staging.REPO}/releases/assets/642024009'
