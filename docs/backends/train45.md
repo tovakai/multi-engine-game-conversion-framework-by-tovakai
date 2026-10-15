@@ -9,9 +9,9 @@ unverified AppID sidecar establishes Steam identity or ownership.
 
 Select/drop the installed Train45 directory into the GUI and click **CONVERT**.
 No FMOD SDK or compiler is required. The development Windows build bundles the
-verified open-source runtime archive. Public runtime provisioning remains a
-release-preparation gate; source checkouts without that archive can use an
-extracted, verified bundle with `--backend-runtime`.
+verified open-source runtime archive. A checksum-pinned public runtime-only
+prerelease also supports automatic download; source checkouts can additionally
+use an extracted, verified bundle with `--backend-runtime`.
 
 ```powershell
 python -m megcfbt build "C:\Program Files (x86)\Steam\steamapps\common\Train45"
