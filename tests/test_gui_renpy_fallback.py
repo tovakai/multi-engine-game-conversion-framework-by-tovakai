@@ -57,6 +57,9 @@ def app_for_inspection(tmp_path: Path):
     app.last_result = None
     app.force_var = SimpleNamespace(get=lambda: False)
     app.archive_var = SimpleNamespace(get=lambda: False)
+    app.steamgriddb_key_var = SimpleNamespace(get=lambda: "")
+    app.steamgriddb_id_var = SimpleNamespace(get=lambda: "", set=lambda value: None)
+    app.controller_profile_var = SimpleNamespace(get=lambda: False, set=lambda value: None)
     app._dispatch = lambda cb: cb()
     app._set_status = lambda *args: None
     app._set_busy = lambda busy: None
@@ -70,7 +73,7 @@ def app_for_inspection(tmp_path: Path):
     for name in (
         "activity_progress", "activity_label", "game_label",
         "engine_label", "backend_label", "compat_label", "runtime_button",
-        "convert_btn", "drop_label", "notes_box", "log_box",
+        "convert_btn", "drop_label", "notes_box", "log_box", "controller_profile_checkbox",
     ):
         setattr(app, name, Widget())
     return app

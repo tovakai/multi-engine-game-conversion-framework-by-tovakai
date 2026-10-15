@@ -25,6 +25,7 @@ def main(argv=None) -> int:
     parser.add_argument('--output-dir',type=Path)
     parser.add_argument('--receipt',type=Path,required=True)
     parser.add_argument('--timeout',type=int,default=900)
+    parser.add_argument('--controller-profile',action='store_true',help='verify bundled experimental controller resources')
     parser.add_argument('--backend-runtime', type=Path,
                         help='Explicit runtime directory selected for this acceptance run')
     parser.add_argument('--fmod-sdk', type=Path,
@@ -46,12 +47,19 @@ def main(argv=None) -> int:
         app=gui.ConverterApp()
         try:
             app.root.withdraw()
+            app._show_artwork_settings()
+            app.artwork_dialog.withdraw()
+            entries = [w for w in app.artwork_dialog.winfo_children() if isinstance(w, gui.ctk.CTkEntry)]
+            if len(entries) != 2 or entries[0].cget("show") != "*":
+                raise RuntimeError("Artwork key/game-ID fields missing or key not masked")
+            app.artwork_dialog.destroy()
             app.root.update_idletasks()
             args.receipt.parent.mkdir(parents=True,exist_ok=True)
             args.receipt.write_text(json.dumps({'state':'complete','app_name':APP_NAME,
                 'version':__version__, 'build_info':get_build_info(),
                 'version_display':app.version_label.cget('text'),
                 'cli_build_info':json.loads(cli_output.getvalue()),
+                'artwork_settings_verified':True,
                 'frozen':bool(getattr(sys,'frozen',False))},indent=2)+'\n')
             if app.version_label.cget('text') != display_version():
                 raise RuntimeError('GUI version disagrees with build metadata')
@@ -130,6 +138,7 @@ def main(argv=None) -> int:
             if not app._conversion_allowed() or not state['convert_enabled']:
                 failed('Verification','Automatic GUI conversion is unavailable')
                 return
+            app.controller_profile_var.set(args.controller_profile)
             initiated=True
             state['state']='converting'
             # Invoke the same command bound to the actual shipped Convert button.

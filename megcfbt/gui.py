@@ -166,6 +166,10 @@ class ConverterApp:
         self._ui_queue: queue.Queue[Any] = queue.Queue()
         self.archive_var = tk.BooleanVar(value=True)
         self.force_var = tk.BooleanVar(value=False)
+        self.controller_profile_var = tk.BooleanVar(value=False)
+        self.steamgriddb_key_var = tk.StringVar(value=os.environ.get("STEAMGRIDDB_API_KEY", ""))
+        self.steamgriddb_id_var = tk.StringVar(value="")
+        self.artwork_dialog = None
 
         self._build_ui()
         self.root.after(25, self._drain_ui_queue)
@@ -336,6 +340,17 @@ class ConverterApp:
             command=self._pick_runtime,
         )
         self.runtime_button.pack(side="right")
+
+        controller_options = ctk.CTkFrame(self.root, fg_color="transparent")
+        controller_options.pack(fill="x", padx=28, pady=(0, 4))
+        self.controller_profile_checkbox = ctk.CTkCheckBox(
+            controller_options, text="EXPERIMENTAL CONTROLLER PROFILE • R3 POINTER TOGGLE",
+            variable=self.controller_profile_var, fg_color=C_TEAL, text_color=C_MUTED, state="disabled")
+        self.controller_profile_checkbox.pack(side="left")
+        ctk.CTkButton(
+            controller_options, text="ARTWORK SETTINGS", width=180, height=30,
+            fg_color=C_PANEL_2, hover_color=C_BORDER, command=self._show_artwork_settings,
+        ).pack(side="right")
 
         self.out_label = ctk.CTkLabel(
             self.root,
@@ -601,6 +616,8 @@ class ConverterApp:
             messagebox.showinfo(APP_NAME, "Select a game folder or .zip archive.")
             return
 
+        if self.source != source:
+            self.steamgriddb_id_var.set("")
         self.source = source
         self.inspection = None
         self.renpy_runtime = None
@@ -642,6 +659,10 @@ class ConverterApp:
         self.activity_progress.stop()
         self.activity_label.configure(text="CURRENT OPERATION // READY")
         self.inspection = result
+        from megcfbt.controller_profiles import ENGINES
+        self.controller_profile_checkbox.configure(state="normal" if result.engine in ENGINES else "disabled")
+        if result.engine not in ENGINES:
+            self.controller_profile_var.set(False)
         version = f" {result.engine_version}" if result.engine_version else ""
         self.game_label.configure(text=result.game_name or "Unknown game")
         self.engine_label.configure(text=f"Engine: {result.engine_label}{version}", text_color=C_TEXT)
@@ -892,6 +913,48 @@ class ConverterApp:
             self.steam_cover = Path(selected)
             self._log(f"Custom artwork: {self.steam_cover}")
 
+    def _artwork_options(self) -> tuple[str, int | None]:
+        key = self.steamgriddb_key_var.get().strip()
+        raw_id = self.steamgriddb_id_var.get().strip()
+        if "\r" in key or "\n" in key:
+            raise ValueError("The SteamGridDB API key must be a single line.")
+        if raw_id and (not raw_id.isascii() or not raw_id.isdecimal() or len(raw_id) > 10 or int(raw_id) <= 0):
+            raise ValueError("Enter a positive numeric SteamGridDB game ID, or leave it blank for automatic matching.")
+        if raw_id and not key:
+            raise ValueError("A SteamGridDB API key is required when supplying a SteamGridDB game ID.")
+        return key, int(raw_id) if raw_id else None
+
+    def _show_artwork_settings(self) -> None:
+        if self.artwork_dialog is not None and self.artwork_dialog.winfo_exists():
+            self.artwork_dialog.lift()
+            return
+        dialog = ctk.CTkToplevel(self.root)
+        self.artwork_dialog = dialog
+        dialog.title("Artwork settings")
+        dialog.geometry("560x350")
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        ctk.CTkLabel(dialog, text="SteamGridDB API key", anchor="w").pack(fill="x", padx=24, pady=(18, 4))
+        ctk.CTkEntry(dialog, textvariable=self.steamgriddb_key_var, show="*", width=510).pack(fill="x", padx=24)
+        ctk.CTkLabel(dialog, text="SteamGridDB game ID (optional)", anchor="w").pack(fill="x", padx=24, pady=(14, 4))
+        ctk.CTkEntry(dialog, textvariable=self.steamgriddb_id_var, width=510).pack(fill="x", padx=24)
+        ctk.CTkLabel(dialog, text="Use the number from steamgriddb.com/game/ID.\nBlank ID uses automatic matching. The key stays in this session.\nManual artwork and existing artwork stay in place.",
+                     justify="left", text_color=C_MUTED).pack(anchor="w", padx=24, pady=12)
+        buttons = ctk.CTkFrame(dialog, fg_color="transparent")
+        buttons.pack(fill="x", padx=24, pady=8)
+        def done():
+            try:
+                self._artwork_options()
+            except ValueError as error:
+                messagebox.showerror("Artwork settings", str(error), parent=dialog)
+                return
+            dialog.destroy()
+        def get_key():
+            import webbrowser
+            webbrowser.open("https://www.steamgriddb.com/profile/preferences/api")
+        ctk.CTkButton(buttons, text="GET API KEY", command=get_key).pack(side="left")
+        ctk.CTkButton(buttons, text="DONE", command=done).pack(side="right")
+
     def _start_convert(self) -> None:
         if self._busy or self.source is None or self.inspection is None:
             return
@@ -1023,10 +1086,16 @@ class ConverterApp:
                 self._pick_runtime()
                 return
 
+        try:
+            artwork_key, artwork_game_id = self._artwork_options()
+        except ValueError as error:
+            messagebox.showerror("Artwork settings", str(error))
+            return
         source = self.source
         output = output_path_for_source(source, self.output_dir, self.inspection.game_name)
         force = bool(self.force_var.get())
         archive = bool(self.archive_var.get())
+        controller_profile = bool(self.controller_profile_var.get())
 
         self.log_box.delete("1.0", "end")
         self._log(f"Source: {source}")
@@ -1052,7 +1121,10 @@ class ConverterApp:
                        if self.inspection.backend == "sts2" else {}),
                     force=force,
                     archive=archive,
+                    controller_profile=controller_profile,
                     steam_cover=self.steam_cover,
+                    steamgriddb_api_key=artwork_key,
+                    steamgriddb_game_id=artwork_game_id,
                     progress=self._progress_log,
                     stage_progress=self._set_progress,
                     download_progress=self._download_progress,

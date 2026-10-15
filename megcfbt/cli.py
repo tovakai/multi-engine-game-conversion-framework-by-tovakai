@@ -32,6 +32,8 @@ def _parser() -> argparse.ArgumentParser:
 
     build_cmd = sub.add_parser("build", help="convert a supported game for ARM64 Linux/Frame")
     build_cmd.add_argument("source", type=Path)
+    build_cmd.add_argument("--controller-profile", action="store_true",
+                           help="opt in: bundle experimental Ren'Py/RPG Maker directions and R3 pointer-toggle setup")
     build_cmd.add_argument("--experimental-legacy-arm64-fallback", action="store_true",
                            help="opt in: authoritative 7.3.5 or 7.4.x Python 2; matched full 7.5.0 ARM64 engine; experimental")
     build_cmd.add_argument("--experimental-ddlc-753-migration", action="store_true",
@@ -110,6 +112,10 @@ def _parser() -> argparse.ArgumentParser:
         help="Frame Control server.py, Frame Control.exe, or install directory",
     )
 
+    controller_cmd = sub.add_parser("controller-profile", help="add experimental controller setup to an existing converted build")
+    controller_cmd.add_argument("build", type=Path)
+    controller_cmd.add_argument("--sensitivity", type=int, default=100)
+    controller_cmd.add_argument("--deadzone", type=int, default=8000)
     sub.add_parser("gui", help="open the desktop frontend")
     return parser
 
@@ -123,6 +129,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
+        if args.command == "controller-profile":
+            from megcfbt.controller_profiles import prepare_profile
+            from megcfbt.frame_package import load_frame_metadata
+            root = args.build.expanduser().resolve()
+            metadata = load_frame_metadata(root)
+            if metadata.get("payload"):
+                raise RuntimeError("Use the converted payload directory inside this extracted package.")
+            try:
+                directory = prepare_profile(root, metadata["engine"], sensitivity=args.sensitivity, deadzone=args.deadzone)
+            except (ValueError, OSError) as exc:
+                raise RuntimeError(str(exc)) from exc
+            print(f"Controller profile: {directory}")
+            print("On the Frame: ./setup-controller-profile.sh --list")
+            print("Then: ./setup-controller-profile.sh --appid SHORTCUT_ID --apply")
+            print("Frame routing workaround: ./setup-controller-profile.sh --appid SHORTCUT_ID --frame-routing --apply")
+            return 0
         if args.command == "artwork":
             from megcfbt.artwork import complete_frame_artwork
             from megcfbt.frame_package import create_frame_zip, load_frame_metadata
@@ -258,6 +280,7 @@ def main(argv: list[str] | None = None) -> int:
             steam_cover=args.steam_cover,
             steamgriddb_game_id=args.steamgriddb_id,
             allow_renpy_version_mismatch=args.allow_renpy_version_mismatch,
+            controller_profile=args.controller_profile,
             progress=print,
             **kwargs,
         )

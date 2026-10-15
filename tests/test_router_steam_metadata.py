@@ -25,6 +25,9 @@ def host_preparer(monkeypatch, backend, prepare):
     substitute = types.SimpleNamespace(**vars(subprocess))
     substitute.run = prepare
     monkeypatch.setattr(backend, 'subprocess', substitute)
+    if hasattr(backend, 'preparation_command'):
+        monkeypatch.setattr(backend, 'preparation_command',
+            lambda sdk, tool: ['synthetic-preparer', str(sdk / 'prepare/managed' / (tool + '.dll'))])
 
 
 def fixture_game(tmp_path, monkeypatch, backend, trusted=True):

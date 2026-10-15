@@ -16,39 +16,11 @@ for binary in "$ROOT/nw" "$ROOT/chrome_crashpad_handler" "$ROOT/mkxp-z.aarch64" 
     chmod u+x "$binary" 2>/dev/null || true
 done
 
-import_graphics_env() {
-    local pid="$1"
-    local key value
-    while IFS='=' read -r key value; do
-        case "$key" in
-            DISPLAY|WAYLAND_DISPLAY|XDG_RUNTIME_DIR|XAUTHORITY)
-                export "$key=$value"
-                ;;
-        esac
-    done < <(tr '\0' '\n' 2>/dev/null < "/proc/$pid/environ" || true)
-}
-
-if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]] && command -v pgrep >/dev/null 2>&1; then
-    plasma_pid="$(pgrep -n plasmashell || true)"
-    if [[ -n "$plasma_pid" && -r "/proc/$plasma_pid/environ" ]]; then
-        plasma_runtime="$(
-            { tr '\0' '\n' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |
-                sed -n 's/^XDG_RUNTIME_DIR=//p' |
-                tail -n 1
-        )"
-        plasma_xauth="$(
-            { tr '\0' '\n' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |
-                sed -n 's/^XAUTHORITY=//p' |
-                tail -n 1
-        )"
-
-        if [[ "$plasma_runtime" == */frametop || "$plasma_xauth" == */frametop/* ]]; then
-            import_graphics_env "$plasma_pid"
-        elif [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
-            import_graphics_env "$plasma_pid"
-        fi
-    fi
-fi
+# Follow the caller's session: Steam supplies gamescope's graphics environment;
+# a desktop launch supplies the desktop environment. Never borrow Plasma's
+# display just because Frametop happens to be running. In particular, do not
+# fill unset variables from another session (an X11 Steam launch may correctly
+# have no WAYLAND_DISPLAY). Headless launches must supply their intended session.
 
 if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
     user_bus="/run/user/$(id -u)/bus"
@@ -57,9 +29,10 @@ if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
     fi
 fi
 
-# Steam API initialization can replace DISPLAY before the engine creates its
-# window. Keep the selected Frame desktop while forwarding the real API calls.
-if [[ ( "${XDG_RUNTIME_DIR:-}" == */frametop || "${XAUTHORITY:-}" == */frametop/* )
+# Steam API initialization can replace graphics variables before video starts.
+# Preserve the caller's chosen session for both Steam and desktop launches while
+# forwarding the real Steam API calls. The helper also preserves unset values.
+if [[ ( -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" )
       && -f "$ROOT/libframe_steam_env.so" ]]; then
     export TOVAKAI_FRAME_PRESERVE_GRAPHICS=1
     export LD_PRELOAD="$ROOT/libframe_steam_env.so${LD_PRELOAD:+:$LD_PRELOAD}"

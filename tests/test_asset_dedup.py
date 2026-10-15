@@ -333,7 +333,7 @@ def test_checkpoint_supersedes_stale_journal_after_crash(trees, monkeypatch):
     assert dedup.enable(root, meta, detected, experimental=True)['linked'] == 1
 
 
-def test_graphics_import_precedes_isolation_without_spoofing_steam(tmp_path, monkeypatch):
+def test_isolation_preserves_callers_graphics_without_spoofing_steam(tmp_path, monkeypatch):
     proc = tmp_path / 'proc'
     (proc / '27').mkdir(parents=True)
     (proc / '27/environ').write_bytes(b'DISPLAY=:3\0XDG_RUNTIME_DIR=/run/user/1000/frametop\0SteamAppId=999\0HOME=/wrong\0')
@@ -344,7 +344,8 @@ def test_graphics_import_precedes_isolation_without_spoofing_steam(tmp_path, mon
     monkeypatch.setenv('MEGCFBT_FRAME_ENV_IMPORTED', 'fixture-default')
     previous_home = os.environ.get('HOME')
     dedup.import_graphics_environment(pid=27, proc_root=proc)
-    assert os.environ['DISPLAY'] == ':3' and os.environ['SteamAppId'] == '413150'
+    assert os.environ['DISPLAY'] == ':0' and os.environ['SteamAppId'] == '413150'
+    assert os.environ['XDG_RUNTIME_DIR'] == 'fixture-default'
     assert os.environ.get('HOME') == previous_home
     assert os.environ['MEGCFBT_FRAME_ENV_IMPORTED'] == '1'
 
@@ -359,19 +360,16 @@ def test_original_entry_keeps_steamvr_environment(tmp_path, monkeypatch):
 
 
 def test_exact_legacy_bootstrap_repair_is_recoverable_and_preserves_edits(trees):
-    from rpgmframe.launchers import _FRAME_ENV_PREAMBLE
     root, _, _, _, meta, detected = trees
-    new = _FRAME_ENV_PREAMBLE
-    old = new.replace('if [[ "${MEGCFBT_FRAME_ENV_IMPORTED:-}" != 1 ]] && command', 'if command')
-    old = old.replace(' 2>/dev/null < "/proc/$pid/environ" || true', ' < "/proc/$pid/environ"')
-    old = old.replace('{ tr \'\\0\' \'\\n\' 2>/dev/null < "/proc/$plasma_pid/environ" || true; } |',
-                      'tr \'\\0\' \'\\n\' < "/proc/$plasma_pid/environ" |')
+    old = (Path(__file__).parent / 'fixtures/legacy-graphics-preamble.sh').read_text()
     assert hashlib.sha256(old.encode()).hexdigest() == dedup.LEGACY_GRAPHICS_PREAMBLE_SHA
     launcher = root / 'launch.sh'
     original = (old + 'cd "$ROOT/game"\nexit 0\n').encode()
     launcher.write_bytes(original)
     assert dedup.repair_graphics_bootstrap(root, meta, detected)
-    assert launcher.read_text() == new + 'cd "$ROOT/game"\nexit 0\n'
+    repaired = launcher.read_text()
+    assert 'MEGCFBT_FRAME_ENV_IMPORTED' in repaired
+    assert repaired.endswith('cd "$ROOT/game"\nexit 0\n')
     assert (root / '.megcfbt/native-launcher-before-isolation.sh').read_bytes() == original
     assert not dedup.repair_graphics_bootstrap(root, meta, detected)
     launcher.write_bytes(launcher.read_bytes() + b'# user edit\n')

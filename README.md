@@ -1,6 +1,6 @@
 # Multi-Engine Game Conversion Framework by tovakai
 
-**v0.1.1.0** improves the shared Steam Frame installer and adds a Linux x64 GUI.
+**v0.1.1.1** adds experimental controller profiles, R3 pointer mode and GUI artwork settings.
 Transfer and extract the converted ZIP, then run `./install-to-steam.sh`.
 **Add as non-Steam game (recommended)** installs the shortcut and artwork while
 Steam stays running. Original-entry linking and
@@ -17,16 +17,20 @@ Windows ARM64 Hollow Knight player under ARM64 Proton.
 
 There is no short public product name. You have to say the whole thing.
 
-## Download v0.1.1.0: shared installer and experimental Steam library integration
+See the [0.1.1.1 release notes](docs/releases/0.1.1.1.md) and
+[acceptance evidence](docs/releases/0.1.1.1-acceptance.md). The ARM64 download also
+includes the standalone Steam Artwork Companion for Frame.
 
-**[Release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.1.0)**
+## Download v0.1.1.1: controller profiles and artwork tools
+
+**[Release and release notes](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.1.1)**
 
 | Converter application | Download |
 | --- | --- |
-| Windows x64 | [v0.1.1.0 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-windows-x64.zip) |
-| Linux ARM64 / AArch64 | [v0.1.1.0 ARM64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-aarch64.tar.gz) |
-| Linux x64 | [v0.1.1.0 x64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/multi-engine-game-conversion-framework-by-tovakai-0.1.1.0-linux-x64.tar.gz) |
-| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.0/SHA256SUMS.txt) |
+| Windows x64 | [v0.1.1.1 Windows ZIP](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.1/multi-engine-game-conversion-framework-by-tovakai-0.1.1.1-windows-x64.zip) |
+| Linux ARM64 / AArch64 | [v0.1.1.1 ARM64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.1/multi-engine-game-conversion-framework-by-tovakai-0.1.1.1-linux-aarch64.tar.gz) |
+| Linux x64 | [v0.1.1.1 x64 tarball](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.1/multi-engine-game-conversion-framework-by-tovakai-0.1.1.1-linux-x64.tar.gz) |
+| Archive verification | [SHA256SUMS.txt](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/download/v0.1.1.1/SHA256SUMS.txt) |
 
 The previous [v0.1.0.3 release](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/releases/tag/v0.1.0.3) and its tag remain unchanged.
 
@@ -39,12 +43,12 @@ These downloads contain **the converter, not games**. The project does not distr
 
 ### Quick start
 
-For v0.1.1.0, **installing as a non-Steam game is the recommended workflow**.
+For v0.1.1.1, **installing as a non-Steam game is the recommended workflow**.
 Original Steam entry linking and asset deduplication are **[experimental]**,
 optional features with incomplete hardware coverage. Keep the converted ZIP
 for recovery if you choose them.
 
-1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. v0.1.1.0 provides Windows x64, Linux x64 and Linux ARM64 host builds; converted games retain their ARM64 targets.
+1. Download and extract the converter for **your computer's architecture**. Run `Multi-Engine Game Conversion Framework by tovakai.exe` on Windows or the included application executable on Linux. v0.1.1.1 provides Windows x64, Linux x64 and Linux ARM64 host builds; converted games retain their ARM64 targets.
 2. Select or drop in an **existing game installation/archive**. The app inspects it, identifies a supported backend and, where available, downloads a checksum-verified compatible runtime.
 3. Convert the game to a separate **ARM64 game package**. Experimental backends may require an opt-in migration, a specific game version, or your own vendor SDK.
 4. For **Steam Frame**, transfer the generated game package, extract it, keep Steam running, run `./install-to-steam.sh` from the extracted folder, and launch the new non-Steam shortcut. UnityFrame creates `*-windows-arm64-proton.zip` and requires a supported ARM64 Proton 11.0 installation; other engines keep their `*-linux-aarch64.zip` output.
@@ -300,6 +304,15 @@ their original Steam AppID.
 
 ## Optional SteamGridDB artwork for non-Steam games
 
+Version 0.1.1.1 adds **Artwork Settings** in the converter GUI. Enter a
+masked SteamGridDB API key and, optionally, the numeric ID from the game's
+SteamGridDB page. The key lasts for this session; selecting another source clears
+the game ID. Blank ID keeps automatic matching. Existing/manual and official
+Steam artwork keep their priority; SteamGridDB fills missing slots.
+The independent [Frame artwork companion](docs/steam-artwork-companion.md) also
+supports local images and SteamGridDB for existing non-Steam entries.
+
+
 Set the `STEAMGRIDDB_API_KEY` **process environment variable** before running
 the converter to enable [SteamGridDB](https://www.steamgriddb.com/api/v2) artwork.
 The key is never written to the repository, portable ZIP, metadata or Steam shortcut.
@@ -447,7 +460,7 @@ requirements.
 ## Launching converted games on Linux ARM64
 
 The **converter application** is distributed as a Windows ZIP or Linux tarball.
-v0.1.1.0 has separate Linux x64 and Linux ARM64 host builds. The standard **converted game** output is a separate ZIP. Do not
+v0.1.1.1 has separate Linux x64 and Linux ARM64 host builds. The standard **converted game** output is a separate ZIP. Do not
 confuse the application download with the game package: transfer and extract
 the converted game ZIP on the target device, then use its included launcher or
 Steam installer. If file copying loses executable permissions, restore the
