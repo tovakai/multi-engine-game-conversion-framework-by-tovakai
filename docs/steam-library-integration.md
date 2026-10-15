@@ -150,7 +150,8 @@ restored the exact prior options; the user confirmed the original runtime launch
 after a startup delay, then confirmed the relinked ARM64 version works. Its actual
 executable was verified as AArch64 dotnet. Other backends still require
 real-game acceptance. The [asset deduplication checklist](steam-asset-deduplication.md)
-is also mandatory; this test does not approve every candidate backend.
+is required before promoting deduplication out of experimental status; this test
+does not approve every candidate backend or block the revised non-Steam-first release.
 
 - [ ] Installed original on internal storage: recommended non-Steam installation and optional experimental link offered.
 - [ ] Owned but not installed locally: clear requirement; official Steam install
