@@ -15,6 +15,7 @@ from pathlib import Path
 import struct
 import subprocess
 import tempfile
+import zipfile
 
 
 def verify(executable: Path, receipt: Path, *, download_runtime=False):
@@ -55,14 +56,21 @@ def verify(executable: Path, receipt: Path, *, download_runtime=False):
         result = json.loads(receipt.read_text(encoding="utf-8"))
         if result.get("state") != "complete" or not result.get("frozen"):
             raise RuntimeError("Frozen fixture conversion did not complete")
-        target = Path(result["output_path"])
-        binary = (target / "nw").read_bytes()
+        # The GUI removes its temporary build directory after creating the
+        # distributable ZIP. Validate the shipped payload directly.
+        package = Path(result["package"])
+        with zipfile.ZipFile(package) as archive:
+            runtimes = [name for name in archive.namelist() if name.endswith("/payload/nw")]
+            if len(runtimes) != 1:
+                raise RuntimeError("Frozen package must contain exactly one NW.js executable")
+            payload = runtimes[0].removesuffix("nw")
+            binary = archive.read(runtimes[0])
+            if payload + "www/index.html" not in archive.namelist():
+                raise RuntimeError("Frozen conversion did not package the fixture")
         if binary[:6] != header[:6] or struct.unpack_from("<H", binary, 18)[0] != 183:
             raise RuntimeError("Frozen conversion changed target runtime architecture/content")
         if hashlib.sha256(binary).digest() != hashlib.sha256((runtime / "nw").read_bytes()).digest():
             raise RuntimeError("Packaged runtime differs from the verified cache")
-        if not (target / "www/index.html").is_file() or not Path(result["package"]).is_file():
-            raise RuntimeError("Frozen conversion did not package the fixture")
         after = {p.relative_to(source): p.read_bytes() for p in source.rglob("*") if p.is_file()}
         if before != after:
             raise RuntimeError("Frozen conversion modified source data")
