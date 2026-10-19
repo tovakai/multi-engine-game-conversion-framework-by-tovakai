@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from megcfbt.tls import open_url
+
 import hashlib
 import json
 import os
@@ -688,7 +690,7 @@ class RuntimeManager:
             headers={"User-Agent": "Multi-Engine-Game-Conversion-Framework-by-Tovakai"},
         )
         try:
-            with urllib.request.urlopen(request, timeout=60) as response:
+            with open_url(request, timeout=60) as response:
                 return response.read().decode("utf-8", errors="replace")
         except (OSError, urllib.error.URLError) as exc:
             raise RuntimeDownloadError(f"Could not download {url}: {exc}") from exc
@@ -711,7 +713,7 @@ class RuntimeManager:
         if progress:
             progress(f"Downloading official Ren'Py ARM64 SDK: {url}")
         try:
-            with urllib.request.urlopen(request, timeout=60) as response, partial.open(
+            with open_url(request, timeout=60) as response, partial.open(
                 "wb"
             ) as output:
                 total = 0

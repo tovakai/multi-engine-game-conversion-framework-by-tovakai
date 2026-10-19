@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from megcfbt.tls import failure_message, open_url
+
 import hashlib
+import http.client
 import os
 import shutil
+import ssl
 import tarfile
 import tempfile
 import urllib.error
@@ -105,21 +109,40 @@ def _request(url: str) -> urllib.request.Request:
     return urllib.request.Request(url, headers=_HTTP_HEADERS)
 
 
+def _transfer_failure(url: str, exc: BaseException) -> str:
+    if isinstance(exc, (TimeoutError, ssl.SSLError)):
+        return failure_message(url, exc)
+    if isinstance(exc, http.client.HTTPException):
+        return "Interrupted HTTPS transfer; retry when connectivity is restored"
+    return str(exc)
+
+
 def _download(url: str, destination: Path) -> None:
+    partial = destination.with_name(destination.name + ".partial")
     try:
-        with urllib.request.urlopen(_request(url), timeout=60) as response:
-            with destination.open("wb") as handle:
-                shutil.copyfileobj(response, handle, length=1024 * 1024)
-    except (OSError, urllib.error.URLError) as exc:
-        raise RuntimeError(f"Failed to download {url}: {exc}") from exc
+        with open_url(_request(url), timeout=60) as response:
+            length = response.headers.get("Content-Length")
+            expected = int(length) if length and length.isdigit() else None
+            received = 0
+            with partial.open("wb") as handle:
+                while chunk := response.read(1024 * 1024):
+                    handle.write(chunk)
+                    received += len(chunk)
+            if expected is not None and received != expected:
+                raise RuntimeError("Interrupted NW.js archive transfer: incomplete Content-Length")
+        partial.replace(destination)
+    except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
+        raise RuntimeError(f"Failed to download {url}: {_transfer_failure(url, exc)}") from exc
+    finally:
+        partial.unlink(missing_ok=True)
 
 
 def _download_text(url: str) -> str:
     try:
-        with urllib.request.urlopen(_request(url), timeout=30) as response:
+        with open_url(_request(url), timeout=30) as response:
             data = response.read()
-    except (OSError, urllib.error.URLError) as exc:
-        raise RuntimeError(f"Failed to download {url}: {exc}") from exc
+    except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
+        raise RuntimeError(f"Failed to download {url}: {_transfer_failure(url, exc)}") from exc
 
     try:
         return data.decode("utf-8")
@@ -153,7 +176,9 @@ class RuntimeManager:
 
     def _validate_cached(self, path: Path) -> bool:
         nw = path / "nw"
-        return nw.is_file() and read_elf_architecture(nw) == "aarch64"
+        return (nw.is_file() and read_elf_architecture(nw) == "aarch64"
+                and all((path / name).is_file() and (path / name).stat().st_size > 0
+                        for name in ("icudtl.dat", "resources.pak")))
 
     def ensure_nwjs(
         self,
@@ -202,7 +227,10 @@ class RuntimeManager:
                 progress(f"Verified SHA256 for {filename}")
 
             extracted = temp_root / "extracted"
-            _safe_extract(archive, extracted)
+            try:
+                _safe_extract(archive, extracted)
+            except (tarfile.TarError, OSError, EOFError) as exc:
+                raise RuntimeError("Verified NW.js archive is invalid or incomplete") from exc
 
             candidate = extracted / _runtime_dir_name(normalized)
             if not candidate.is_dir():
@@ -218,10 +246,18 @@ class RuntimeManager:
                     f"Downloaded NW.js runtime is {architecture or 'not ELF'}, "
                     "expected aarch64"
                 )
+            if not self._validate_cached(candidate):
+                raise RuntimeError("NW.js archive is incomplete: missing required runtime resources")
 
+            backup = temp_root / "previous"
             if final.exists():
-                shutil.rmtree(final, ignore_errors=True)
-            candidate.rename(final)
+                final.rename(backup)
+            try:
+                candidate.rename(final)
+            except OSError:
+                if backup.exists() and not final.exists():
+                    backup.rename(final)
+                raise
 
         if progress:
             progress(f"Cached NW.js {normalized}: {final}")

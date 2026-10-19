@@ -34,7 +34,7 @@ def package(application: Path, platform: str) -> Path:
             signature = stream.read(6)
             valid = signature[:4] == b'PE\0\0' and struct.unpack_from('<H', signature, 4)[0] == 0x8664
         else:
-            valid = header[:6] == b'\x7fELF\x02\x01' and struct.unpack_from('<H', header, 18)[0] == 183
+            valid = header[:6] == b'\x7fELF\x02\x01' and struct.unpack_from('<H', header, 18)[0] == (62 if platform == 'linux-x64' else 183)
         if not valid:
             raise ValueError(f'Application architecture does not match {platform}')
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -46,7 +46,7 @@ def package(application: Path, platform: str) -> Path:
     (application / 'BUILD.txt').write_text(f'version={__version__}\ncommit={commit}\nplatform={platform}\ntracked_changes={dirty}\n', encoding='utf-8')
     for source in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
         shutil.copy2(ROOT / source, application / source)
-    notes = (ROOT / 'docs/releases/0.1.0.md').read_text(encoding='utf-8')
+    notes = (ROOT / f'docs/releases/{__version__}.md').read_text(encoding='utf-8')
     documentation = f'https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/blob/{commit}/docs/'
     (application / 'RELEASE-NOTES.md').write_text(notes.replace('](../', '](' + documentation), encoding='utf-8')
     (application / 'README.txt').write_text(
@@ -84,6 +84,6 @@ def package(application: Path, platform: str) -> Path:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--application', type=Path, required=True)
-    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64'], required=True)
+    parser.add_argument('--platform', choices=['windows-x64', 'linux-aarch64', 'linux-x64'], required=True)
     args = parser.parse_args()
     package(args.application, args.platform)

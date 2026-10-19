@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 import zipfile
+import tarfile
 
 import pytest
 
@@ -18,10 +19,10 @@ def release(tmp_path, monkeypatch):
     spec.loader.exec_module(module)
     root = tmp_path / 'project'
     root.mkdir()
-    (root / 'pyproject.toml').write_text('[project]\nversion="0.1.0"\n')
+    (root / 'pyproject.toml').write_text(f'[project]\nversion="{module.__version__}"\n')
     (root / 'LICENSE').write_text('license fixture')
     (root / 'THIRD_PARTY_NOTICES.md').write_text('notice fixture')
-    notes = root / 'docs/releases/0.1.0.md'
+    notes = root / f'docs/releases/{module.__version__}.md'
     notes.parent.mkdir(parents=True)
     notes.write_text('release scope fixture [support](../monoframe.md)')
     monkeypatch.setattr(module, 'ROOT', root)
@@ -65,3 +66,19 @@ def test_release_refuses_mislabeled_executable_architecture(release):
     (application / (module.APP_NAME + '.exe')).write_bytes(executable(0xaa64))
     with pytest.raises(ValueError, match='architecture'):
         module.package(application, 'windows-x64')
+
+
+@pytest.mark.parametrize('platform,machine', [('linux-x64',62),('linux-aarch64',183)])
+def test_linux_host_archive_architecture(release, platform, machine):
+    module, application = release
+    header = bytearray(64)
+    header[:6] = b'\x7fELF\x02\x01'
+    struct.pack_into('<H',header,18,machine)
+    (application / module.APP_NAME).write_bytes(header)
+    result = module.package(application, platform)
+    with tarfile.open(result) as packaged:
+        assert packaged.getmember(module.APP_NAME + '/BUILD.json').isfile()
+    struct.pack_into('<H',header,18,183 if machine == 62 else 62)
+    (application / module.APP_NAME).write_bytes(header)
+    with pytest.raises(ValueError,match='architecture'):
+        module.package(application,platform)

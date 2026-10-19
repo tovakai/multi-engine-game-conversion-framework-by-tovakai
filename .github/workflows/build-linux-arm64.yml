@@ -1,7 +1,12 @@
-name: build linux arm64
+name: build linux applications
 
 on:
   workflow_dispatch:
+    inputs:
+      tls_network_smoke:
+        description: Contact official NW.js checksum endpoint with verified TLS
+        type: boolean
+        default: false
   pull_request:
     paths:
       - "app/**"
@@ -14,7 +19,10 @@ on:
       - "agsframe/**"
       - "monoframe/**"
       - "build/build_linux_aarch64.sh"
+      - "build/build_linux.sh"
+      - "build/build_linux_x64.sh"
       - "build/release_metadata.py"
+      - "build/verify_frozen_runtime_fixture.py"
       - "docs/releases/**"
       - "experiments/sts2-steamworks/**"
       - "pyproject.toml"
@@ -26,7 +34,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04-arm
+            platform: linux-aarch64
+            architecture: 'ARM aarch64|ARM64|aarch64'
+          - runner: ubuntu-24.04
+            platform: linux-x64
+            architecture: 'x86-64'
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,29 +56,45 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-tk xvfb
 
-      - name: Build native AArch64 app
+      - name: Build native Linux app
         run: |
           python -m pip install --upgrade pip
-          bash build/build_linux_aarch64.sh
+          bash build/build_linux.sh "${{ matrix.platform }}"
 
-      - name: Run native ARM64 regression tests
+      - name: Run regression tests
         run: |
           python -m pip install -e ".[dev]"
           pytest -q
 
       - name: Smoke-check binary architecture
         run: |
-          APP="dist/linux-aarch64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          APP="dist/${{ matrix.platform }}/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
           test -x "$APP"
           file "$APP"
-          file "$APP" | grep -Eq 'ARM aarch64|ARM64|aarch64'
+          file "$APP" | grep -Eq '${{ matrix.architecture }}'
           xvfb-run -a "$APP" --verify-gui-startup --receipt build/frozen-gui-startup.json
+          test -s "$(dirname "$APP")/_internal/certifi/cacert.pem"
+          "$APP" --tls-diagnostics > build/frozen-tls.json
+          python -c 'import json; r=json.load(open("build/frozen-tls.json")); assert r["frozen"] and r["certificate_verification"] and r["hostname_verification"]; assert r["bundled_ca"]["x509_ca"] > 0'
+
+      - name: Verify frozen cached MV conversion
+        run: |
+          APP="dist/${{ matrix.platform }}/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-conversion.json
+
+      - name: Opt-in verified TLS network smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.tls_network_smoke
+        run: |
+          APP="dist/${{ matrix.platform }}/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          "$APP" --tls-diagnostics --smoke > build/frozen-tls-network.json
 
       - uses: actions/upload-artifact@v4
         with:
-          name: multi-engine-game-conversion-framework-by-tovakai-linux-aarch64
+          name: multi-engine-game-conversion-framework-by-tovakai-${{ matrix.platform }}
           path: |
-            dist/*-linux-aarch64.tar.gz
-            dist/SHA256SUMS-linux-aarch64.txt
+            dist/*-${{ matrix.platform }}.tar.gz
+            dist/SHA256SUMS-${{ matrix.platform }}.txt
             build/frozen-gui-startup.json
+            build/frozen-tls*.json
+            build/frozen-runtime-conversion.json
           if-no-files-found: error

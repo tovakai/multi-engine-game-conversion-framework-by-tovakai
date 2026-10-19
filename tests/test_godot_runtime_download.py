@@ -72,7 +72,7 @@ def test_download_verifies_archive_and_reuses_cache(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(
         download.urllib.request, "urlopen",
-        lambda url, timeout: (calls.append(url), Response(archive))[1],
+        lambda url, timeout, **kwargs: (calls.append(url), Response(archive))[1],
     )
     progress = []
     first = download.ensure_downloaded_runtime(
@@ -99,6 +99,6 @@ def test_rejects_wrong_digest(tmp_path, monkeypatch):
             return self
         def __exit__(self, *args):
             self.close()
-    monkeypatch.setattr(download.urllib.request, "urlopen", lambda url, timeout: Response(b"abc"))
+    monkeypatch.setattr(download.urllib.request, "urlopen", lambda url, timeout, **kwargs: Response(b"abc"))
     with pytest.raises(download.RuntimeDownloadError, match="SHA-256 mismatch"):
         download.ensure_downloaded_runtime(RECIPE_ID)
