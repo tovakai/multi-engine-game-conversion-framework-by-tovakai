@@ -17,6 +17,8 @@ data and license metadata. The Linux CI matrix checks both application targets;
 its optional `tls_network_smoke` workflow-dispatch input requests official NW.js
 checksum metadata through the frozen downloader. The default build is offline
 after dependency installation and does not download an NW.js archive.
+The PR label `tls-network-smoke` also opts that PR into the checksum-only live
+check on both native runners; no archive is downloaded by the smoke step.
 
 The Windows and native ARM64 CI workflows also build the application, start the
 actual frozen GUI in its verification mode and upload the archives, checksums

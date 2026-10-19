@@ -188,6 +188,10 @@ def test_inaccessible_system_material_uses_packaged_roots(monkeypatch):
     (urllib.error.URLError(ssl.SSLCertVerificationError(1, "invalid")), "server identity"),
 ])
 def test_network_error_categories(monkeypatch, error, expected):
+    # This test isolates error classification from host trust configuration.
+    # In particular, Windows need not install Linux's optional CA dependency.
+    monkeypatch.setattr(tls, "resolve_context", lambda: (
+        ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT), "synthetic-test-context"))
     def fail(*args, **kwargs):
         raise error
     monkeypatch.setattr(tls.urllib.request, "urlopen", fail)
@@ -196,6 +200,8 @@ def test_network_error_categories(monkeypatch, error, expected):
 
 
 def test_no_tls_retry_or_proxy_mutation(monkeypatch):
+    monkeypatch.setattr(tls, "resolve_context", lambda: (
+        ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT), "synthetic-test-context"))
     calls = []
     monkeypatch.setenv("HTTPS_PROXY", "http://user:secret@private.example:8080")
     def fail(request, **kwargs):
@@ -218,6 +224,8 @@ def test_windows_urllib_call_is_unchanged(monkeypatch):
 
 
 def test_diagnostics_omit_sensitive_environment(monkeypatch):
+    monkeypatch.setattr(tls_diagnostics, "resolve_context", lambda: (
+        ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT), "synthetic-test-context"))
     monkeypatch.setenv("HTTPS_PROXY", "http://user:secret@private.example")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "sensitive")
     value = json.dumps(tls_diagnostics.report())

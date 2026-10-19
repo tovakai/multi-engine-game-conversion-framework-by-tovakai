@@ -4,6 +4,7 @@ import http.client
 import io
 from pathlib import Path
 import struct
+import sys
 import tarfile
 import urllib.error
 
@@ -84,7 +85,10 @@ def test_download_verifies_installs_arm64_and_reuses_cache(tmp_path, monkeypatch
     for req, options in calls:
         assert req.get_header("User-agent") == runtime._HTTP_HEADERS["User-Agent"]
         assert req.get_header("Accept") == "*/*"
-        assert options["context"].check_hostname
+        if sys.platform.startswith("linux"):
+            assert options["context"].check_hostname
+        else:
+            assert "context" not in options  # Preserve Windows' native trust selection.
     assert [options["timeout"] for _, options in calls] == [30, 60]
     assert manager.ensure_nwjs() == result and len(calls) == 2
     assert manager.list_cached() == [result]

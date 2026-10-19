@@ -69,6 +69,10 @@ configuration, override presence and constrained error details; they do not dump
 environment variables, proxy addresses, credentials, certificate contents or raw
 tracebacks. Review local paths before attaching a report to a public issue.
 
+CI can run the same frozen smoke on both native Linux runners via the workflow's
+`tls_network_smoke` dispatch input or the explicit PR label `tls-network-smoke`.
+Neither opt-in downloads the full runtime archive.
+
 ## Distinguish failures
 
 | Message | Meaning / next action |

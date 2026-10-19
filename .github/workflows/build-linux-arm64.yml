@@ -8,6 +8,7 @@ on:
         type: boolean
         default: false
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "app/**"
       - "megcfbt/**"
@@ -83,7 +84,7 @@ jobs:
           python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-conversion.json
 
       - name: Opt-in verified TLS network smoke
-        if: github.event_name == 'workflow_dispatch' && inputs.tls_network_smoke
+        if: (github.event_name == 'workflow_dispatch' && inputs.tls_network_smoke) || contains(github.event.pull_request.labels.*.name, 'tls-network-smoke')
         run: |
           APP="dist/${{ matrix.platform }}/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
           "$APP" --tls-diagnostics --smoke > build/frozen-tls-network.json
