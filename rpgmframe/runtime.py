@@ -137,9 +137,11 @@ def _download(url: str, destination: Path) -> None:
         partial.unlink(missing_ok=True)
 
 
-def _download_text(url: str) -> str:
+def _download_text(url: str, *, status_callback=None) -> str:
     try:
         with open_url(_request(url), timeout=30) as response:
+            if status_callback is not None:
+                status_callback(response.status)
             data = response.read()
     except (OSError, urllib.error.URLError, http.client.HTTPException) as exc:
         raise RuntimeError(f"Failed to download {url}: {_transfer_failure(url, exc)}") from exc

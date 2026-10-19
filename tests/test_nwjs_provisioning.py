@@ -39,6 +39,7 @@ def archive(*, machine=183, incomplete=False, unsafe=False):
 
 
 class Response(io.BytesIO):
+    status = 200
     def __init__(self, contents, *, length=None):
         super().__init__(contents)
         self.headers = {"Content-Length": str(len(contents) if length is None else length)}
@@ -93,6 +94,14 @@ def test_download_verifies_installs_arm64_and_reuses_cache(tmp_path, monkeypatch
     assert manager.ensure_nwjs() == result and len(calls) == 2
     assert manager.list_cached() == [result]
     assert_clean(manager)
+
+
+def test_checksum_smoke_reports_observed_http_status(monkeypatch):
+    from megcfbt import tls_diagnostics
+    install_network(monkeypatch, archive())
+    assert tls_diagnostics.report(smoke=True)["smoke"]["status"] == 200
+    monkeypatch.setattr(Response, "status", 206)
+    assert "did not receive HTTP 200" in tls_diagnostics.report(smoke=True)["smoke"]["error"]
 
 
 @pytest.mark.parametrize("metadata, message", [

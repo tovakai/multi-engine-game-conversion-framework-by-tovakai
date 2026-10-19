@@ -52,9 +52,12 @@ def report(*, smoke=False):
         from rpgmframe.runtime import _download_text, _expected_sha256, _archive_name
         url = "https://dl.nwjs.io/v0.117.0/SHASUMS256.txt"
         try:
-            data = _download_text(url)
+            statuses = []
+            data = _download_text(url, status_callback=statuses.append)
+            if statuses != [200]:
+                raise RuntimeError("Checksum smoke did not receive HTTP 200")
             digest = _expected_sha256(data, _archive_name("0.117.0"))
-            result["smoke"] = {"url": url, "status": 200, "arm64_sha256": digest}
+            result["smoke"] = {"url": url, "status": statuses[0], "arm64_sha256": digest}
         except Exception as exc:
             result["smoke"] = {"url": url, "error": str(exc), "error_type": type(exc).__name__}
             cause = exc
