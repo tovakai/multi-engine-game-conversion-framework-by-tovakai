@@ -19,6 +19,10 @@ checksum metadata through the frozen downloader. The default build is offline
 after dependency installation and does not download an NW.js archive.
 The PR label `tls-network-smoke` also opts that PR into the checksum-only live
 check on both native runners; no archive is downloaded by the smoke step.
+For full official NW.js archive verification and repeated frozen MV conversion,
+opt in separately with `runtime_network_integration` or PR label
+`runtime-network-integration`. This performs real downloads on both native runners;
+the game source is synthetic and gameplay is not exercised.
 
 The Windows and native ARM64 CI workflows also build the application, start the
 actual frozen GUI in its verification mode and upload the archives, checksums
