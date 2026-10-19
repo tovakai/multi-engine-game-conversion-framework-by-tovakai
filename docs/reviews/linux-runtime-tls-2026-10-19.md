@@ -132,10 +132,10 @@ only; no release, tag, merge or application publication was performed.
 
 | Command / check | Result |
 | --- | --- |
-| `.venv/bin/python -m pytest -q --tb=short` (Python 3.12.15) | 426 passed; six existing-style tar extraction deprecation warnings. |
+| `.venv/bin/python -m pytest -q --tb=short` (Python 3.12.15) | 427 passed; six existing-style tar extraction deprecation warnings. |
 | `.venv/bin/python -m pytest -q --tb=short tests/test_tls.py tests/test_nwjs_provisioning.py` | Initial targeted run: 40 passed, before three additional trust tests were added. |
 | `.venv/bin/python -m pytest -q --tb=short tests/test_tls.py tests/test_release_packaging.py` | 31 passed after inaccessible/missing material and Linux packaging tests were added. |
-| `.venv-314/bin/python -m pytest -q --tb=short` (Python 3.14.8) | 425 passed, one pre-existing bytecode-detection failure. |
+| `.venv-314/bin/python -m pytest -q --tb=short` (Python 3.14.8) | 426 passed, one pre-existing bytecode-detection failure. |
 | `/home/tovakai/Projects/multi-engine-game-conversion-framework-by-tovakai/work/.venv/bin/python -m pytest -q --tb=short` from `/tmp/megcfbt-baseline` (before renaming the Python 3.14 venv) | Same bytecode-detection failure; 380 passed, one failed. No unrelated bytecode fix included. |
 | `PIP_NO_INDEX=1 PIP_NO_BUILD_ISOLATION=0 bash build/build_linux_x64.sh` | Canonical native x64 build succeeds using installed Python 3.12 dependencies; local 0.1.1.2 archive generated. |
 | `file 'dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai'` | ELF64 x86-64 converter. |
@@ -159,8 +159,8 @@ curl -fL --connect-timeout 10 \
 ```
 
 Result: HTTP 200, TLS verify result 0. This is curl connectivity evidence,
-**not** proof that the packaged urllib live smoke passed. No complete NW.js
-archive was downloaded merely to repeat this connectivity test.
+**not** proof that the packaged urllib live smoke passed. The later hosted integration run downloaded the full NW.js archive specifically
+to verify provisioning and conversion, not to repeat this connectivity control.
 
 ## Regression scope and remaining validation
 
@@ -173,14 +173,52 @@ short transfers, source preservation, output preservation, and offline overrides
 Real OpenSSL MemoryBIO tests prove successful trusted handshakes, untrusted-chain
 rejection and hostname mismatch rejection without live sockets.
 
-Native AArch64 hardware execution, actual graphical conversion and live packaged
-urllib checksum/archive provisioning are not validated locally. Both native CI
-runners now build the package, check frozen GUI startup, parse the actual bundled
-CA data, and perform cached synthetic MV conversion. Those are planned CI checks,
-not results claimed from this session. The optional live CI smoke must be run
-explicitly. The synthetic cached ELF is not a playable runtime or gameplay test.
-No full real NW.js archive, uncached physical-device conversion or gameplay
-validation was performed; those remain acceptance work in a capable environment.
+Local graphical execution and urllib network access remain restricted, as the
+attempts above show. Hosted CI then completed the missing integration checks on
+commit `4bf3b19b1bc69ad1072db391e3c94cb96a5647b1`:
+
+| CI run | Verified result |
+| --- | --- |
+| [Native Linux builds and integration](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/actions/runs/39271040536) | Both Ubuntu x86_64 and native AArch64 jobs pass: canonical build, full regression suite, frozen GUI startup, bundled CA parsing, cached synthetic MV conversion, observed HTTP 200 through the exact frozen checksum downloader, full official NW.js archive download/SHA256 verification, ARM64 output validation and repeated conversion from cache. |
+| [Ubuntu/Windows unit suite](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/actions/runs/39271040761) | Both pass. Native ARM64 log reports 427 passed; Windows reports 421 passed, six skipped (Linux fallback dependency/permission-specific cases). |
+| [Windows packaged GUI](https://github.com/tovakai/multi-engine-game-conversion-framework-by-tovakai/actions/runs/39271040695) | Windows x64 build and actual frozen GUI startup pass. |
+
+The first Windows test run exposed Linux-only assumptions in test setup, not a
+production trust change. Error-classification tests now supply their own context,
+and provisioning assertions explicitly check that Windows receives no context
+argument. The corrected Windows suite passes. Linux-only certifi tests skip when
+that optional Linux dependency is absent on Windows.
+
+The exact additional hosted commands, run for both native Linux targets, were:
+
+```sh
+bash build/build_linux.sh "$TARGET"
+pytest -q
+xvfb-run -a "$APP" --verify-gui-startup --receipt build/frozen-gui-startup.json
+"$APP" --tls-diagnostics > build/frozen-tls.json
+python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-conversion.json
+"$APP" --tls-diagnostics --smoke > build/frozen-tls-network.json
+python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-network.json --download-runtime
+```
+
+`TARGET` is `linux-x64` or `linux-aarch64`; `APP` is the executable inside
+`dist/$TARGET/Multi-Engine Game Conversion Framework by tovakai/`.
+The full integration uses an empty isolated cache and the real official ARM64
+NW.js 0.117.0 archive. It checks the GUI's SHA256 verification log, package/cache
+binary identity and ELF architecture, and source preservation. A second actual
+GUI conversion runs against the populated cache with deliberately invalid
+SSL_CERT_FILE and must log cache reuse and succeed. This confirms that cache
+hits avoid runtime network/trust resolution. The source game remains synthetic;
+no proprietary game assets are used or uploaded.
+
+CI artifacts contain `frozen-gui-startup.json`, `frozen-tls.json`,
+`frozen-tls-network.json`, `frozen-runtime-conversion.json`,
+`frozen-runtime-network.json` and `frozen-runtime-network-reuse.json` for each
+architecture. These are hosted-runner results, not Steam Frame or physical-device
+gameplay validation. Gameplay and game-specific plugin/media compatibility
+remain untested. The default fixture uses a synthetic ELF; the separately opted-in
+network integration uses real verified NW.js and is explicitly marked in its
+receipt.
 
 ZIP runtime preflight is documented as a separate follow-up to preserve existing
 multi-engine precedence, deep/archive inspection and extraction safety. This patch
