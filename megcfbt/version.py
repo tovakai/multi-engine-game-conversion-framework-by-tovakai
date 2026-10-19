@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 # Change only when preparing a deliberate public release, not on every commit.
-RELEASE_VERSION = "0.1.1.1"
+RELEASE_VERSION = "0.1.1.2"
 ROOT = Path(__file__).resolve().parents[1]
 EMBEDDED = Path(__file__).with_name("_build_info.json")
 

@@ -38,6 +38,8 @@ done
   --hidden-import tkinterdnd2 \
   --collect-all customtkinter \
   --collect-all tkinterdnd2 \
+  --collect-data certifi \
+  --copy-metadata certifi \
   --collect-data megcfbt \
   --add-data "megcfbt/controller_support:megcfbt/controller_support" \
   --add-data "megcfbt/steam_library.py:megcfbt" \

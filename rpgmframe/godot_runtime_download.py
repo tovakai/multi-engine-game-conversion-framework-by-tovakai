@@ -5,6 +5,8 @@ Never download an arbitrary executable based on a game's untrusted metadata.
 """
 from __future__ import annotations
 
+from megcfbt.tls import open_url
+
 import hashlib
 import json
 import os
@@ -220,7 +222,7 @@ def ensure_downloaded_runtime(
         if progress:
             progress("Downloading custom GodotSteam ARM64 runtime…")
         try:
-            with urllib.request.urlopen(entry["url"], timeout=45) as response:
+            with open_url(entry["url"], timeout=45) as response:
                 length_header = response.headers.get("Content-Length")
                 total = int(length_header) if length_header and length_header.isdigit() else None
                 with archive.open("wb") as output:

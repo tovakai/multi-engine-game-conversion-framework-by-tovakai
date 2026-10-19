@@ -1,4 +1,5 @@
 """Shared verified download and atomic installation for allowlisted runtime bundles."""
+from megcfbt.tls import open_url
 from pathlib import Path, PurePosixPath
 import re
 import hashlib,shutil,tarfile,tempfile,urllib.error,urllib.request
@@ -26,7 +27,7 @@ def ensure_bundle(entry: dict, target: Path, *, validate, progress=None, downloa
         digest=hashlib.sha256();received=0
         if progress:progress('Reading bundled native ARM64 runtime…' if archive_path else 'Downloading native ARM64 runtime…')
         try:
-            source = archive_path.open('rb') if archive_path else urllib.request.urlopen(entry['url'],timeout=45)
+            source = archive_path.open('rb') if archive_path else open_url(entry['url'],timeout=45)
             with source as response,archive.open('wb') as output:
                 size=str(archive_path.stat().st_size) if archive_path else response.headers.get('Content-Length')
                 total=int(size) if size and size.isdigit() else None

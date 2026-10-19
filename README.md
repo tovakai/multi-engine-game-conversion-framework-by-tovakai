@@ -516,3 +516,8 @@ source payloads intact unless a generic compatibility repair is justified.
 Existing framework components use GNU GPLv3 (`LICENSE`); the integrated STS2
 backend retains GNU AGPLv3 (`experiments/sts2-steamworks/LICENSE`). Combined
 distributions carry the AGPL requirements described in `THIRD_PARTY_NOTICES.md`.
+
+## Runtime download certificate errors
+
+For Linux TLS failures, run the converter with `--tls-diagnostics` (add `--smoke`
+to test official NW.js metadata). See [TLS troubleshooting](docs/runtime-tls-troubleshooting.md).

@@ -1,7 +1,7 @@
 # Versions and conversion provenance
 
 `megcfbt/version.py:RELEASE_VERSION` is the only maintained application version.
-It targets **0.1.1.1**, with non-Steam installation recommended and library
+It targets **0.1.1.2**, with non-Steam installation recommended and library
 linking/deduplication explicitly experimental. v0.1.0.3 and its Git tag remain
 immutable. A version number alone does not make a development build a release;
 official builds require the exact matching tag, clean source and verified artifacts.

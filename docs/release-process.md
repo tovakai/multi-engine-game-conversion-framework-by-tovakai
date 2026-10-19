@@ -64,8 +64,16 @@ receipt against archive metadata, names and checksums. Full history is fetched.
    Linux ARM64 and Linux x64 tarballs, and checksums. Use a notes file with `gh release create`;
    verify release asset names and hashes after upload.
 
-Release publication is a manual final step. The workflows do not automatically
-publish a release merely because a branch or tag was pushed. Test/diagnostic
+Release publication is an explicit final step. Ordinary branches and tags do not
+publish releases. For 0.1.1.2, the maintainer may opt the accepted release-preparation
+PR into publication with label `publish-0.1.1.2` before merging it into main.
+`.github/workflows/publish-release.yml` verifies that main still equals that
+accepted merge, creates the immutable matching tag, rebuilds all three official
+platform archives from it, runs frozen checks, and validates archive metadata,
+architecture and SHA256. It uploads a draft, downloads and verifies its assets,
+then publishes it. A manual workflow dispatch provides the same deliberate opt-in.
+The workflow refuses to move existing tags or overwrite an already published
+release. Its assets are only the three converter archives and SHA256SUMS.txt. Test/diagnostic
 receipts belong in CI artifacts; private game files, converted games, vendor SDKs,
 runtime caches and branch-recovery bundles must never become release assets.
 
