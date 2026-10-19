@@ -6,6 +6,8 @@ the normal converter then takes over and installs the ARM64 runtime.
 """
 from __future__ import annotations
 
+from megcfbt.tls import open_url
+
 import re
 import shutil
 import tarfile
@@ -335,7 +337,7 @@ def _download(
 
     _log(log, f"Downloading compatibility asset: {url}")
     try:
-        with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as output:
+        with open_url(url, timeout=60) as response, partial.open("wb") as output:
             shutil.copyfileobj(response, output, length=1024 * 1024)
     except Exception as exc:
         try:

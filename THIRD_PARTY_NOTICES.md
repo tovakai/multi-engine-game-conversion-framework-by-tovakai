@@ -149,3 +149,12 @@ The Frame graphics guard and legacy Steam API bridge are GPL-3.0-only with sourc
 included. They call the installed Frame Steam API; its proprietary library is
 not redistributed in the SDK. Retail game assemblies, assets and saves are
 never part of public runtime downloads.
+
+## certifi CA bundle (Linux fallback)
+
+Linux packages include certifi (`certifi/cacert.pem`), containing Mozilla's
+maintained CA collection. certifi is distributed under the Mozilla Public
+License 2.0: https://github.com/certifi/python-certifi/blob/master/LICENSE.
+The bundle supplements unavailable system trust only; usable system roots and
+explicit trust configuration take precedence. The Linux builder copies certifi's
+distribution metadata and license; rebuild with maintained certifi releases.

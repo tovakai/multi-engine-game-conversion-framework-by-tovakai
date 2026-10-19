@@ -137,7 +137,7 @@ def test_failed_download_preserves_existing_cache(tmp_path,monkeypatch):
     (result/'godot.arm64').write_bytes(b'previous damaged runtime')
     def fail(*a,**k):raise OSError('offline')
     monkeypatch.setattr(download.urllib.request,'urlopen',fail)
-    with pytest.raises(download.RuntimeDownloadError,match='offline'):
+    with pytest.raises(download.RuntimeDownloadError,match='check network connectivity'):
         download.ensure_downloaded_runtime(GODOTSTEAM_351_RECIPE)
     assert (result/'godot.arm64').read_bytes()==b'previous damaged runtime'
 
