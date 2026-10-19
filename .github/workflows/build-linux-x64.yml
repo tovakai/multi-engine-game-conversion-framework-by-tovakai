@@ -3,6 +3,7 @@ name: build linux x64
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "app/**"
       - "megcfbt/**"
@@ -21,6 +22,7 @@ on:
       - "build/build_identity.py"
       - "build/verify_build_identity.py"
       - "build/verify_frozen_conversion.py"
+      - "build/verify_frozen_runtime_fixture.py"
       - "setup.py"
       - "docs/releases/**"
       - "experiments/sts2-steamworks/**"
@@ -78,6 +80,20 @@ jobs:
         run: |
           xvfb-run -a python build/verify_frozen_conversion.py --executable "dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai" --receipt build/frozen-gui-conversion.json
 
+      - name: Verify Linux TLS and cached MV provisioning
+        run: |
+          APP="dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          "$APP" --tls-diagnostics > build/frozen-tls.json
+          python -c 'import json; r=json.load(open("build/frozen-tls.json")); assert r["frozen"] and r["certificate_verification"] and r["hostname_verification"] and r["bundled_ca"]["x509_ca"] > 0'
+          python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-conversion.json
+
+      - name: Opt-in real NW.js TLS, provisioning and cache reuse
+        if: startsWith(github.ref, 'refs/tags/v') || contains(github.event.pull_request.labels.*.name, 'runtime-network-integration')
+        run: |
+          APP="dist/linux-x64/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          "$APP" --tls-diagnostics --smoke > build/frozen-tls-network.json
+          python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/frozen-runtime-network.json --download-runtime
+
       - uses: actions/upload-artifact@v4
         with:
           name: multi-engine-game-conversion-framework-by-tovakai-linux-x64
@@ -86,4 +102,6 @@ jobs:
             dist/SHA256SUMS-linux-x64.txt
             build/frozen-gui-startup.json
             build/frozen-gui-conversion.json
+            build/frozen-tls*.json
+            build/frozen-runtime-*.json
           if-no-files-found: error

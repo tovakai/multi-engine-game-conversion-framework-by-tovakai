@@ -216,3 +216,12 @@ Pillow distribution metadata and documented at https://github.com/python-pillow/
 PyInstaller uses GPL with its bootloader exception. No Steam client library or
 SteamGridDB artwork is bundled in the companion; images are supplied locally or
 fetched by the user under the provider's terms.
+
+## certifi CA bundle (Linux fallback)
+
+Linux packages include certifi (`certifi/cacert.pem`), containing Mozilla's
+maintained CA collection. certifi is distributed under the Mozilla Public
+License 2.0: https://github.com/certifi/python-certifi/blob/master/LICENSE.
+The bundle supplements unavailable system trust only; usable system roots and
+explicit trust configuration take precedence. The Linux builder copies certifi's
+distribution metadata and license; rebuild with maintained certifi releases.

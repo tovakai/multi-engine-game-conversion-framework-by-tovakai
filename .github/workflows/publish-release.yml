@@ -1,0 +1,181 @@
+name: publish application release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-application-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'publish-0.1.1.2'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tag the accepted main commit without moving existing tags
+        id: tag
+        env:
+          ACCEPTED_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_sha="$(git rev-parse HEAD)"
+          if [[ -n "$ACCEPTED_SHA" && "$release_sha" != "$ACCEPTED_SHA" ]]; then
+            echo 'Main moved after acceptance; review the new commit before publishing.' >&2
+            exit 1
+          fi
+          release_version="$(python -c 'from megcfbt.version import RELEASE_VERSION, parse_release; parse_release(RELEASE_VERSION); print(RELEASE_VERSION)')"
+          test "$release_version" = '0.1.1.2'
+          test -f "docs/releases/$release_version.md"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          release_tag="v$release_version"
+          if git show-ref --verify --quiet "refs/tags/$release_tag"; then
+            test "$(git rev-parse "$release_tag^{commit}")" = "$release_sha"
+          else
+            git tag "$release_tag" "$release_sha"
+            git push origin "refs/tags/$release_tag"
+          fi
+          echo "sha=$release_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "version=$release_version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: tag
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux-x64
+          - runner: ubuntu-24.04-arm
+            platform: linux-aarch64
+          - runner: windows-2022
+            platform: windows-x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check tagged source
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ needs.tag.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Install Linux display runtime
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
+      - name: Stage verified pinned runtime bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python build/stage_runtime_bundles.py
+      - name: Build tagged Linux application
+        if: runner.os == 'Linux'
+        env:
+          GITHUB_REF_TYPE: tag
+          GITHUB_REF_NAME: ${{ needs.tag.outputs.tag }}
+        run: bash build/build_linux.sh '${{ matrix.platform }}'
+      - name: Build tagged Windows application
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_REF_TYPE: tag
+          GITHUB_REF_NAME: ${{ needs.tag.outputs.tag }}
+        shell: pwsh
+        run: |
+          ./build/build_windows.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Official Windows build failed' }
+      - name: Verify official Linux GUI, identity and real runtime provisioning
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/${{ matrix.platform }}/Multi-Engine Game Conversion Framework by tovakai/Multi-Engine Game Conversion Framework by tovakai"
+          xvfb-run -a "$APP" --verify-gui-startup --receipt build/release-startup.json
+          python build/verify_build_identity.py --application "$(dirname "$APP")" --receipt build/release-startup.json --platform '${{ matrix.platform }}'
+          "$APP" --tls-diagnostics --smoke > build/release-tls.json
+          python build/verify_frozen_runtime_fixture.py --executable "$APP" --receipt build/release-runtime.json --download-runtime
+      - name: Verify official Windows GUI and identity
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $app = 'dist/windows/Multi-Engine Game Conversion Framework by tovakai'
+          $exe = "$app/Multi-Engine Game Conversion Framework by tovakai.exe"
+          $process = Start-Process -FilePath $exe -ArgumentList @('--verify-gui-startup', '--receipt', 'build/release-startup.json') -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Official Windows startup failed' }
+          python build/verify_build_identity.py --application $app --receipt build/release-startup.json --platform windows-x64
+          if ($LASTEXITCODE -ne 0) { throw 'Official Windows identity verification failed' }
+          python build/verify_frozen_conversion.py --executable $exe --receipt build/release-conversion.json
+          if ($LASTEXITCODE -ne 0) { throw 'Official Windows conversion failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-${{ matrix.platform }}
+          path: |
+            dist/*-${{ matrix.platform }}.tar.gz
+            dist/*-${{ matrix.platform }}.zip
+            dist/SHA256SUMS-${{ matrix.platform }}.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-receipts-${{ matrix.platform }}
+          path: build/release-*.json
+          if-no-files-found: error
+
+  publish:
+    needs: [tag, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: official-*
+          path: release-assets
+          merge-multiple: true
+      - name: Validate all official archives, then publish verified draft assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.tag.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.tag.outputs.version }}
+          RELEASE_SHA: ${{ needs.tag.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python build/verify_release_assets.py --directory release-assets --version "$RELEASE_VERSION" --commit "$RELEASE_SHA"
+          if gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft' > /tmp/release-is-draft; then
+            test "$(cat /tmp/release-is-draft)" = 'true'
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_VERSION" --notes-file "docs/releases/$RELEASE_VERSION.md"
+          fi
+          gh release upload "$RELEASE_TAG" release-assets/*-linux-x64.tar.gz release-assets/*-linux-aarch64.tar.gz release-assets/*-windows-x64.zip release-assets/SHA256SUMS.txt
+          gh release download "$RELEASE_TAG" --dir release-roundtrip
+          python build/verify_release_assets.py --directory release-roundtrip --version "$RELEASE_VERSION" --commit "$RELEASE_SHA"
+          gh release edit "$RELEASE_TAG" --draft=false --latest
+          gh release view "$RELEASE_TAG" --json url,isDraft,tagName,assets

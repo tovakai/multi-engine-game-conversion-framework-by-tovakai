@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from megcfbt.tls import open_url
+
 import hashlib
 import json
 import os
@@ -40,7 +42,7 @@ def _hash(path: Path, algorithm: str) -> str:
 def _request_json(url: str) -> dict:
     request = urllib.request.Request(url, headers=_HEADERS)
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with open_url(request, timeout=15) as response:
             data = response.read()
     except (OSError, urllib.error.URLError) as exc:
         raise GodotRuntimeError(f"Could not query Godot release metadata: {exc}") from exc
@@ -56,7 +58,7 @@ def _request_json(url: str) -> dict:
 def _download_bytes(url: str) -> bytes:
     request = urllib.request.Request(url, headers=_HEADERS)
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
+        with open_url(request, timeout=60) as response:
             return response.read()
     except (OSError, urllib.error.URLError) as exc:
         raise GodotRuntimeError(f"Failed to download Godot checksum metadata: {exc}") from exc
@@ -65,7 +67,7 @@ def _download_bytes(url: str) -> bytes:
 def _download(url: str, destination: Path) -> None:
     request = urllib.request.Request(url, headers=_HEADERS)
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with open_url(request, timeout=120) as response:
             with destination.open("wb") as handle:
                 shutil.copyfileobj(response, handle, length=1024 * 1024)
     except (OSError, urllib.error.URLError) as exc:

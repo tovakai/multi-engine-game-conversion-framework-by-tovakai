@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from megcfbt.tls import open_url
+
 import hashlib
 import os
 import shutil
@@ -76,7 +78,7 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
 def _download(url: str, destination: Path) -> None:
     request = urllib.request.Request(url, headers=_HTTP_HEADERS)
     try:
-        with urllib.request.urlopen(request, timeout=90) as response:
+        with open_url(request, timeout=90) as response:
             with destination.open("wb") as handle:
                 shutil.copyfileobj(response, handle, length=1024 * 1024)
     except (OSError, urllib.error.URLError) as exc:
